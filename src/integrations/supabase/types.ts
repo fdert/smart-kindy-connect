@@ -205,6 +205,113 @@ export type Database = {
           },
         ]
       }
+      cms_blocks: {
+        Row: {
+          block_type: Database["public"]["Enums"]["block_type"]
+          content: Json
+          created_at: string
+          id: string
+          is_visible: boolean
+          page_id: string
+          settings: Json | null
+          sort_order: number
+          title: string | null
+          title_ar: string | null
+          updated_at: string
+        }
+        Insert: {
+          block_type: Database["public"]["Enums"]["block_type"]
+          content: Json
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          page_id: string
+          settings?: Json | null
+          sort_order?: number
+          title?: string | null
+          title_ar?: string | null
+          updated_at?: string
+        }
+        Update: {
+          block_type?: Database["public"]["Enums"]["block_type"]
+          content?: Json
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          page_id?: string
+          settings?: Json | null
+          sort_order?: number
+          title?: string | null
+          title_ar?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cms_blocks_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "cms_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cms_pages: {
+        Row: {
+          created_at: string
+          custom_css: string | null
+          description: string | null
+          description_ar: string | null
+          id: string
+          is_published: boolean
+          meta_description: string | null
+          meta_keywords: string | null
+          meta_title: string | null
+          og_image: string | null
+          slug: string
+          sort_order: number | null
+          template_name: string | null
+          title: string
+          title_ar: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_css?: string | null
+          description?: string | null
+          description_ar?: string | null
+          id?: string
+          is_published?: boolean
+          meta_description?: string | null
+          meta_keywords?: string | null
+          meta_title?: string | null
+          og_image?: string | null
+          slug: string
+          sort_order?: number | null
+          template_name?: string | null
+          title: string
+          title_ar: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_css?: string | null
+          description?: string | null
+          description_ar?: string | null
+          id?: string
+          is_published?: boolean
+          meta_description?: string | null
+          meta_keywords?: string | null
+          meta_title?: string | null
+          og_image?: string | null
+          slug?: string
+          sort_order?: number | null
+          template_name?: string | null
+          title?: string
+          title_ar?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       development_skills: {
         Row: {
           assessed_by: string
@@ -409,6 +516,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      faqs: {
+        Row: {
+          answer: string
+          answer_ar: string
+          category: string | null
+          created_at: string
+          id: string
+          is_published: boolean
+          question: string
+          question_ar: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          answer_ar: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          question: string
+          question_ar: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          answer_ar?: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          question?: string
+          question_ar?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       guardian_student_links: {
         Row: {
@@ -1164,6 +1310,39 @@ export type Database = {
           },
         ]
       }
+      site_settings: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean
+          key: string
+          updated_at: string
+          value: Json | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          key: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          key?: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Relationships: []
+      }
       students: {
         Row: {
           class_id: string | null
@@ -1478,6 +1657,105 @@ export type Database = {
         }
         Relationships: []
       }
+      testimonials: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          customer_name: string
+          customer_title: string | null
+          id: string
+          is_featured: boolean
+          is_published: boolean
+          nursery_name: string | null
+          rating: number | null
+          sort_order: number | null
+          testimonial_text: string
+          testimonial_text_ar: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          customer_name: string
+          customer_title?: string | null
+          id?: string
+          is_featured?: boolean
+          is_published?: boolean
+          nursery_name?: string | null
+          rating?: number | null
+          sort_order?: number | null
+          testimonial_text: string
+          testimonial_text_ar?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          customer_name?: string
+          customer_title?: string | null
+          id?: string
+          is_featured?: boolean
+          is_published?: boolean
+          nursery_name?: string | null
+          rating?: number | null
+          sort_order?: number | null
+          testimonial_text?: string
+          testimonial_text_ar?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      themes: {
+        Row: {
+          config: Json
+          created_at: string
+          css_variables: Json | null
+          description: string | null
+          description_ar: string | null
+          display_name: string
+          display_name_ar: string
+          id: string
+          is_active: boolean
+          is_default: boolean
+          name: string
+          preview_image: string | null
+          updated_at: string
+          version: string | null
+        }
+        Insert: {
+          config: Json
+          created_at?: string
+          css_variables?: Json | null
+          description?: string | null
+          description_ar?: string | null
+          display_name: string
+          display_name_ar: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name: string
+          preview_image?: string | null
+          updated_at?: string
+          version?: string | null
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          css_variables?: Json | null
+          description?: string | null
+          description_ar?: string | null
+          display_name?: string
+          display_name_ar?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name?: string
+          preview_image?: string | null
+          updated_at?: string
+          version?: string | null
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           avatar_url: string | null
@@ -1646,6 +1924,18 @@ export type Database = {
     Enums: {
       attendance_status: "present" | "absent" | "late" | "excused"
       billing_interval: "monthly" | "quarterly" | "yearly"
+      block_type:
+        | "hero"
+        | "features"
+        | "testimonials"
+        | "pricing"
+        | "faq"
+        | "cta"
+        | "gallery"
+        | "stats"
+        | "about"
+        | "contact"
+      content_status: "draft" | "published" | "archived"
       dismissal_status: "pending" | "approved" | "rejected" | "completed"
       invoice_status: "draft" | "sent" | "paid" | "overdue" | "cancelled"
       message_status: "pending" | "sent" | "delivered" | "failed"
@@ -1794,6 +2084,19 @@ export const Constants = {
     Enums: {
       attendance_status: ["present", "absent", "late", "excused"],
       billing_interval: ["monthly", "quarterly", "yearly"],
+      block_type: [
+        "hero",
+        "features",
+        "testimonials",
+        "pricing",
+        "faq",
+        "cta",
+        "gallery",
+        "stats",
+        "about",
+        "contact",
+      ],
+      content_status: ["draft", "published", "archived"],
       dismissal_status: ["pending", "approved", "rejected", "completed"],
       invoice_status: ["draft", "sent", "paid", "overdue", "cancelled"],
       message_status: ["pending", "sent", "delivered", "failed"],
