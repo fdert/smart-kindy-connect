@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Shield, Plus, Send, Eye, CalendarIcon, Check, X, Clock, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { PermissionResponseCard } from '@/components/PermissionResponseCard';
 
 interface Permission {
   id: string;

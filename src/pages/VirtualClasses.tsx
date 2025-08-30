@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Video, Plus, Send, Eye, Calendar, Clock, Users, ExternalLink, Play, UserCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { VirtualClassCard } from '@/components/VirtualClassCard';
 
 interface VirtualClass {
   id: string;

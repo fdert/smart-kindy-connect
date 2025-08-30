@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { BarChart3, Plus, Send, Eye, CalendarIcon, Trash2, Users, PieChart } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import { SurveyResultsChart } from '@/components/SurveyResultsChart';
 
 interface Survey {
   id: string;
