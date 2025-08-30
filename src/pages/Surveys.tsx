@@ -81,21 +81,25 @@ const Surveys = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (tenant) {
-      loadSurveys();
-    }
+    // Super admins can view all data, regular users need a tenant
+    loadSurveys();
   }, [tenant]);
 
   const loadSurveys = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('surveys')
         .select(`
           *,
           survey_questions(*)
-        `)
-        .eq('tenant_id', tenant?.id)
-        .order('created_at', { ascending: false });
+        `);
+      
+      // Filter by tenant only if user has a tenant (not super admin)
+      if (tenant?.id) {
+        query = query.eq('tenant_id', tenant.id);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       setSurveys(data || []);

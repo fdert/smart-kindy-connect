@@ -86,16 +86,15 @@ const VirtualClasses = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (tenant) {
-      loadVirtualClasses();
-      loadClasses();
-      loadStudents();
-    }
+    // Super admins can view all data, regular users need a tenant
+    loadVirtualClasses();
+    loadClasses();
+    loadStudents();
   }, [tenant]);
 
   const loadVirtualClasses = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('virtual_classes')
         .select(`
           *,
@@ -104,9 +103,14 @@ const VirtualClasses = () => {
             *,
             students(full_name, student_id)
           )
-        `)
-        .eq('tenant_id', tenant?.id)
-        .order('scheduled_at', { ascending: false });
+        `);
+      
+      // Filter by tenant only if user has a tenant (not super admin)
+      if (tenant?.id) {
+        query = query.eq('tenant_id', tenant.id);
+      }
+      
+      const { data, error } = await query.order('scheduled_at', { ascending: false });
 
       if (error) throw error;
       setVirtualClasses(data || []);
@@ -123,12 +127,17 @@ const VirtualClasses = () => {
 
   const loadClasses = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('classes')
         .select('id, name')
-        .eq('tenant_id', tenant?.id)
-        .eq('is_active', true)
-        .order('name');
+        .eq('is_active', true);
+      
+      // Filter by tenant only if user has a tenant (not super admin)
+      if (tenant?.id) {
+        query = query.eq('tenant_id', tenant.id);
+      }
+      
+      const { data, error } = await query.order('name');
 
       if (error) throw error;
       setClasses(data || []);
@@ -139,12 +148,17 @@ const VirtualClasses = () => {
 
   const loadStudents = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('students')
         .select('id, full_name, student_id')
-        .eq('tenant_id', tenant?.id)
-        .eq('is_active', true)
-        .order('full_name');
+        .eq('is_active', true);
+      
+      // Filter by tenant only if user has a tenant (not super admin)
+      if (tenant?.id) {
+        query = query.eq('tenant_id', tenant.id);
+      }
+      
+      const { data, error } = await query.order('full_name');
 
       if (error) throw error;
       setStudents(data || []);

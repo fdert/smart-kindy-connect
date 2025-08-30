@@ -71,19 +71,23 @@ const Permissions = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (tenant) {
-      loadPermissions();
-      loadStudents();
-    }
+    // Super admins can view all data, regular users need a tenant
+    loadPermissions();
+    loadStudents();
   }, [tenant]);
 
   const loadPermissions = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('permissions')
-        .select('*')
-        .eq('tenant_id', tenant?.id)
-        .order('created_at', { ascending: false });
+        .select('*');
+      
+      // Filter by tenant only if user has a tenant (not super admin)
+      if (tenant?.id) {
+        query = query.eq('tenant_id', tenant.id);
+      }
+      
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       setPermissions(data || []);
@@ -100,12 +104,17 @@ const Permissions = () => {
 
   const loadStudents = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('students')
         .select('id, full_name, student_id')
-        .eq('tenant_id', tenant?.id)
-        .eq('is_active', true)
-        .order('full_name');
+        .eq('is_active', true);
+      
+      // Filter by tenant only if user has a tenant (not super admin)
+      if (tenant?.id) {
+        query = query.eq('tenant_id', tenant.id);
+      }
+      
+      const { data, error } = await query.order('full_name');
 
       if (error) throw error;
       setStudents(data || []);
