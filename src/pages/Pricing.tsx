@@ -19,6 +19,8 @@ import {
   ArrowLeft
 } from 'lucide-react';
 
+const smartKindyLogo = "/lovable-uploads/46a447fc-00fa-49c5-b6ae-3f7b46fc4691.png";
+
 const Pricing = () => {
   const [isYearly, setIsYearly] = useState(false);
 
@@ -148,10 +150,12 @@ const Pricing = () => {
       <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <Link to="/" className="flex items-center space-x-reverse space-x-2">
-              <div className="bg-primary/10 p-2 rounded-full">
-                <Heart className="h-6 w-6 text-primary" />
-              </div>
+            <Link to="/" className="flex items-center space-x-reverse space-x-3">
+              <img 
+                src={smartKindyLogo} 
+                alt="SmartKindy Logo" 
+                className="h-8 w-8 object-contain"
+              />
               <h1 className="text-xl font-bold text-gray-900">SmartKindy</h1>
             </Link>
             <div className="flex items-center space-x-reverse space-x-4">

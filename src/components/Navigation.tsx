@@ -15,6 +15,8 @@ import {
   Menu,
   X
 } from 'lucide-react';
+
+const smartKindyLogo = "/lovable-uploads/46a447fc-00fa-49c5-b6ae-3f7b46fc4691.png";
 import { useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 
@@ -47,7 +49,12 @@ const Navigation = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <div className="flex-shrink-0 flex items-center">
+            <div className="flex-shrink-0 flex items-center space-x-reverse space-x-3">
+              <img 
+                src={smartKindyLogo} 
+                alt="SmartKindy Logo" 
+                className="h-8 w-8 object-contain"
+              />
               <h1 className="text-xl font-bold text-gray-900">
                 {tenant?.name || 'SmartKindy'}
               </h1>

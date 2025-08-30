@@ -21,6 +21,8 @@ import {
   Smartphone
 } from "lucide-react";
 
+const smartKindyLogo = "/lovable-uploads/46a447fc-00fa-49c5-b6ae-3f7b46fc4691.png";
+
 const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
@@ -36,12 +38,14 @@ const Index = () => {
       <header className="relative z-10 bg-white/80 backdrop-blur-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-reverse space-x-2">
-              <div className="bg-primary/10 p-2 rounded-full">
-                <Heart className="h-6 w-6 text-primary" />
-              </div>
+            <Link to="/" className="flex items-center space-x-reverse space-x-3">
+              <img 
+                src={smartKindyLogo} 
+                alt="SmartKindy Logo" 
+                className="h-10 w-10 object-contain"
+              />
               <h1 className="text-xl font-bold text-gray-900">SmartKindy</h1>
-            </div>
+            </Link>
             <div className="flex items-center space-x-reverse space-x-4">
               <Link to="/register">
                 <Button variant="secondary" size="sm">
@@ -66,15 +70,20 @@ const Index = () => {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* القسم الترحيبي */}
         <div className="text-center mb-16">
-          <div className="flex justify-center mb-6">
-            <div className="bg-primary/10 p-4 rounded-full">
-              <Heart className="h-12 w-12 text-primary" />
+          <div className="flex justify-center mb-8">
+            <div className="relative">
+              <img 
+                src={smartKindyLogo} 
+                alt="SmartKindy - منصة إدارة رياض الأطفال الذكية" 
+                className="h-32 w-32 object-contain drop-shadow-lg"
+              />
+              <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-full blur-xl animate-pulse-soft"></div>
             </div>
           </div>
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
+          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
             SmartKindy
           </h1>
-          <p className="text-xl text-gray-600 mb-2 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-2xl text-primary font-semibold mb-4 max-w-3xl mx-auto leading-relaxed">
             منصة إدارة رياض الأطفال الذكية
           </p>
           <p className="text-lg text-gray-500 mb-8 max-w-2xl mx-auto">
@@ -397,13 +406,15 @@ const Index = () => {
       {/* الفوتر */}
       <footer className="relative z-10 bg-white/80 backdrop-blur-sm border-t border-gray-200 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">
-            <div className="flex items-center justify-center space-x-reverse space-x-2 mb-4">
-              <div className="bg-primary/10 p-2 rounded-full">
-                <Heart className="h-5 w-5 text-primary" />
-              </div>
-              <span className="text-lg font-bold text-gray-900">SmartKindy</span>
-            </div>
+        <div className="text-center">
+          <div className="flex items-center justify-center space-x-reverse space-x-3 mb-4">
+            <img 
+              src={smartKindyLogo} 
+              alt="SmartKindy Logo" 
+              className="h-8 w-8 object-contain"
+            />
+            <span className="text-lg font-bold text-gray-900">SmartKindy</span>
+          </div>
             <p className="text-gray-600 text-sm">
               © 2025 SmartKindy. جميع الحقوق محفوظة. منصة إدارة رياض الأطفال الذكية.
             </p>

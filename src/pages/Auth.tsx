@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Heart, Star, Users } from 'lucide-react';
 
+const smartKindyLogo = "/lovable-uploads/46a447fc-00fa-49c5-b6ae-3f7b46fc4691.png";
+
 const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [signInForm, setSignInForm] = useState({ email: '', password: '' });
@@ -60,13 +62,18 @@ const Auth = () => {
       <div className="w-full max-w-md relative z-10">
         {/* شعار/عنوان المنصة */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <div className="bg-primary/10 p-3 rounded-full">
-              <Heart className="h-8 w-8 text-primary" />
+          <div className="flex items-center justify-center mb-6">
+            <div className="relative">
+              <img 
+                src={smartKindyLogo} 
+                alt="SmartKindy - منصة إدارة رياض الأطفال الذكية" 
+                className="h-20 w-20 object-contain drop-shadow-lg"
+              />
+              <div className="absolute -inset-2 bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-full blur-lg animate-pulse-soft"></div>
             </div>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">SmartKindy</h1>
-          <p className="text-gray-600">منصة إدارة رياض الأطفال الذكية</p>
+          <p className="text-gray-600 font-medium">منصة إدارة رياض الأطفال الذكية</p>
         </div>
 
         <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
