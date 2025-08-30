@@ -178,7 +178,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer">
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer" onClick={() => window.location.href = '/media'}>
             <CardHeader>
               <div className="flex items-center space-x-reverse space-x-2">
                 <Image className="h-5 w-5 text-pink-500" />
@@ -189,8 +189,8 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" disabled>
-                قريباً
+              <Button className="w-full">
+                ابدأ الآن
               </Button>
             </CardContent>
           </Card>
@@ -212,19 +212,19 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer">
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer" onClick={() => window.location.href = '/classes'}>
             <CardHeader>
               <div className="flex items-center space-x-reverse space-x-2">
-                <Settings className="h-5 w-5 text-gray-500" />
-                <CardTitle className="text-lg">الإعدادات</CardTitle>
+                <BookOpen className="h-5 w-5 text-indigo-500" />
+                <CardTitle className="text-lg">الفصول</CardTitle>
               </div>
               <CardDescription>
-                إعدادات الحضانة والمنصة
+                إنشاء وإدارة الفصول الدراسية
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" disabled>
-                قريباً
+              <Button className="w-full">
+                ابدأ الآن
               </Button>
             </CardContent>
           </Card>
