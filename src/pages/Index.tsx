@@ -101,6 +101,12 @@ const Index = () => {
                 جولة تعريفية
               </Button>
             </Link>
+            <Link to="/super-admin">
+              <Button variant="secondary" size="lg" className="text-lg px-8 py-3">
+                تجربة النظام
+                <Users className="mr-2 h-5 w-5" />
+              </Button>
+            </Link>
           </div>
         </div>
 
