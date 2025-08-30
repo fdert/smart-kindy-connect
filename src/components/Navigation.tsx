@@ -16,20 +16,54 @@ import {
   X,
   Shield,
   BarChart3,
-  Video
+  Video,
+  Building,
+  Baby
 } from 'lucide-react';
 
 const smartKindyLogo = "/lovable-uploads/46a447fc-00fa-49c5-b6ae-3f7b46fc4691.png";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const { user, signOut } = useAuth();
   const { tenant } = useTenant();
   const location = useLocation();
 
-  const navigation = [
+  useEffect(() => {
+    if (user) {
+      loadUserRole();
+    }
+  }, [user]);
+
+  const loadUserRole = async () => {
+    if (!user) return;
+
+    try {
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      setUserRole(userData?.role || 'guardian');
+    } catch (error: any) {
+      console.error('Error loading user role:', error);
+      setUserRole('guardian'); // default role
+    }
+  };
+
+  // Navigation items for different roles
+  const superAdminNavigation = [
+    { name: 'لوحة التحكم', href: '/dashboard', icon: Settings },
+    { name: 'إدارة النظام', href: '/super-admin', icon: Shield },
+  ];
+
+  const adminNavigation = [
     { name: 'لوحة التحكم', href: '/dashboard', icon: Settings },
     { name: 'الطلاب', href: '/students', icon: Users },
     { name: 'الفصول', href: '/classes', icon: BookOpen },
@@ -43,6 +77,32 @@ const Navigation = () => {
     { name: 'التقارير', href: '/reports', icon: FileText },
     { name: 'الإعدادات', href: '/settings', icon: Settings },
   ];
+
+  const teacherNavigation = [
+    { name: 'لوحة التحكم', href: '/dashboard', icon: Settings },
+    { name: 'فصولي', href: '/classes', icon: BookOpen },
+    { name: 'الحضور', href: '/attendance', icon: Calendar },
+    { name: 'التحفيز', href: '/rewards', icon: Star },
+    { name: 'الألبوم', href: '/media', icon: Image },
+  ];
+
+  const guardianNavigation = [
+    { name: 'لوحة التحكم', href: '/dashboard', icon: Settings },
+    { name: 'أطفالي', href: '/students', icon: Baby },
+    { name: 'الألبوم', href: '/media', icon: Image },
+  ];
+
+  const getNavigationItems = () => {
+    switch (userRole) {
+      case 'super_admin': return superAdminNavigation;
+      case 'admin': return adminNavigation;
+      case 'teacher': return teacherNavigation;
+      case 'guardian': return guardianNavigation;
+      default: return guardianNavigation;
+    }
+  };
+
+  const navigation = getNavigationItems();
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
