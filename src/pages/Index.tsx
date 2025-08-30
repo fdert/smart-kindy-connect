@@ -42,7 +42,7 @@ const Index = () => {
               <img 
                 src={smartKindyLogo} 
                 alt="SmartKindy Logo" 
-                className="h-[100px] w-[100px] object-contain"
+                className="h-[150px] w-[150px] object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-300"
               />
               <h1 className="text-xl font-bold text-gray-900">SmartKindy</h1>
             </Link>
