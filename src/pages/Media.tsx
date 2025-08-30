@@ -60,6 +60,8 @@ const Media = () => {
   const [generating, setGenerating] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
+  const [reportLoading, setReportLoading] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { tenant } = useTenant();
@@ -313,6 +315,273 @@ const Media = () => {
     return mediaLinks
       .filter(link => link.media_id === mediaId)
       .map(link => link.students);
+  };
+
+  const sendDailyReports = async () => {
+    if (!tenant || !reportDate) return;
+
+    try {
+      setReportLoading(true);
+      
+      // Get media for the selected report date
+      const { data: dayMedia, error: mediaError } = await supabase
+        .from('media')
+        .select('*')
+        .eq('tenant_id', tenant.id)
+        .eq('album_date', reportDate);
+
+      if (mediaError) throw mediaError;
+
+      if (!dayMedia || dayMedia.length === 0) {
+        toast({
+          title: "لا توجد ملفات",
+          description: "لا توجد ملفات في التاريخ المحدد لإرسال التقارير",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Get media links for the day
+      const mediaIds = dayMedia.map(m => m.id);
+      const { data: dayMediaLinks, error: linksError } = await supabase
+        .from('media_student_links')
+        .select('*')
+        .eq('tenant_id', tenant.id)
+        .in('media_id', mediaIds);
+
+      if (linksError) throw linksError;
+
+      // Get unique student IDs who have media on this day
+      const studentIds = [...new Set(dayMediaLinks?.map(link => link.student_id) || [])];
+
+      if (studentIds.length === 0) {
+        toast({
+          title: "لا يوجد طلاب",
+          description: "لا يوجد طلاب مرتبطين بالملفات في هذا التاريخ",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Group media by student for individual reports
+      const mediaByStudent = studentIds.reduce((acc, studentId) => {
+        const student = students.find(s => s.id === studentId);
+        if (!student) return acc;
+
+        const studentMediaIds = dayMediaLinks
+          ?.filter(link => link.student_id === studentId)
+          .map(link => link.media_id) || [];
+        
+        const studentMedia = dayMedia.filter(media => studentMediaIds.includes(media.id));
+        
+        if (studentMedia.length > 0) {
+          acc[studentId] = {
+            student,
+            media: studentMedia
+          };
+        }
+        
+        return acc;
+      }, {} as Record<string, { student: Student; media: MediaItem[] }>);
+
+      let successCount = 0;
+      let errorCount = 0;
+      const errors: string[] = [];
+
+      // Generate and send reports for each student
+      for (const [studentId, { student, media }] of Object.entries(mediaByStudent)) {
+        try {
+          // Create report container
+          const reportContainer = document.createElement('div');
+          reportContainer.style.width = '800px';
+          reportContainer.style.padding = '40px';
+          reportContainer.style.fontFamily = 'Arial, sans-serif';
+          reportContainer.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+          reportContainer.style.minHeight = '1000px';
+          reportContainer.style.direction = 'rtl';
+
+          // Generate beautiful report HTML
+          reportContainer.innerHTML = `
+            <div style="background: white; border-radius: 25px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); position: relative; overflow: hidden;">
+              <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: linear-gradient(45deg, #ff6b6b, #ffd93d); border-radius: 50%; opacity: 0.1;"></div>
+              <div style="position: absolute; bottom: -30px; left: -30px; width: 150px; height: 150px; background: linear-gradient(45deg, #4ecdc4, #96ceb4); border-radius: 50%; opacity: 0.1;"></div>
+              
+              <div style="text-align: center; margin-bottom: 30px; position: relative; z-index: 2;">
+                <h1 style="color: #2c3e50; font-size: 32px; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">📸 ألبوم ${student.full_name} 📸</h1>
+                <div style="background: linear-gradient(90deg, #ff6b6b, #ffd93d, #4ecdc4, #96ceb4, #a8edea); height: 4px; margin: 15px 0; border-radius: 2px;"></div>
+                <p style="color: #34495e; font-size: 18px; margin: 10px 0;">📅 ${new Date(reportDate).toLocaleDateString('ar-SA')}</p>
+              </div>
+
+              <div style="background: linear-gradient(135deg, #ffeaa7, #fab1a0); padding: 20px; border-radius: 15px; margin: 20px 0; border: 3px dashed #e17055;">
+                <h2 style="color: #d63031; margin: 0 0 15px 0; font-size: 20px;">🌟 معلومات الطالب</h2>
+                <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                  <p style="color: #2d3436; margin: 5px 0; font-size: 16px;"><strong>👶 اسم الطالب:</strong> ${student.full_name}</p>
+                  <p style="color: #2d3436; margin: 5px 0; font-size: 16px;"><strong>🏫 الفصل:</strong> ${student.classes?.name || 'غير محدد'}</p>
+                  <p style="color: #2d3436; margin: 5px 0; font-size: 16px;"><strong>🏢 الروضة:</strong> ${tenant.name}</p>
+                  <p style="color: #2d3436; margin: 5px 0; font-size: 16px;"><strong>📊 إجمالي الملفات:</strong> ${media.length}</p>
+                </div>
+              </div>
+
+              <div style="background: linear-gradient(135deg, #a8edea, #fed6e3); padding: 20px; border-radius: 15px; margin: 20px 0; border: 3px dashed #fd79a8;">
+                <h2 style="color: #e84393; margin: 0 0 15px 0; font-size: 20px;">📊 إحصائيات الألبوم</h2>
+                <div style="display: flex; justify-content: space-around; text-align: center;">
+                  <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                    <div style="font-size: 24px; color: #00b894;">📷</div>
+                    <div style="font-size: 20px; font-weight: bold; color: #2d3436;">${media.filter(m => m.file_type === 'image').length}</div>
+                    <div style="color: #636e72;">صور</div>
+                  </div>
+                  <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                    <div style="font-size: 24px; color: #e17055;">🎥</div>
+                    <div style="font-size: 20px; font-weight: bold; color: #2d3436;">${media.filter(m => m.file_type === 'video').length}</div>
+                    <div style="color: #636e72;">فيديوهات</div>
+                  </div>
+                  <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                    <div style="font-size: 24px; color: #fdcb6e;">🌟</div>
+                    <div style="font-size: 20px; font-weight: bold; color: #2d3436;">${media.filter(m => m.is_public).length}</div>
+                    <div style="color: #636e72;">عامة</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="background: linear-gradient(135deg, #d1f2eb, #fef9e7); padding: 20px; border-radius: 15px; margin: 20px 0; border: 3px dashed #f39c12;">
+                <h2 style="color: #d68910; margin: 0 0 15px 0; font-size: 20px;">🎨 معرض الصور والفيديوهات</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px;">
+                  ${media.slice(0, 12).map(mediaItem => `
+                    <div style="background: white; border-radius: 10px; padding: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center;">
+                      <div style="background: linear-gradient(45deg, #ff9a9e, #fecfef); height: 100px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px;">
+                        <div style="font-size: 30px;">${mediaItem.file_type === 'image' ? '📷' : '🎥'}</div>
+                      </div>
+                      <p style="margin: 0; font-size: 12px; color: #636e72; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${mediaItem.file_name}</p>
+                      ${mediaItem.caption ? `<p style="margin: 5px 0 0 0; font-size: 11px; color: #2d3436; font-style: italic;">${mediaItem.caption}</p>` : ''}
+                    </div>
+                  `).join('')}
+                </div>
+                ${media.length > 12 ? `<p style="text-align: center; color: #636e72; font-style: italic; margin-top: 15px;">و ${media.length - 12} ملف إضافي...</p>` : ''}
+              </div>
+
+              <div style="background: linear-gradient(135deg, #ff9a9e, #fecfef); padding: 20px; border-radius: 15px; margin: 20px 0; text-align: center; border: 3px dashed #e84393;">
+                <h3 style="color: #d63031; margin: 0; font-size: 18px;">💖 شكراً لاختياركم روضتنا 💖</h3>
+                <p style="color: #2d3436; margin: 10px 0; font-size: 14px;">نتمنى لطفلكم يوماً سعيداً مليئاً بالتعلم واللعب!</p>
+                <div style="margin-top: 15px;">
+                  <span style="font-size: 20px;">🌈</span>
+                  <span style="font-size: 20px;">⭐</span>
+                  <span style="font-size: 20px;">🎈</span>
+                  <span style="font-size: 20px;">🎨</span>
+                  <span style="font-size: 20px;">🎪</span>
+                </div>
+              </div>
+            </div>
+          `;
+
+          document.body.appendChild(reportContainer);
+
+          // Generate PDF
+          const canvas = await html2canvas(reportContainer, {
+            scale: 2,
+            backgroundColor: 'transparent',
+            logging: false,
+            useCORS: true
+          });
+
+          const imgData = canvas.toDataURL('image/png');
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const imgWidth = 210;
+          const pageHeight = 295;
+          const imgHeight = (canvas.height * imgWidth) / canvas.width;
+          let heightLeft = imgHeight;
+
+          let position = 0;
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+
+          while (heightLeft >= 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+          }
+
+          // Upload PDF to Supabase Storage
+          const fileName = `album-report-${student.full_name.replace(/\s+/g, '-')}-${reportDate}.pdf`;
+          const pdfBlob = pdf.output('blob');
+          
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('media')
+            .upload(`reports/${fileName}`, pdfBlob, {
+              contentType: 'application/pdf',
+              upsert: true
+            });
+
+          if (uploadError) {
+            console.error('Error uploading PDF:', uploadError);
+            errors.push(`فشل رفع تقرير ${student.full_name}: ${uploadError.message}`);
+            errorCount++;
+          } else {
+            // Get public URL
+            const { data: { publicUrl } } = supabase.storage
+              .from('media')
+              .getPublicUrl(`reports/${fileName}`);
+
+            // Send report to guardians via WhatsApp
+            const { data: sendResult, error: sendError } = await supabase.functions.invoke(
+              'send-album-report',
+              {
+                body: {
+                  studentId: student.id,
+                  albumDate: reportDate,
+                  pdfUrl: publicUrl
+                }
+              }
+            );
+
+            if (sendError) {
+              console.error('Error sending album report:', sendError);
+              errors.push(`فشل إرسال تقرير ${student.full_name}: ${sendError.message}`);
+              errorCount++;
+            } else {
+              console.log('Album report sent successfully:', sendResult);
+              successCount++;
+            }
+          }
+
+          document.body.removeChild(reportContainer);
+        } catch (error: any) {
+          console.error(`Error processing report for ${student.full_name}:`, error);
+          errors.push(`خطأ في معالجة تقرير ${student.full_name}: ${error.message}`);
+          errorCount++;
+        }
+      }
+
+      // Show results
+      if (successCount > 0 && errorCount === 0) {
+        toast({
+          title: "تم إرسال التقارير بنجاح",
+          description: `تم إنشاء وإرسال ${successCount} تقرير للطلاب عبر الواتساب`,
+        });
+      } else if (successCount > 0 && errorCount > 0) {
+        toast({
+          title: "تم إرسال التقارير جزئياً",
+          description: `تم إرسال ${successCount} تقرير بنجاح، فشل ${errorCount} تقرير`,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "فشل إرسال التقارير",
+          description: errors.slice(0, 3).join('، '),
+          variant: "destructive"
+        });
+      }
+
+    } catch (error: any) {
+      console.error('Error sending daily reports:', error);
+      toast({
+        title: "خطأ في إرسال التقارير",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setReportLoading(false);
+    }
   };
 
   const generatePDFReport = async () => {
