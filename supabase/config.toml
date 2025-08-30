@@ -1,1 +1,7 @@
 project_id = "ytjodudlnfamvnescumu"
+
+[functions.whatsapp-inbound]
+verify_jwt = false
+
+[functions.whatsapp-outbound]
+verify_jwt = true
