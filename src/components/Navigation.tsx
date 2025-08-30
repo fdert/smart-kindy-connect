@@ -61,6 +61,8 @@ const Navigation = () => {
   const superAdminNavigation = [
     { name: 'لوحة التحكم', href: '/dashboard', icon: Settings },
     { name: 'إدارة النظام', href: '/super-admin', icon: Shield },
+    { name: 'إدارة الخطط', href: '/plans-management', icon: Building },
+    { name: 'إدارة المحتوى', href: '/cms-management', icon: FileText },
   ];
 
   const adminNavigation = [

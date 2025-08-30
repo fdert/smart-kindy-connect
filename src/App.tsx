@@ -24,6 +24,8 @@ import Pricing from "./pages/Pricing";
 import Permissions from "./pages/Permissions";
 import Surveys from "./pages/Surveys";
 import VirtualClasses from "./pages/VirtualClasses";
+import PlansManagement from "./pages/PlansManagement";
+import CMSManagement from "./pages/CMSManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -147,6 +149,16 @@ const AppRoutes = () => (
     <Route path="/virtual-classes" element={
       <ProtectedRoute>
         <VirtualClasses />
+      </ProtectedRoute>
+    } />
+    <Route path="/plans-management" element={
+      <ProtectedRoute>
+        <PlansManagement />
+      </ProtectedRoute>
+    } />
+    <Route path="/cms-management" element={
+      <ProtectedRoute>
+        <CMSManagement />
       </ProtectedRoute>
     } />
     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
