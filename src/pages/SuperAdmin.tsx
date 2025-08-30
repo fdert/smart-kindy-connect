@@ -32,6 +32,12 @@ interface Tenant {
   status: 'pending' | 'approved' | 'suspended' | 'cancelled';
   created_at: string;
   owner_id: string;
+  owner?: Array<{
+    id: string;
+    full_name: string;
+    email: string;
+    is_active: boolean;
+  }>;
 }
 
 interface Subscription {
@@ -67,10 +73,18 @@ const SuperAdmin = () => {
 
   const loadData = async () => {
     try {
-      // Load tenants
+      // Load tenants with owner info
       const { data: tenantsData, error: tenantsError } = await supabase
         .from('tenants')
-        .select('*')
+        .select(`
+          *,
+          owner:users(
+            id,
+            full_name,
+            email,
+            is_active
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (tenantsError) throw tenantsError;
@@ -130,6 +144,32 @@ const SuperAdmin = () => {
       toast({
         title: approve ? "تم الاعتماد" : "تم الرفض",
         description: approve ? "تم اعتماد الحضانة بنجاح" : "تم رفض طلب التسجيل",
+      });
+
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: "خطأ",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUserActivation = async (userId: string, activate: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          is_active: activate
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: activate ? "تم التفعيل" : "تم إلغاء التفعيل",
+        description: activate ? "تم تفعيل حساب المدير بنجاح" : "تم إلغاء تفعيل حساب المدير",
       });
 
       loadData();
@@ -267,8 +307,9 @@ const SuperAdmin = () => {
                       <TableRow>
                         <TableHead>اسم الحضانة</TableHead>
                         <TableHead>البريد الإلكتروني</TableHead>
-                        <TableHead>الهاتف</TableHead>
-                        <TableHead>الحالة</TableHead>
+                        <TableHead>المدير</TableHead>
+                        <TableHead>حالة الحضانة</TableHead>
+                        <TableHead>حالة المدير</TableHead>
                         <TableHead>تاريخ التسجيل</TableHead>
                         <TableHead>الإجراءات</TableHead>
                       </TableRow>
@@ -278,32 +319,73 @@ const SuperAdmin = () => {
                         <TableRow key={tenant.id}>
                           <TableCell className="font-medium">{tenant.name}</TableCell>
                           <TableCell>{tenant.email}</TableCell>
-                          <TableCell>{tenant.phone}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{tenant.owner?.[0]?.full_name || 'غير محدد'}</span>
+                              <span className="text-sm text-muted-foreground">{tenant.owner?.[0]?.email}</span>
+                            </div>
+                          </TableCell>
                           <TableCell>{getStatusBadge(tenant.status)}</TableCell>
+                          <TableCell>
+                            {tenant.owner?.[0] && (
+                              <Badge className={`${tenant.owner[0].is_active ? 'bg-green-500' : 'bg-red-500'} text-white`}>
+                                {tenant.owner[0].is_active ? 'مفعل' : 'غير مفعل'}
+                              </Badge>
+                            )}
+                          </TableCell>
                           <TableCell>
                             {new Date(tenant.created_at).toLocaleDateString('ar-SA')}
                           </TableCell>
                           <TableCell>
-                            {tenant.status === 'pending' && (
-                              <div className="flex space-x-reverse space-x-2">
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleTenantApproval(tenant.id, true)}
-                                  className="bg-green-500 hover:bg-green-600"
-                                >
-                                  <CheckCircle className="h-4 w-4 ml-1" />
-                                  اعتماد
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleTenantApproval(tenant.id, false)}
-                                >
-                                  <XCircle className="h-4 w-4 ml-1" />
-                                  رفض
-                                </Button>
-                              </div>
-                            )}
+                            <div className="flex flex-col space-y-2">
+                              {/* إجراءات الحضانة */}
+                              {tenant.status === 'pending' && (
+                                <div className="flex space-x-reverse space-x-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleTenantApproval(tenant.id, true)}
+                                    className="bg-green-500 hover:bg-green-600"
+                                  >
+                                    <CheckCircle className="h-4 w-4 ml-1" />
+                                    اعتماد
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleTenantApproval(tenant.id, false)}
+                                  >
+                                    <XCircle className="h-4 w-4 ml-1" />
+                                    رفض
+                                  </Button>
+                                </div>
+                              )}
+                              
+                              {/* إجراءات المدير */}
+                              {tenant.owner?.[0] && tenant.status === 'approved' && (
+                                <div className="flex space-x-reverse space-x-2">
+                                  {tenant.owner[0].is_active ? (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleUserActivation(tenant.owner[0].id, false)}
+                                      className="text-red-600 border-red-200 hover:bg-red-50"
+                                    >
+                                      <AlertTriangle className="h-4 w-4 ml-1" />
+                                      إلغاء تفعيل المدير
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleUserActivation(tenant.owner[0].id, true)}
+                                      className="bg-blue-500 hover:bg-blue-600"
+                                    >
+                                      <CheckCircle className="h-4 w-4 ml-1" />
+                                      تفعيل المدير
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
