@@ -1,7 +1,25 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { Heart, Star, Users, MessageCircle, Calendar, Settings, ArrowLeft } from "lucide-react";
+import Testimonials from "@/components/Testimonials";
+import { 
+  Heart, 
+  Star, 
+  Users, 
+  MessageCircle, 
+  Calendar, 
+  Settings, 
+  ArrowLeft,
+  CheckCircle,
+  Zap,
+  Shield,
+  Clock,
+  Camera,
+  FileText,
+  Award,
+  Smartphone
+} from "lucide-react";
 
 const Index = () => {
   return (
@@ -77,9 +95,12 @@ const Index = () => {
 
         {/* الميزات الرئيسية */}
         <div className="mb-16">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">
             ميزات المنصة
           </h2>
+          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+            مجموعة شاملة من الأدوات المتطورة لإدارة حضانتك بكفاءة واحترافية
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-lg transition-all group">
               <CardHeader>
@@ -132,7 +153,7 @@ const Index = () => {
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-lg transition-all group">
               <CardHeader>
                 <div className="flex items-center justify-center w-12 h-12 bg-pink-100 rounded-lg mb-4 group-hover:bg-pink-200 transition-colors">
-                  <Heart className="h-6 w-6 text-pink-600" />
+                  <Camera className="h-6 w-6 text-pink-600" />
                 </div>
                 <CardTitle className="text-xl">الألبوم اليومي</CardTitle>
                 <CardDescription className="text-gray-600">
@@ -144,14 +165,208 @@ const Index = () => {
             <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-lg transition-all group">
               <CardHeader>
                 <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-lg mb-4 group-hover:bg-gray-200 transition-colors">
-                  <Settings className="h-6 w-6 text-gray-600" />
+                  <FileText className="h-6 w-6 text-gray-600" />
                 </div>
-                <CardTitle className="text-xl">إدارة متقدمة</CardTitle>
+                <CardTitle className="text-xl">التقارير الذكية</CardTitle>
                 <CardDescription className="text-gray-600">
-                  لوحة تحكم شاملة مع تقارير مفصلة وإعدادات قابلة للتخصيص
+                  تقارير مفصلة عن الحضور والتطور والأنشطة مع إمكانية التصدير
                 </CardDescription>
               </CardHeader>
             </Card>
+          </div>
+        </div>
+
+        {/* إحصائيات مثيرة للإعجاب */}
+        <div className="mb-16 bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10 rounded-2xl p-8">
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+            لماذا يثق بنا المئات؟
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-primary mb-2">500+</div>
+              <div className="text-gray-600">حضانة تستخدم النظام</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-primary mb-2">15K+</div>
+              <div className="text-gray-600">طفل سعيد</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-primary mb-2">99.9%</div>
+              <div className="text-gray-600">معدل الرضا</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-primary mb-2">24/7</div>
+              <div className="text-gray-600">دعم فني</div>
+            </div>
+          </div>
+        </div>
+
+        {/* الميزات المتقدمة */}
+        <div className="mb-16">
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">
+            ميزات متقدمة أكثر
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="flex items-start space-x-reverse space-x-4 p-6 bg-white/80 backdrop-blur-sm rounded-xl">
+              <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
+                <Shield className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold mb-2">أمان متقدم</h3>
+                <p className="text-gray-600">حماية شاملة للبيانات مع نسخ احتياطية تلقائية وتشفير متقدم</p>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-reverse space-x-4 p-6 bg-white/80 backdrop-blur-sm rounded-xl">
+              <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-lg">
+                <Zap className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold mb-2">سرعة عالية</h3>
+                <p className="text-gray-600">أداء متميز مع تحميل سريع واستجابة فورية لجميع العمليات</p>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-reverse space-x-4 p-6 bg-white/80 backdrop-blur-sm rounded-xl">
+              <div className="flex items-center justify-center w-10 h-10 bg-purple-100 rounded-lg">
+                <Smartphone className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold mb-2">متوافق مع الجوال</h3>
+                <p className="text-gray-600">تصميم متجاوب يعمل بسلاسة على جميع الأجهزة والشاشات</p>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-reverse space-x-4 p-6 bg-white/80 backdrop-blur-sm rounded-xl">
+              <div className="flex items-center justify-center w-10 h-10 bg-orange-100 rounded-lg">
+                <Clock className="h-5 w-5 text-orange-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold mb-2">توفير الوقت</h3>
+                <p className="text-gray-600">أتمتة المهام الروتينية وتبسيط العمليات لتوفير ساعات من العمل</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* التوصيات والآراء */}
+        <Testimonials />
+
+        {/* الأسعار المبسطة */}
+        <div className="mb-16">
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-4">
+            خطط تناسب جميع الحضانات
+          </h2>
+          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+            ابدأ مجاناً وارق لاحقاً حسب احتياجاتك
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm text-center">
+              <CardHeader>
+                <CardTitle className="text-2xl">المبتدئ</CardTitle>
+                <div className="mt-4">
+                  <span className="text-4xl font-bold">199</span>
+                  <span className="text-gray-600 mr-2">ر.س/شهرياً</span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 mb-6">
+                  <li className="flex items-center justify-center space-x-reverse space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">حتى 50 طالب</span>
+                  </li>
+                  <li className="flex items-center justify-center space-x-reverse space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">3 معلمين</span>
+                  </li>
+                  <li className="flex items-center justify-center space-x-reverse space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">ميزات أساسية</span>
+                  </li>
+                </ul>
+                <Link to="/pricing">
+                  <Button variant="outline" className="w-full">
+                    اعرف المزيد
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-primary/5 to-purple-500/10 border-2 border-primary shadow-lg text-center relative">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <Badge className="bg-primary text-white">
+                  <Star className="h-3 w-3 ml-1" />
+                  الأكثر شيوعاً
+                </Badge>
+              </div>
+              <CardHeader>
+                <CardTitle className="text-2xl">المحترف</CardTitle>
+                <div className="mt-4">
+                  <span className="text-4xl font-bold">399</span>
+                  <span className="text-gray-600 mr-2">ر.س/شهرياً</span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 mb-6">
+                  <li className="flex items-center justify-center space-x-reverse space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">حتى 150 طالب</span>
+                  </li>
+                  <li className="flex items-center justify-center space-x-reverse space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">تكامل واتساب</span>
+                  </li>
+                  <li className="flex items-center justify-center space-x-reverse space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">تقارير متقدمة</span>
+                  </li>
+                </ul>
+                <Link to="/pricing">
+                  <Button className="w-full">
+                    ابدأ الآن
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm text-center">
+              <CardHeader>
+                <CardTitle className="text-2xl">المؤسسي</CardTitle>
+                <div className="mt-4">
+                  <span className="text-4xl font-bold">799</span>
+                  <span className="text-gray-600 mr-2">ر.س/شهرياً</span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 mb-6">
+                  <li className="flex items-center justify-center space-x-reverse space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">حتى 500 طالب</span>
+                  </li>
+                  <li className="flex items-center justify-center space-x-reverse space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">مدير حساب مخصص</span>
+                  </li>
+                  <li className="flex items-center justify-center space-x-reverse space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">تخصيص كامل</span>
+                  </li>
+                </ul>
+                <Link to="/pricing">
+                  <Button variant="outline" className="w-full">
+                    تواصل معنا
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+          <div className="text-center mt-8">
+            <Link to="/pricing">
+              <Button variant="outline" size="lg">
+                مقارنة جميع الخطط
+                <ArrowLeft className="mr-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </div>
 
@@ -163,12 +378,19 @@ const Index = () => {
           <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
             انضم إلى مئات الحضانات التي تستخدم SmartKindy لتحسين جودة الخدمة وتسهيل التواصل مع الأولياء
           </p>
-          <Link to="/auth">
-            <Button size="lg" className="text-lg px-12 py-4">
-              ابدأ مجاناً الآن
-              <ArrowLeft className="mr-2 h-5 w-5" />
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/auth">
+              <Button size="lg" className="text-lg px-12 py-4">
+                ابدأ مجاناً الآن
+                <ArrowLeft className="mr-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link to="/pricing">
+              <Button variant="outline" size="lg" className="text-lg px-12 py-4">
+                اطلع على الأسعار
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 

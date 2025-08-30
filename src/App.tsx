@@ -18,6 +18,7 @@ import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import TenantRegistration from "./pages/TenantRegistration";
 import SuperAdmin from "./pages/SuperAdmin";
+import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -70,6 +71,7 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Index />} />
     <Route path="/register" element={<TenantRegistration />} />
+    <Route path="/pricing" element={<Pricing />} />
     <Route path="/super-admin" element={
       <ProtectedRoute>
         <SuperAdmin />
