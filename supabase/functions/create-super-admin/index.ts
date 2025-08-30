@@ -25,16 +25,26 @@ serve(async (req) => {
     )
 
     // حذف المستخدم الحالي إذا كان موجوداً
-    const { data: existingUser } = await supabaseAdmin.auth.admin.getUserByEmail('admin@smartkindy.com')
-    
-    if (existingUser.user) {
-      await supabaseAdmin.auth.admin.deleteUser(existingUser.user.id)
-      
-      // حذف السجل من جدول users إذا كان موجوداً
-      await supabaseAdmin
+    try {
+      const { data: existingUsers } = await supabaseAdmin
         .from('users')
-        .delete()
-        .eq('id', existingUser.user.id)
+        .select('id')
+        .eq('email', 'admin@smartkindy.com')
+      
+      if (existingUsers && existingUsers.length > 0) {
+        // حذف من جدول users أولاً
+        await supabaseAdmin
+          .from('users')
+          .delete()
+          .eq('email', 'admin@smartkindy.com')
+        
+        // ثم من auth.users
+        for (const user of existingUsers) {
+          await supabaseAdmin.auth.admin.deleteUser(user.id)
+        }
+      }
+    } catch (deleteError) {
+      console.log('تم تجاهل خطأ الحذف:', deleteError)
     }
 
     // إنشاء المستخدم الجديد
@@ -50,6 +60,10 @@ serve(async (req) => {
     if (authError) {
       console.error('خطأ في إنشاء المستخدم:', authError)
       throw authError
+    }
+
+    if (!newUser.user) {
+      throw new Error('فشل في إنشاء المستخدم')
     }
 
     // إضافة السجل في جدول users
@@ -86,7 +100,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('خطأ:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        success: false,
+        error: error.message || 'حدث خطأ غير متوقع' 
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
