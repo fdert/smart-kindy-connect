@@ -19,6 +19,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 const smartKindyLogo = "/lovable-uploads/46a447fc-00fa-49c5-b6ae-3f7b46fc4691.png";
 
@@ -83,19 +84,34 @@ const Demo = () => {
 
   const loginWithDemo = async (email: string, password: string) => {
     setLoading(true);
-    const { error } = await signIn(email, password);
     
-    if (!error) {
-      navigate('/dashboard');
-    } else {
-      toast({
-        title: "خطأ في تسجيل الدخول",
-        description: "تأكد من صحة البيانات أو تواصل مع الدعم الفني",
-        variant: "destructive",
-      });
+    try {
+      // محاولة إنشاء الحسابات التجريبية إذا لم تكن موجودة
+      const { data } = await supabase.functions.invoke('create-demo-accounts');
+      
+      if (data?.success) {
+        console.log('Demo accounts created successfully');
+      }
+    } catch (error) {
+      console.log('Demo accounts creation may have failed:', error);
     }
-    
-    setLoading(false);
+
+    // انتظار قصير للتأكد من إنشاء الحسابات
+    setTimeout(async () => {
+      const { error } = await signIn(email, password);
+      
+      if (!error) {
+        navigate('/dashboard');
+      } else {
+        toast({
+          title: "خطأ في تسجيل الدخول",
+          description: "جاري إنشاء الحسابات التجريبية، يرجى المحاولة مرة أخرى خلال لحظات",
+          variant: "destructive",
+        });
+      }
+      
+      setLoading(false);
+    }, 1000);
   };
 
   return (
