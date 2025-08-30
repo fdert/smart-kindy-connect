@@ -1,5 +1,11 @@
 project_id = "ytjodudlnfamvnescumu"
 
+[functions.create-super-admin]
+verify_jwt = false
+
+[functions.create-demo-accounts]
+verify_jwt = false
+
 [functions.whatsapp-inbound]
 verify_jwt = false
 

@@ -15,6 +15,7 @@ export const CreateSuperAdmin = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0am9kdWRsbmZhbXZuZXNjdW11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1MTYwMzgsImV4cCI6MjA3MjA5MjAzOH0.sXV4caS0mPZ_CjEIzgenbCpQYDhT21T5wuYMUPNisFY'
         }
       });
 
