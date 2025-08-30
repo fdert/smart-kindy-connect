@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import DemoAccountsManager from '@/components/DemoAccountsManager';
 import { 
   Building, 
   Users, 
@@ -375,20 +376,25 @@ const SuperAdmin = () => {
 
           {/* تبويب الإعدادات */}
           <TabsContent value="settings">
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm">
-              <CardHeader>
-                <CardTitle>إعدادات المنصة</CardTitle>
-                <CardDescription>
-                  إدارة الخطط والأسعار وإعدادات النظام
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-muted-foreground">قريباً - إعدادات النظام وإدارة المحتوى</p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              {/* إدارة الحسابات التجريبية */}
+              <DemoAccountsManager />
+              
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm">
+                <CardHeader>
+                  <CardTitle>إعدادات أخرى</CardTitle>
+                  <CardDescription>
+                    إدارة الخطط والأسعار وإعدادات النظام
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8">
+                    <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-muted-foreground">قريباً - إعدادات النظام وإدارة المحتوى</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
