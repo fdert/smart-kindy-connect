@@ -345,7 +345,7 @@ const Classes = () => {
                           <SelectValue placeholder="اختر المعلم" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">بدون معلم محدد</SelectItem>
+                          <SelectItem value="none">بدون معلم محدد</SelectItem>
                           {teachers.map((teacher) => (
                             <SelectItem key={teacher.id} value={teacher.id}>
                               {teacher.full_name}

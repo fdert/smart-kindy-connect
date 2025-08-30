@@ -526,7 +526,7 @@ const Rewards = () => {
                     <SelectValue placeholder="اختر الطالب" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">جميع الطلاب</SelectItem>
+                    <SelectItem value="all">جميع الطلاب</SelectItem>
                     {students.map((student) => (
                       <SelectItem key={student.id} value={student.id}>
                         {student.full_name}
