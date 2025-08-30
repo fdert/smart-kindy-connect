@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Heart, Star, Users } from 'lucide-react';
+import { Loader2, Heart, Star, Users, UserCheck, Settings, BookOpen, Eye, Copy } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 const smartKindyLogo = "/lovable-uploads/46a447fc-00fa-49c5-b6ae-3f7b46fc4691.png";
 
@@ -16,6 +18,77 @@ const Auth = () => {
   const [signUpForm, setSignUpForm] = useState({ email: '', password: '', fullName: '', confirmPassword: '' });
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // الحسابات التجريبية
+  const demoAccounts = [
+    {
+      role: 'super_admin',
+      title: 'مدير عام النظام',
+      email: 'superadmin@smartkindy.com',
+      password: 'demo123456',
+      description: 'إدارة شاملة لجميع الحضانات والاشتراكات',
+      icon: Settings,
+      color: 'bg-purple-500',
+      features: ['إدارة جميع الحضانات', 'إدارة الاشتراكات والفواتير', 'إحصائيات شاملة', 'إدارة المستخدمين']
+    },
+    {
+      role: 'owner',
+      title: 'مدير الروضة',
+      email: 'owner@smartkindy.com',
+      password: 'demo123456',
+      description: 'إدارة كاملة للروضة والطلاب والمعلمين',
+      icon: UserCheck,
+      color: 'bg-blue-500',
+      features: ['إدارة الطلاب والفصول', 'إدارة المعلمين', 'تقارير مفصلة', 'إعدادات الروضة']
+    },
+    {
+      role: 'teacher',
+      title: 'المعلمة',
+      email: 'teacher@smartkindy.com',
+      password: 'demo123456',
+      description: 'متابعة الطلاب وتسجيل الحضور والأنشطة',
+      icon: BookOpen,
+      color: 'bg-green-500',
+      features: ['تسجيل الحضور', 'منح المكافآت', 'رفع صور الأنشطة', 'متابعة الطلاب']
+    },
+    {
+      role: 'guardian',
+      title: 'ولي الأمر',
+      email: 'parent@smartkindy.com',
+      password: 'demo123456',
+      description: 'متابعة طفلك وتلقي التحديثات والصور',
+      icon: Heart,
+      color: 'bg-pink-500',
+      features: ['متابعة حضور الطفل', 'تلقي إشعارات واتساب', 'مشاهدة صور الأنشطة', 'تتبع المكافآت']
+    }
+  ];
+
+  const copyToClipboard = (text: string, type: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "تم النسخ",
+      description: `تم نسخ ${type} بنجاح`,
+      duration: 2000,
+    });
+  };
+
+  const loginWithDemo = async (email: string, password: string) => {
+    setLoading(true);
+    const { error } = await signIn(email, password);
+    
+    if (!error) {
+      navigate('/dashboard');
+    } else {
+      toast({
+        title: "خطأ في تسجيل الدخول",
+        description: "تأكد من صحة البيانات أو تواصل مع الدعم الفني",
+        variant: "destructive",
+      });
+    }
+    
+    setLoading(false);
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,14 +152,94 @@ const Auth = () => {
         <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold text-gray-900">مرحباً بك</CardTitle>
-            <CardDescription>سجل دخولك أو أنشئ حساباً جديداً</CardDescription>
+            <CardDescription>سجل دخولك أو أنشئ حساباً جديداً أو جرب النظام</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
+            <Tabs defaultValue="demo" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
+                <TabsTrigger value="demo">تجربة النظام</TabsTrigger>
                 <TabsTrigger value="signin">تسجيل الدخول</TabsTrigger>
                 <TabsTrigger value="signup">حساب جديد</TabsTrigger>
               </TabsList>
+
+              {/* الحسابات التجريبية */}
+              <TabsContent value="demo" className="space-y-4">
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">جرب النظام بجميع الأدوار</h3>
+                  <p className="text-sm text-gray-600">اختر أي دور لتجربة النظام بشكل كامل مع بيانات تجريبية</p>
+                </div>
+                
+                <div className="space-y-3">
+                  {demoAccounts.map((account) => {
+                    const IconComponent = account.icon;
+                    return (
+                      <Card key={account.role} className="border border-gray-200 hover:border-primary/50 transition-colors">
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center space-x-reverse space-x-3">
+                              <div className={`p-2 rounded-lg ${account.color} text-white`}>
+                                <IconComponent className="h-4 w-4" />
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-gray-900">{account.title}</h4>
+                                <p className="text-xs text-gray-600 mt-1">{account.description}</p>
+                              </div>
+                            </div>
+                            <Badge variant="outline" className="text-xs">تجريبي</Badge>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
+                            {account.features.slice(0, 4).map((feature, index) => (
+                              <div key={index} className="flex items-center space-x-reverse space-x-1 text-gray-600">
+                                <div className="w-1 h-1 bg-primary rounded-full"></div>
+                                <span>{feature}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                            <div className="flex items-center space-x-reverse space-x-2 text-xs text-gray-500">
+                              <button
+                                onClick={() => copyToClipboard(account.email, 'البريد الإلكتروني')}
+                                className="flex items-center space-x-reverse space-x-1 hover:text-primary transition-colors"
+                              >
+                                <Copy className="h-3 w-3" />
+                                <span>{account.email}</span>
+                              </button>
+                            </div>
+                            <Button
+                              size="sm"
+                              onClick={() => loginWithDemo(account.email, account.password)}
+                              disabled={loading}
+                              className="text-xs px-4 py-2"
+                            >
+                              {loading ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <>
+                                  <Eye className="h-3 w-3 ml-1" />
+                                  تجربة
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
+                  <div className="text-center">
+                    <h4 className="font-semibold text-blue-900 mb-2">💡 نصائح للتجربة</h4>
+                    <div className="text-sm text-blue-800 space-y-1">
+                      <p>• جميع البيانات تجريبية ويمكن التعديل عليها بحرية</p>
+                      <p>• جرب إضافة طلاب جدد وتسجيل الحضور ومنح المكافآت</p>
+                      <p>• تتضمن التجربة جميع ميزات النظام الكاملة</p>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
 
               {/* تسجيل الدخول */}
               <TabsContent value="signin">
