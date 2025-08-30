@@ -14,16 +14,404 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      classes: {
+        Row: {
+          age_max: number | null
+          age_min: number | null
+          capacity: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          teacher_id: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          age_max?: number | null
+          age_min?: number | null
+          capacity?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          teacher_id?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          age_max?: number | null
+          age_min?: number | null
+          capacity?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          teacher_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classes_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guardian_student_links: {
+        Row: {
+          can_pickup: boolean
+          created_at: string
+          guardian_id: string
+          id: string
+          is_primary: boolean
+          relationship: string
+          student_id: string
+          tenant_id: string
+        }
+        Insert: {
+          can_pickup?: boolean
+          created_at?: string
+          guardian_id: string
+          id?: string
+          is_primary?: boolean
+          relationship: string
+          student_id: string
+          tenant_id: string
+        }
+        Update: {
+          can_pickup?: boolean
+          created_at?: string
+          guardian_id?: string
+          id?: string
+          is_primary?: boolean
+          relationship?: string
+          student_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guardian_student_links_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guardian_student_links_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guardian_student_links_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guardians: {
+        Row: {
+          can_pickup: boolean
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          is_primary: boolean
+          phone: string
+          relationship: string | null
+          tenant_id: string
+          updated_at: string
+          user_id: string | null
+          whatsapp_number: string | null
+        }
+        Insert: {
+          can_pickup?: boolean
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          is_primary?: boolean
+          phone: string
+          relationship?: string | null
+          tenant_id: string
+          updated_at?: string
+          user_id?: string | null
+          whatsapp_number?: string | null
+        }
+        Update: {
+          can_pickup?: boolean
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          is_primary?: boolean
+          phone?: string
+          relationship?: string | null
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string | null
+          whatsapp_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guardians_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guardians_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          class_id: string | null
+          created_at: string
+          date_of_birth: string
+          emergency_contact: Json | null
+          enrollment_date: string
+          full_name: string
+          gender: string | null
+          id: string
+          is_active: boolean
+          medical_info: Json | null
+          photo_url: string | null
+          student_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_id?: string | null
+          created_at?: string
+          date_of_birth: string
+          emergency_contact?: Json | null
+          enrollment_date?: string
+          full_name: string
+          gender?: string | null
+          id?: string
+          is_active?: boolean
+          medical_info?: Json | null
+          photo_url?: string | null
+          student_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string | null
+          created_at?: string
+          date_of_birth?: string
+          emergency_contact?: Json | null
+          enrollment_date?: string
+          full_name?: string
+          gender?: string | null
+          id?: string
+          is_active?: boolean
+          medical_info?: Json | null
+          photo_url?: string | null
+          student_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_settings: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          tenant_id: string
+          updated_at: string
+          value: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          tenant_id: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          tenant_id?: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          address: string | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          domain: string | null
+          email: string
+          id: string
+          logo_url: string | null
+          name: string
+          owner_id: string | null
+          phone: string | null
+          slug: string
+          status: Database["public"]["Enums"]["tenant_status"]
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          domain?: string | null
+          email: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          owner_id?: string | null
+          phone?: string | null
+          slug: string
+          status?: Database["public"]["Enums"]["tenant_status"]
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          domain?: string | null
+          email?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          owner_id?: string | null
+          phone?: string | null
+          slug?: string
+          status?: Database["public"]["Enums"]["tenant_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          last_login_at: string | null
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id: string
+          is_active?: boolean
+          last_login_at?: string | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          last_login_at?: string | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_tenant_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      has_role: {
+        Args: { _role: Database["public"]["Enums"]["user_role"] }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      subscription_status: "active" | "past_due" | "cancelled" | "suspended"
+      tenant_status: "pending" | "approved" | "suspended" | "cancelled"
+      user_role:
+        | "super_admin"
+        | "owner"
+        | "admin"
+        | "teacher"
+        | "gate"
+        | "guardian"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +538,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      subscription_status: ["active", "past_due", "cancelled", "suspended"],
+      tenant_status: ["pending", "approved", "suspended", "cancelled"],
+      user_role: [
+        "super_admin",
+        "owner",
+        "admin",
+        "teacher",
+        "gate",
+        "guardian",
+      ],
+    },
   },
 } as const
