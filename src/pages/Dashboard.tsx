@@ -1,9 +1,12 @@
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTenant } from '@/hooks/useTenant';
 import Navigation from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Users, 
   Calendar, 
@@ -19,6 +22,90 @@ import {
 
 const Dashboard = () => {
   const { user, signOut } = useAuth();
+  const { tenant } = useTenant();
+  const { toast } = useToast();
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    todayAttendance: 0,
+    totalAttendance: 0,
+    weeklyRewards: 0,
+    newMessages: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (tenant) {
+      loadDashboardStats();
+    }
+  }, [tenant]);
+
+  const loadDashboardStats = async () => {
+    try {
+      setLoading(true);
+      
+      // Load students count
+      const { data: studentsData, error: studentsError } = await supabase
+        .from('students')
+        .select('id, is_active')
+        .eq('tenant_id', tenant?.id);
+
+      if (studentsError) throw studentsError;
+
+      // Load today's attendance
+      const today = new Date().toISOString().split('T')[0];
+      const { data: attendanceData, error: attendanceError } = await supabase
+        .from('attendance_events')
+        .select('student_id, status')
+        .eq('tenant_id', tenant?.id)
+        .eq('date', today);
+
+      if (attendanceError) throw attendanceError;
+
+      // Load this week's rewards
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      const { data: rewardsData, error: rewardsError } = await supabase
+        .from('rewards')
+        .select('points')
+        .eq('tenant_id', tenant?.id)
+        .gte('awarded_at', weekStart.toISOString());
+
+      if (rewardsError) throw rewardsError;
+
+      // Load messages count (placeholder for now)
+      const { data: messagesData, error: messagesError } = await supabase
+        .from('wa_messages')
+        .select('id')
+        .eq('tenant_id', tenant?.id)
+        .eq('direction', 'inbound')
+        .eq('processed', false);
+
+      if (messagesError) throw messagesError;
+
+      const totalStudents = studentsData?.length || 0;
+      const activeStudents = studentsData?.filter(s => s.is_active).length || 0;
+      const todayAttendance = attendanceData?.filter(a => a.status === 'present').length || 0;
+      const weeklyRewards = rewardsData?.reduce((sum, r) => sum + r.points, 0) || 0;
+      const newMessages = messagesData?.length || 0;
+
+      setStats({
+        totalStudents: activeStudents,
+        todayAttendance,
+        totalAttendance: totalStudents,
+        weeklyRewards,
+        newMessages
+      });
+
+    } catch (error: any) {
+      toast({
+        title: "خطأ في تحميل الإحصائيات",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!user) {
     return null;
@@ -54,10 +141,19 @@ const Dashboard = () => {
               <Users className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                لم يتم إضافة طلاب بعد
-              </p>
+              {loading ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{stats.totalStudents}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {stats.totalStudents > 0 ? 'طالب نشط' : 'لم يتم إضافة طلاب بعد'}
+                  </p>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -67,10 +163,19 @@ const Dashboard = () => {
               <Clock className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                من أصل 0 طالب
-              </p>
+              {loading ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{stats.todayAttendance}</div>
+                  <p className="text-xs text-muted-foreground">
+                    من أصل {stats.totalAttendance} طالب
+                  </p>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -80,10 +185,19 @@ const Dashboard = () => {
               <Star className="h-4 w-4 text-yellow-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                هذا الأسبوع
-              </p>
+              {loading ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{stats.weeklyRewards}</div>
+                  <p className="text-xs text-muted-foreground">
+                    هذا الأسبوع
+                  </p>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -93,10 +207,19 @@ const Dashboard = () => {
               <MessageCircle className="h-4 w-4 text-purple-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                رسائل جديدة
-              </p>
+              {loading ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{stats.newMessages}</div>
+                  <p className="text-xs text-muted-foreground">
+                    رسائل جديدة
+                  </p>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
