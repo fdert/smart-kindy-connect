@@ -83,9 +83,9 @@ const Index = () => {
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
             SmartKindy
           </h1>
-          <p className="text-2xl text-primary font-semibold mb-4 max-w-3xl mx-auto leading-relaxed">
-            منصة إدارة رياض الأطفال الذكية
-          </p>
+           <p className="text-2xl text-primary font-semibold mb-4 max-w-3xl mx-auto leading-relaxed">
+             منصة إدارة رياض الأطفال الذكية
+           </p>
           <p className="text-lg text-gray-500 mb-8 max-w-2xl mx-auto">
             نظام شامل لإدارة الحضانات مع تكامل واتساب وتتبع الحضور ونظام التحفيز
           </p>
