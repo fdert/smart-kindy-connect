@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { TenantProvider } from "@/hooks/useTenant";
 import Index from "./pages/Index";
 import Tour from "./pages/Tour";
+import Demo from "./pages/Demo";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
@@ -72,6 +73,7 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Index />} />
     <Route path="/tour" element={<Tour />} />
+    <Route path="/demo" element={<Demo />} />
     <Route path="/register" element={<TenantRegistration />} />
     <Route path="/pricing" element={<Pricing />} />
     <Route path="/super-admin" element={
