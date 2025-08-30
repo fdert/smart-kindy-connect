@@ -45,11 +45,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             try {
               const { data: existingUser } = await supabase
                 .from('users')
-                .select('id')
+                .select('id, role')
                 .eq('id', session.user.id)
                 .maybeSingle();
 
               if (!existingUser) {
+                // تحقق من البريد الإلكتروني لمعرفة نوع الحساب
+                const isAdmin = session.user.email === 'admin@smartkindy.com';
+                
                 const { error } = await supabase
                   .from('users')
                   .insert([
@@ -57,7 +60,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                       id: session.user.id,
                       email: session.user.email!,
                       full_name: session.user.user_metadata?.full_name || '',
-                      role: 'guardian'
+                      role: isAdmin ? 'super_admin' : 'guardian'
                     }
                   ]);
 
