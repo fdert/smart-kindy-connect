@@ -53,7 +53,7 @@ const Navigation = () => {
               <img 
                 src={smartKindyLogo} 
                 alt="SmartKindy Logo" 
-                className="h-8 w-8 object-contain"
+                className="h-12 w-12 object-contain"
               />
               <h1 className="text-xl font-bold text-gray-900">
                 {tenant?.name || 'SmartKindy'}
