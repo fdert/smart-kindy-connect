@@ -7,6 +7,11 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import Students from "./pages/Students";
+import Attendance from "./pages/Attendance";
+import Rewards from "./pages/Rewards";
+import TenantRegistration from "./pages/TenantRegistration";
+import SuperAdmin from "./pages/SuperAdmin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -58,6 +63,12 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<Index />} />
+    <Route path="/register" element={<TenantRegistration />} />
+    <Route path="/super-admin" element={
+      <ProtectedRoute>
+        <SuperAdmin />
+      </ProtectedRoute>
+    } />
     <Route path="/auth" element={
       <PublicRoute>
         <Auth />
@@ -66,6 +77,21 @@ const AppRoutes = () => (
     <Route path="/dashboard" element={
       <ProtectedRoute>
         <Dashboard />
+      </ProtectedRoute>
+    } />
+    <Route path="/students" element={
+      <ProtectedRoute>
+        <Students />
+      </ProtectedRoute>
+    } />
+    <Route path="/attendance" element={
+      <ProtectedRoute>
+        <Attendance />
+      </ProtectedRoute>
+    } />
+    <Route path="/rewards" element={
+      <ProtectedRoute>
+        <Rewards />
       </ProtectedRoute>
     } />
     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -127,7 +127,7 @@ const Dashboard = () => {
 
         {/* الإجراءات السريعة */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer">
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer" onClick={() => window.location.href = '/students'}>
             <CardHeader>
               <div className="flex items-center space-x-reverse space-x-2">
                 <Users className="h-5 w-5 text-blue-500" />
@@ -138,13 +138,13 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" disabled>
-                قريباً
+              <Button className="w-full">
+                ابدأ الآن
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer">
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer" onClick={() => window.location.href = '/attendance'}>
             <CardHeader>
               <div className="flex items-center space-x-reverse space-x-2">
                 <Calendar className="h-5 w-5 text-green-500" />
@@ -155,13 +155,13 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" disabled>
-                قريباً
+              <Button className="w-full">
+                ابدأ الآن
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer">
+          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer" onClick={() => window.location.href = '/rewards'}>
             <CardHeader>
               <div className="flex items-center space-x-reverse space-x-2">
                 <Star className="h-5 w-5 text-yellow-500" />
@@ -172,8 +172,8 @@ const Dashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" disabled>
-                قريباً
+              <Button className="w-full">
+                ابدأ الآن
               </Button>
             </CardContent>
           </Card>
