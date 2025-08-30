@@ -11,10 +11,8 @@ import { MessageCircle, Key, Webhook, TestTube, CheckCircle, XCircle } from 'luc
 
 interface WhatsAppConfig {
   wa_provider: string;
-  wa_api_base: string;
-  wa_api_key: string;
+  wa_webhook_url: string;
   wa_webhook_secret: string;
-  wa_session_id: string;
   wa_templates_json: string;
 }
 
@@ -26,17 +24,16 @@ const WhatsAppSettings = () => {
   const [connectionStatus, setConnectionStatus] = useState<'unknown' | 'connected' | 'disconnected'>('unknown');
   
   const [config, setConfig] = useState<WhatsAppConfig>({
-    wa_provider: 'wasender',
-    wa_api_base: 'https://www.wasenderapi.com',
-    wa_api_key: '',
+    wa_provider: 'n8n',
+    wa_webhook_url: '',
     wa_webhook_secret: '',
-    wa_session_id: '',
     wa_templates_json: JSON.stringify({
       attendance_present: 'تم وصول {{studentName}} إلى الحضانة في تمام الساعة {{time}}. نتمنى لهم يوماً سعيداً! 🌟',
       attendance_absent: 'نود إعلامكم أن {{studentName}} لم يحضر اليوم. نأمل أن يكون بخير. إذا كان هناك عذر، يرجى إبلاغنا.',
       dismissal_approved_pin: 'تم اعتماد خروج {{studentName}} في تمام الساعة {{time}}.\n\nرمز الاستلام: {{pin}}\n\nيرجى إظهار هذا الرمز عند الاستلام.',
       dismissal_approved_qr: 'تم اعتماد خروج {{studentName}} في تمام الساعة {{time}}.\n\nيرجى إظهار رمز QR المرفق عند الاستلام.',
       album_shared: 'ألبوم {{studentName}} لليوم {{date}} متاح الآن! 📸\n\n{{mediaLinks}}\n\nستنتهي صلاحية الروابط خلال 24 ساعة.',
+      album_report: 'تقرير ألبوم {{studentName}} لليوم {{date}} 📸\n\nاسم الطالب: {{studentName}}\nالفصل: {{className}}\nالروضة: {{nurseryName}}\nعدد الصور: {{photoCount}}\nعدد الفيديوهات: {{videoCount}}\n\nالألبوم متاح للعرض.',
       general_notification: 'إشعار من {{nurseryName}}:\n\n{{message}}'
     }, null, 2)
   });
@@ -45,11 +42,9 @@ const WhatsAppSettings = () => {
     // Load existing settings
     setConfig(prev => ({
       ...prev,
-      wa_provider: settings.wa_provider || 'wasender',
-      wa_api_base: settings.wa_api_base || 'https://www.wasenderapi.com',
-      wa_api_key: settings.wa_api_key || '',
+      wa_provider: settings.wa_provider || 'n8n',
+      wa_webhook_url: settings.wa_webhook_url || '',
       wa_webhook_secret: settings.wa_webhook_secret || '',
-      wa_session_id: settings.wa_session_id || '',
       wa_templates_json: settings.wa_templates_json ? 
         JSON.stringify(settings.wa_templates_json, null, 2) : 
         JSON.stringify({
@@ -58,6 +53,7 @@ const WhatsAppSettings = () => {
           dismissal_approved_pin: 'تم اعتماد خروج {{studentName}} في تمام الساعة {{time}}.\n\nرمز الاستلام: {{pin}}\n\nيرجى إظهار هذا الرمز عند الاستلام.',
           dismissal_approved_qr: 'تم اعتماد خروج {{studentName}} في تمام الساعة {{time}}.\n\nيرجى إظهار رمز QR المرفق عند الاستلام.',
           album_shared: 'ألبوم {{studentName}} لليوم {{date}} متاح الآن! 📸\n\n{{mediaLinks}}\n\nستنتهي صلاحية الروابط خلال 24 ساعة.',
+          album_report: 'تقرير ألبوم {{studentName}} لليوم {{date}} 📸\n\nاسم الطالب: {{studentName}}\nالفصل: {{className}}\nالروضة: {{nurseryName}}\nعدد الصور: {{photoCount}}\nعدد الفيديوهات: {{videoCount}}\n\nالألبوم متاح للعرض.',
           general_notification: 'إشعار من {{nurseryName}}:\n\n{{message}}'
         }, null, 2)
     }));
@@ -77,10 +73,8 @@ const WhatsAppSettings = () => {
       // Save all settings
       await Promise.all([
         updateSetting('wa_provider', config.wa_provider),
-        updateSetting('wa_api_base', config.wa_api_base),
-        updateSetting('wa_api_key', config.wa_api_key),
+        updateSetting('wa_webhook_url', config.wa_webhook_url),
         updateSetting('wa_webhook_secret', config.wa_webhook_secret),
-        updateSetting('wa_session_id', config.wa_session_id),
         updateSetting('wa_templates_json', templatesJson)
       ]);
 
@@ -102,10 +96,10 @@ const WhatsAppSettings = () => {
   };
 
   const testConnection = async () => {
-    if (!config.wa_api_key) {
+    if (!config.wa_webhook_url) {
       toast({
         title: "خطأ",
-        description: "يرجى إدخال مفتاح API أولاً",
+        description: "يرجى إدخال رابط N8N Webhook أولاً",
         variant: "destructive",
       });
       return;
@@ -113,23 +107,31 @@ const WhatsAppSettings = () => {
 
     setTestLoading(true);
     try {
-      const response = await fetch(`${config.wa_api_base}/api/status`, {
+      const testPayload = {
+        test: true,
+        timestamp: new Date().toISOString(),
+        message: 'اختبار اتصال من نظام إدارة الحضانة'
+      };
+
+      const response = await fetch(config.wa_webhook_url, {
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${config.wa_api_key}`,
-        }
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(testPayload)
       });
 
       if (response.ok) {
         setConnectionStatus('connected');
         toast({
           title: "تم الاتصال بنجاح",
-          description: "تم الاتصال بـ WhatSender بنجاح",
+          description: "تم الاتصال بـ N8N Webhook بنجاح",
         });
       } else {
         setConnectionStatus('disconnected');
         toast({
           title: "فشل الاتصال",
-          description: "تحقق من صحة المفتاح ورابط API",
+          description: "تحقق من صحة رابط N8N Webhook",
           variant: "destructive",
         });
       }
@@ -137,7 +139,7 @@ const WhatsAppSettings = () => {
       setConnectionStatus('disconnected');
       toast({
         title: "خطأ في الاتصال",
-        description: "تعذر الاتصال بخدمة واتساب",
+        description: "تعذر الاتصال بـ N8N Webhook",
         variant: "destructive",
       });
     } finally {
@@ -159,7 +161,7 @@ const WhatsAppSettings = () => {
             إعدادات واتساب
           </CardTitle>
           <CardDescription>
-            إعداد تكامل واتساب مع WhatSender/WasenderApi لإرسال الإشعارات
+            إعداد تكامل واتساب مع N8N لإرسال الإشعارات عبر الويب هوك
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -203,72 +205,47 @@ const WhatsAppSettings = () => {
             </div>
           </div>
 
-          {/* إعدادات API */}
+          {/* إعدادات N8N Webhook */}
           <div className="space-y-4">
             <div>
-              <Label htmlFor="wa_api_base">رابط API</Label>
+              <Label htmlFor="wa_webhook_url">رابط N8N Webhook</Label>
               <Input
-                id="wa_api_base"
-                value={config.wa_api_base}
-                onChange={(e) => setConfig(prev => ({ ...prev, wa_api_base: e.target.value }))}
-                placeholder="https://www.wasenderapi.com"
-                dir="ltr"
-                className="text-left"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="wa_api_key">مفتاح API</Label>
-              <Input
-                id="wa_api_key"
-                type="password"
-                value={config.wa_api_key}
-                onChange={(e) => setConfig(prev => ({ ...prev, wa_api_key: e.target.value }))}
-                placeholder="أدخل مفتاح API من WhatSender"
+                id="wa_webhook_url"
+                value={config.wa_webhook_url}
+                onChange={(e) => setConfig(prev => ({ ...prev, wa_webhook_url: e.target.value }))}
+                placeholder="https://your-n8n-instance.com/webhook/whatsapp"
                 dir="ltr"
                 className="text-left"
               />
               <p className="text-xs text-gray-500 mt-1">
-                احصل على مفتاح API من لوحة تحكم WhatSender
+                رابط الويب هوك الخاص بـ N8N لإرسال رسائل الواتساب
               </p>
-            </div>
-
-            <div>
-              <Label htmlFor="wa_session_id">معرف الجلسة (اختياري)</Label>
-              <Input
-                id="wa_session_id"
-                value={config.wa_session_id}
-                onChange={(e) => setConfig(prev => ({ ...prev, wa_session_id: e.target.value }))}
-                placeholder="معرف جلسة واتساب"
-                dir="ltr"
-                className="text-left"
-              />
             </div>
           </div>
 
-          {/* إعدادات Webhook */}
+          {/* إعدادات الأمان */}
           <div className="border-t pt-4">
             <h4 className="font-semibold mb-3 flex items-center">
               <Webhook className="h-4 w-4 ml-2" />
-              إعدادات Webhook
+              إعدادات الأمان
             </h4>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="webhook_url">رابط Webhook (للإعداد في WhatSender)</Label>
+                <Label htmlFor="inbound_webhook_url">رابط Webhook الواردة (للإعداد في N8N)</Label>
                 <Input
-                  id="webhook_url"
+                  id="inbound_webhook_url"
                   value={`https://ytjodudlnfamvnescumu.supabase.co/functions/v1/whatsapp-inbound`}
                   readOnly
                   dir="ltr"
                   className="text-left bg-gray-50"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  استخدم هذا الرابط في إعدادات Webhook في WhatSender
+                  استخدم هذا الرابط في N8N لاستقبال الرسائل الواردة
                 </p>
               </div>
 
               <div>
-                <Label htmlFor="wa_webhook_secret">مفتاح التحقق من Webhook</Label>
+                <Label htmlFor="wa_webhook_secret">مفتاح التحقق من الأمان (اختياري)</Label>
                 <div className="flex space-x-reverse space-x-2">
                   <Input
                     id="wa_webhook_secret"
@@ -287,7 +264,7 @@ const WhatsAppSettings = () => {
                   </Button>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  استخدم نفس المفتاح في إعدادات Webhook في WhatSender
+                  مفتاح سري للتأكد من أن الرسائل تأتي من مصدر موثوق
                 </p>
               </div>
             </div>
@@ -307,7 +284,7 @@ const WhatsAppSettings = () => {
                 className="text-left font-mono text-sm"
               />
               <p className="text-xs text-gray-500 mt-1">
-                يمكنك استخدام المتغيرات التالية: {'{studentName}, {time}, {date}, {pin}, {nurseryName}, {message}'}
+                يمكنك استخدام المتغيرات التالية: {'{studentName}, {time}, {date}, {pin}, {nurseryName}, {message}, {className}, {photoCount}, {videoCount}'}
               </p>
             </div>
           </div>

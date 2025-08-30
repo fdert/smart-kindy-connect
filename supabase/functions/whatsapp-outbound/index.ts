@@ -73,20 +73,20 @@ serve(async (req) => {
       .from('tenant_settings')
       .select('key, value')
       .eq('tenant_id', tenantId)
-      .in('key', ['wa_api_base', 'wa_api_key', 'wa_templates_json']);
+      .in('key', ['wa_webhook_url', 'wa_webhook_secret', 'wa_templates_json']);
 
     const settingsMap = settings?.reduce((acc, setting) => {
       acc[setting.key] = setting.value;
       return acc;
     }, {} as Record<string, any>) || {};
 
-    const apiBase = settingsMap.wa_api_base || 'https://www.wasenderapi.com';
-    const apiKey = settingsMap.wa_api_key;
+    const webhookUrl = settingsMap.wa_webhook_url;
+    const webhookSecret = settingsMap.wa_webhook_secret;
     const templates = settingsMap.wa_templates_json || {};
 
-    if (!apiKey) {
-      console.error('WhatsApp API key not configured for tenant');
-      return new Response('WhatsApp not configured', { 
+    if (!webhookUrl) {
+      console.error('WhatsApp webhook URL not configured for tenant');
+      return new Response('WhatsApp webhook not configured', { 
         status: 400, 
         headers: corsHeaders 
       });
@@ -106,39 +106,50 @@ serve(async (req) => {
       });
     }
 
-    // Prepare message payload
+    // Prepare message payload for N8N
     const messagePayload: any = {
-      to: to
+      to: to,
+      tenantId: tenantId,
+      timestamp: new Date().toISOString(),
+      contextType: contextType || 'general',
+      contextId: contextId,
+      studentId: studentId,
+      templateName: templateName
     };
 
     if (messageText) {
-      messagePayload.text = messageText;
+      messagePayload.message = messageText;
     }
 
     if (mediaUrl) {
-      if (mediaUrl.match(/\.(jpg|jpeg|png|gif)$/i)) {
-        messagePayload.imageUrl = mediaUrl;
-      } else if (mediaUrl.match(/\.(mp4|mov|avi)$/i)) {
-        messagePayload.videoUrl = mediaUrl;
-      } else {
-        messagePayload.documentUrl = mediaUrl;
-      }
+      messagePayload.mediaUrl = mediaUrl;
+      messagePayload.mediaType = mediaUrl.match(/\.(jpg|jpeg|png|gif)$/i) ? 'image' : 
+                               mediaUrl.match(/\.(mp4|mov|avi)$/i) ? 'video' : 'document';
     }
 
-    console.log('Sending message payload:', JSON.stringify(messagePayload, null, 2));
+    // Add webhook secret if configured
+    if (webhookSecret) {
+      messagePayload.secret = webhookSecret;
+    }
 
-    // Send message via WhatSender API
-    const response = await fetch(`${apiBase}/api/send-message`, {
+    console.log('Sending message payload to N8N:', JSON.stringify(messagePayload, null, 2));
+
+    // Send message via N8N Webhook
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(messagePayload)
     });
 
-    const result = await response.json();
-    console.log('WhatSender API response:', JSON.stringify(result, null, 2));
+    let result: any = {};
+    try {
+      result = await response.json();
+    } catch (e) {
+      result = { message: 'Response received but no JSON data' };
+    }
+    console.log('N8N Webhook response:', JSON.stringify(result, null, 2));
 
     // Log outbound message in database
     const { data: messageRecord, error: messageError } = await supabase
@@ -170,10 +181,10 @@ serve(async (req) => {
     }
 
     if (!response.ok) {
-      console.error('Failed to send WhatsApp message:', result);
+      console.error('Failed to send WhatsApp message via N8N:', result);
       return new Response(JSON.stringify({
         success: false,
-        error: result.error || 'Failed to send message',
+        error: result.error || 'Failed to send message to N8N',
         messageId: messageRecord?.id
       }), { 
         status: 400, 

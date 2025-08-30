@@ -321,155 +321,184 @@ const Media = () => {
     try {
       setGenerating(true);
       
-      // Create a temporary div to hold our report content
-      const reportDiv = document.createElement('div');
-      reportDiv.className = 'pdf-report';
-      reportDiv.style.cssText = `
-        width: 800px;
-        padding: 40px;
-        font-family: 'Arial', sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: #333;
-        direction: rtl;
-      `;
+      // Group media by student
+      const mediaByStudent = students.reduce((acc, student) => {
+        const studentMedia = filteredMediaItems.filter(media => 
+          mediaLinks.some(link => link.media_id === media.id && link.student_id === student.id)
+        );
+        
+        if (studentMedia.length > 0) {
+          acc[student.id] = {
+            student,
+            media: studentMedia
+          };
+        }
+        
+        return acc;
+      }, {} as Record<string, { student: Student; media: MediaItem[] }>);
 
-      // Get students for this date
-      const studentsWithMedia = students.filter(student => 
-        mediaLinks.some(link => 
-          filteredMediaItems.some(media => media.id === link.media_id) &&
-          link.student_id === student.id
-        )
-      );
+      // Generate reports for each student
+      for (const [studentId, { student, media }] of Object.entries(mediaByStudent)) {
+        // Create report container
+        const reportContainer = document.createElement('div');
+        reportContainer.style.width = '800px';
+        reportContainer.style.padding = '40px';
+        reportContainer.style.fontFamily = 'Arial, sans-serif';
+        reportContainer.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        reportContainer.style.minHeight = '1000px';
+        reportContainer.style.direction = 'rtl';
 
-      reportDiv.innerHTML = `
-        <div style="text-align: center; margin-bottom: 40px; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-          <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 20px;">
-            <div style="width: 60px; height: 60px; background: linear-gradient(45deg, #ff6b6b, #ffd93d); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-              <span style="font-size: 30px;">🌟</span>
+        // Add fun border and effects
+        reportContainer.innerHTML = `
+          <div style="background: white; border-radius: 25px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); position: relative; overflow: hidden;">
+            <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: linear-gradient(45deg, #ff6b6b, #ffd93d); border-radius: 50%; opacity: 0.1;"></div>
+            <div style="position: absolute; bottom: -30px; left: -30px; width: 150px; height: 150px; background: linear-gradient(45deg, #4ecdc4, #96ceb4); border-radius: 50%; opacity: 0.1;"></div>
+            
+            <div style="text-align: center; margin-bottom: 30px; position: relative; z-index: 2;">
+              <h1 style="color: #2c3e50; font-size: 32px; margin: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">📸 ألبوم ${student.full_name} 📸</h1>
+              <div style="background: linear-gradient(90deg, #ff6b6b, #ffd93d, #4ecdc4, #96ceb4, #a8edea); height: 4px; margin: 15px 0; border-radius: 2px;"></div>
+              <p style="color: #34495e; font-size: 18px; margin: 10px 0;">📅 ${new Date(selectedDate).toLocaleDateString('ar-SA')}</p>
             </div>
-            <h1 style="color: #4a5568; font-size: 36px; margin: 0; font-weight: bold;">ألبوم ${tenant.name}</h1>
-          </div>
-          
-          <div style="background: linear-gradient(45deg, #4facfe, #00f2fe); color: white; padding: 20px; border-radius: 15px; margin: 20px 0;">
-            <h2 style="font-size: 24px; margin: 0;">📅 تقرير يوم ${new Date(selectedDate).toLocaleDateString('ar-SA', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}</h2>
-          </div>
 
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 30px 0;">
-            <div style="background: linear-gradient(45deg, #a8e6cf, #dcedc1); padding: 20px; border-radius: 15px; text-align: center;">
-              <div style="font-size: 30px; margin-bottom: 10px;">📸</div>
-              <div style="font-size: 24px; font-weight: bold; color: #2d5016;">${totalImages}</div>
-              <div style="color: #2d5016;">صورة</div>
+            <div style="background: linear-gradient(135deg, #ffeaa7, #fab1a0); padding: 20px; border-radius: 15px; margin: 20px 0; border: 3px dashed #e17055;">
+              <h2 style="color: #d63031; margin: 0 0 15px 0; font-size: 20px;">🌟 معلومات الطالب</h2>
+              <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                <p style="color: #2d3436; margin: 5px 0; font-size: 16px;"><strong>👶 اسم الطالب:</strong> ${student.full_name}</p>
+                <p style="color: #2d3436; margin: 5px 0; font-size: 16px;"><strong>🏫 الفصل:</strong> ${student.classes?.name || 'غير محدد'}</p>
+                <p style="color: #2d3436; margin: 5px 0; font-size: 16px;"><strong>🏢 الروضة:</strong> ${tenant.name}</p>
+                <p style="color: #2d3436; margin: 5px 0; font-size: 16px;"><strong>📊 إجمالي الملفات:</strong> ${media.length}</p>
+              </div>
             </div>
-            <div style="background: linear-gradient(45deg, #ffd3a5, #fd9853); padding: 20px; border-radius: 15px; text-align: center;">
-              <div style="font-size: 30px; margin-bottom: 10px;">🎬</div>
-              <div style="font-size: 24px; font-weight: bold; color: #8b4513;">${totalVideos}</div>
-              <div style="color: #8b4513;">فيديو</div>
-            </div>
-            <div style="background: linear-gradient(45deg, #c3cfe2, #c3cfe2); padding: 20px; border-radius: 15px; text-align: center;">
-              <div style="font-size: 30px; margin-bottom: 10px;">👦👧</div>
-              <div style="font-size: 24px; font-weight: bold; color: #4a5568;">${studentsWithMedia.length}</div>
-              <div style="color: #4a5568;">طالب/طالبة</div>
-            </div>
-          </div>
-        </div>
 
-        ${studentsWithMedia.map(student => {
-          const studentMedia = filteredMediaItems.filter(media => 
-            mediaLinks.some(link => link.media_id === media.id && link.student_id === student.id)
-          );
-          
-          return `
-            <div style="background: white; margin: 30px 0; padding: 30px; border-radius: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.1);">
-              <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 25px; background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 15px;">
-                <div style="width: 80px; height: 80px; background: rgba(255,255,255,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px;">
-                  👶
+            <div style="background: linear-gradient(135deg, #a8edea, #fed6e3); padding: 20px; border-radius: 15px; margin: 20px 0; border: 3px dashed #fd79a8;">
+              <h2 style="color: #e84393; margin: 0 0 15px 0; font-size: 20px;">📊 إحصائيات الألبوم</h2>
+              <div style="display: flex; justify-content: space-around; text-align: center;">
+                <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                  <div style="font-size: 24px; color: #00b894;">📷</div>
+                  <div style="font-size: 20px; font-weight: bold; color: #2d3436;">${media.filter(m => m.file_type === 'image').length}</div>
+                  <div style="color: #636e72;">صور</div>
                 </div>
-                <div>
-                  <h3 style="font-size: 28px; margin: 0; font-weight: bold;">${student.full_name}</h3>
-                  <p style="font-size: 18px; margin: 5px 0; opacity: 0.9;">رقم الطالب: ${student.student_id}</p>
-                  ${student.classes ? `<p style="font-size: 16px; margin: 0; opacity: 0.8;">الفصل: ${student.classes.name}</p>` : ''}
+                <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                  <div style="font-size: 24px; color: #e17055;">🎥</div>
+                  <div style="font-size: 20px; font-weight: bold; color: #2d3436;">${media.filter(m => m.file_type === 'video').length}</div>
+                  <div style="color: #636e72;">فيديوهات</div>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                  <div style="font-size: 24px; color: #fdcb6e;">🌟</div>
+                  <div style="font-size: 20px; font-weight: bold; color: #2d3436;">${media.filter(m => m.is_public).length}</div>
+                  <div style="color: #636e72;">عامة</div>
                 </div>
               </div>
-              
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                ${studentMedia.slice(0, 8).map(media => `
-                  <div style="background: linear-gradient(45deg, #ffeaa7, #fab1a0); padding: 15px; border-radius: 12px; text-align: center;">
-                    <div style="font-size: 40px; margin-bottom: 10px;">${media.file_type === 'image' ? '🖼️' : '🎥'}</div>
-                    <div style="font-size: 14px; font-weight: bold; color: #2d3436; margin-bottom: 5px;">${media.file_name}</div>
-                    ${media.caption ? `<div style="font-size: 12px; color: #636e72; font-style: italic;">"${media.caption}"</div>` : ''}
-                    <div style="font-size: 11px; color: #636e72; margin-top: 8px;">⏰ ${new Date(media.created_at).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}</div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #d1f2eb, #fef9e7); padding: 20px; border-radius: 15px; margin: 20px 0; border: 3px dashed #f39c12;">
+              <h2 style="color: #d68910; margin: 0 0 15px 0; font-size: 20px;">🎨 معرض الصور والفيديوهات</h2>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px;">
+                ${media.slice(0, 12).map(mediaItem => `
+                  <div style="background: white; border-radius: 10px; padding: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center;">
+                    <div style="background: linear-gradient(45deg, #ff9a9e, #fecfef); height: 100px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px;">
+                      <div style="font-size: 30px;">${mediaItem.file_type === 'image' ? '📷' : '🎥'}</div>
+                    </div>
+                    <p style="margin: 0; font-size: 12px; color: #636e72; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${mediaItem.file_name}</p>
+                    ${mediaItem.caption ? `<p style="margin: 5px 0 0 0; font-size: 11px; color: #2d3436; font-style: italic;">${mediaItem.caption}</p>` : ''}
                   </div>
                 `).join('')}
               </div>
-              
-              ${studentMedia.length > 8 ? `
-                <div style="text-align: center; margin-top: 20px; padding: 15px; background: linear-gradient(45deg, #74b9ff, #0984e3); color: white; border-radius: 10px;">
-                  <span style="font-size: 16px; font-weight: bold;">+ ${studentMedia.length - 8} ملف إضافي</span>
-                </div>
-              ` : ''}
+              ${media.length > 12 ? `<p style="text-align: center; color: #636e72; font-style: italic; margin-top: 15px;">و ${media.length - 12} ملف إضافي...</p>` : ''}
             </div>
-          `;
-        }).join('')}
 
-        <div style="background: white; padding: 30px; margin-top: 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.1);">
-          <div style="font-size: 50px; margin-bottom: 15px;">🌈</div>
-          <h3 style="color: #4a5568; font-size: 24px; margin-bottom: 10px;">شكراً لكم على ثقتكم</h3>
-          <p style="color: #718096; font-size: 16px;">تم إنشاء هذا التقرير في ${new Date().toLocaleDateString('ar-SA')} بواسطة ${tenant.name}</p>
-          <div style="margin-top: 20px; display: flex; justify-content: center; gap: 10px;">
-            <span style="font-size: 30px;">⭐</span>
-            <span style="font-size: 30px;">🎨</span>
-            <span style="font-size: 30px;">📚</span>
-            <span style="font-size: 30px;">🎪</span>
-            <span style="font-size: 30px;">🎈</span>
+            <div style="background: linear-gradient(135deg, #ff9a9e, #fecfef); padding: 20px; border-radius: 15px; margin: 20px 0; text-align: center; border: 3px dashed #e84393;">
+              <h3 style="color: #d63031; margin: 0; font-size: 18px;">💖 شكراً لاختياركم روضتنا 💖</h3>
+              <p style="color: #2d3436; margin: 10px 0; font-size: 14px;">نتمنى لطفلكم يوماً سعيداً مليئاً بالتعلم واللعب!</p>
+              <div style="margin-top: 15px;">
+                <span style="font-size: 20px;">🌈</span>
+                <span style="font-size: 20px;">⭐</span>
+                <span style="font-size: 20px;">🎈</span>
+                <span style="font-size: 20px;">🎨</span>
+                <span style="font-size: 20px;">🎪</span>
+              </div>
+            </div>
           </div>
-        </div>
-      `;
+        `;
 
-      document.body.appendChild(reportDiv);
+        document.body.appendChild(reportContainer);
 
-      // Generate PDF using html2canvas and jsPDF
-      const canvas = await html2canvas(reportDiv, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null
-      });
+        // Generate PDF
+        const canvas = await html2canvas(reportContainer, {
+          scale: 2,
+          backgroundColor: 'transparent',
+          logging: false,
+          useCORS: true
+        });
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 0;
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgWidth = 210;
+        const pageHeight = 295;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
 
-      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-      
-      // Clean up
-      document.body.removeChild(reportDiv);
-      
-      // Save the PDF
-      const fileName = `album-report-${tenant.name}-${selectedDate}.pdf`;
-      pdf.save(fileName);
+        let position = 0;
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+
+        // Upload PDF to Supabase Storage
+        const fileName = `album-report-${student.full_name.replace(/\s+/g, '-')}-${selectedDate}.pdf`;
+        const pdfBlob = pdf.output('blob');
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('media')
+          .upload(`reports/${fileName}`, pdfBlob, {
+            contentType: 'application/pdf',
+            upsert: true
+          });
+
+        if (uploadError) {
+          console.error('Error uploading PDF:', uploadError);
+        } else {
+          // Get public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('media')
+            .getPublicUrl(`reports/${fileName}`);
+
+          // Send report to guardians via WhatsApp
+          const { data: sendResult, error: sendError } = await supabase.functions.invoke(
+            'send-album-report',
+            {
+              body: {
+                studentId: student.id,
+                albumDate: selectedDate,
+                pdfUrl: publicUrl
+              }
+            }
+          );
+
+          if (sendError) {
+            console.error('Error sending album report:', sendError);
+          } else {
+            console.log('Album report sent successfully:', sendResult);
+          }
+        }
+
+        document.body.removeChild(reportContainer);
+      }
 
       toast({
-        title: "تم إنشاء التقرير",
-        description: `تم حفظ تقرير الألبوم بصيغة PDF`,
+        title: "تم إنشاء التقارير",
+        description: `تم إنشاء وإرسال ${Object.keys(mediaByStudent).length} تقرير للطلاب عبر الواتساب`,
       });
-
     } catch (error: any) {
       toast({
         title: "خطأ في إنشاء التقرير",
         description: error.message,
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setGenerating(false);
