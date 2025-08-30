@@ -21,6 +21,9 @@ import Settings from "./pages/Settings";
 import TenantRegistration from "./pages/TenantRegistration";
 import SuperAdmin from "./pages/SuperAdmin";
 import Pricing from "./pages/Pricing";
+import Permissions from "./pages/Permissions";
+import Surveys from "./pages/Surveys";
+import VirtualClasses from "./pages/VirtualClasses";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -129,6 +132,21 @@ const AppRoutes = () => (
     <Route path="/settings" element={
       <ProtectedRoute>
         <Settings />
+      </ProtectedRoute>
+    } />
+    <Route path="/permissions" element={
+      <ProtectedRoute>
+        <Permissions />
+      </ProtectedRoute>
+    } />
+    <Route path="/surveys" element={
+      <ProtectedRoute>
+        <Surveys />
+      </ProtectedRoute>
+    } />
+    <Route path="/virtual-classes" element={
+      <ProtectedRoute>
+        <VirtualClasses />
       </ProtectedRoute>
     } />
     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
