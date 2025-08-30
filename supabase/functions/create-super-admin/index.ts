@@ -15,39 +15,12 @@ serve(async (req) => {
   try {
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // حذف المستخدم الحالي إذا كان موجوداً
-    try {
-      const { data: existingUsers } = await supabaseAdmin
-        .from('users')
-        .select('id')
-        .eq('email', 'admin@smartkindy.com')
-      
-      if (existingUsers && existingUsers.length > 0) {
-        // حذف من جدول users أولاً
-        await supabaseAdmin
-          .from('users')
-          .delete()
-          .eq('email', 'admin@smartkindy.com')
-        
-        // ثم من auth.users
-        for (const user of existingUsers) {
-          await supabaseAdmin.auth.admin.deleteUser(user.id)
-        }
-      }
-    } catch (deleteError) {
-      console.log('تم تجاهل خطأ الحذف:', deleteError)
-    }
+    console.log('بدء إنشاء المستخدم...')
 
-    // إنشاء المستخدم الجديد
+    // إنشاء المستخدم الجديد مباشرة
     const { data: newUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: 'admin@smartkindy.com',
       password: 'SuperAdmin2024!',
@@ -59,14 +32,34 @@ serve(async (req) => {
 
     if (authError) {
       console.error('خطأ في إنشاء المستخدم:', authError)
-      throw authError
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'خطأ في إنشاء المستخدم: ' + authError.message
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        },
+      )
     }
 
     if (!newUser.user) {
-      throw new Error('فشل في إنشاء المستخدم')
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'فشل في إنشاء المستخدم - لا توجد بيانات مستخدم'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        },
+      )
     }
 
-    // إضافة السجل في جدول users
+    console.log('تم إنشاء المستخدم في Auth:', newUser.user.id)
+
+    // إضافة السجل في جدول users باستخدام service role
     const { error: profileError } = await supabaseAdmin
       .from('users')
       .insert({
@@ -80,8 +73,19 @@ serve(async (req) => {
 
     if (profileError) {
       console.error('خطأ في إنشاء الملف الشخصي:', profileError)
-      throw profileError
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'خطأ في إنشاء الملف الشخصي: ' + profileError.message
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        },
+      )
     }
+
+    console.log('تم إنشاء الملف الشخصي بنجاح')
 
     return new Response(
       JSON.stringify({ 
@@ -98,15 +102,15 @@ serve(async (req) => {
       },
     )
   } catch (error) {
-    console.error('خطأ:', error)
+    console.error('خطأ عام:', error)
     return new Response(
       JSON.stringify({ 
         success: false,
-        error: error.message || 'حدث خطأ غير متوقع' 
+        error: 'خطأ غير متوقع: ' + (error.message || error.toString())
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status: 500,
       },
     )
   }
