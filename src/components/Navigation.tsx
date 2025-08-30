@@ -13,7 +13,10 @@ import {
   Settings,
   LogOut,
   Menu,
-  X
+  X,
+  Shield,
+  BarChart3,
+  Video
 } from 'lucide-react';
 
 const smartKindyLogo = "/lovable-uploads/46a447fc-00fa-49c5-b6ae-3f7b46fc4691.png";
@@ -34,6 +37,9 @@ const Navigation = () => {
     { name: 'التحفيز', href: '/rewards', icon: Star },
     { name: 'الألبوم', href: '/media', icon: Image },
     { name: 'أولياء الأمور', href: '/guardians', icon: UserCheck },
+    { name: 'أذونات الوالدين', href: '/permissions', icon: Shield },
+    { name: 'الاستطلاعات', href: '/surveys', icon: BarChart3 },
+    { name: 'الفصول الافتراضية', href: '/virtual-classes', icon: Video },
     { name: 'التقارير', href: '/reports', icon: FileText },
     { name: 'الإعدادات', href: '/settings', icon: Settings },
   ];
