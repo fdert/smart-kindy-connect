@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Heart, Star, Users, UserCheck, Settings, BookOpen, Eye, Copy } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { CreateSuperAdmin } from '@/components/CreateSuperAdmin';
 
 const smartKindyLogo = "/lovable-uploads/46a447fc-00fa-49c5-b6ae-3f7b46fc4691.png";
 
@@ -156,9 +157,10 @@ const Auth = () => {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
                 <TabsTrigger value="signin">تسجيل الدخول</TabsTrigger>
                 <TabsTrigger value="signup">حساب جديد</TabsTrigger>
+                <TabsTrigger value="admin">إنشاء مدير</TabsTrigger>
               </TabsList>
 
 
@@ -271,6 +273,13 @@ const Auth = () => {
                     )}
                   </Button>
                 </form>
+              </TabsContent>
+
+              {/* إنشاء مدير عام */}
+              <TabsContent value="admin">
+                <div className="flex justify-center">
+                  <CreateSuperAdmin />
+                </div>
               </TabsContent>
             </Tabs>
           </CardContent>
