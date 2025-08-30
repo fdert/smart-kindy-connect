@@ -601,6 +601,131 @@ export type Database = {
           },
         ]
       }
+      invoice_items: {
+        Row: {
+          created_at: string
+          description: string
+          description_ar: string | null
+          id: string
+          invoice_id: string
+          quantity: number
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          description_ar?: string | null
+          id?: string
+          invoice_id: string
+          quantity?: number
+          total_price: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          description_ar?: string | null
+          id?: string
+          invoice_id?: string
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          billing_period_end: string
+          billing_period_start: string
+          created_at: string
+          currency: string
+          discount_amount: number | null
+          due_date: string
+          file_path: string | null
+          id: string
+          invoice_number: string
+          notes: string | null
+          paid_at: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          subscription_id: string
+          subtotal: number
+          tax_amount: number
+          tax_rate: number | null
+          tenant_id: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          billing_period_end: string
+          billing_period_start: string
+          created_at?: string
+          currency?: string
+          discount_amount?: number | null
+          due_date: string
+          file_path?: string | null
+          id?: string
+          invoice_number: string
+          notes?: string | null
+          paid_at?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subscription_id: string
+          subtotal: number
+          tax_amount?: number
+          tax_rate?: number | null
+          tenant_id: string
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          billing_period_end?: string
+          billing_period_start?: string
+          created_at?: string
+          currency?: string
+          discount_amount?: number | null
+          due_date?: string
+          file_path?: string | null
+          id?: string
+          invoice_number?: string
+          notes?: string | null
+          paid_at?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subscription_id?: string
+          subtotal?: number
+          tax_amount?: number
+          tax_rate?: number | null
+          tenant_id?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       media: {
         Row: {
           album_date: string
@@ -712,6 +837,176 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          failed_reason: string | null
+          id: string
+          invoice_id: string
+          metadata: Json | null
+          notes: string | null
+          payment_method: string
+          payment_provider: string | null
+          processed_at: string | null
+          processed_by: string | null
+          provider_transaction_id: string | null
+          receipt_url: string | null
+          reference_number: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          subscription_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          failed_reason?: string | null
+          id?: string
+          invoice_id: string
+          metadata?: Json | null
+          notes?: string | null
+          payment_method: string
+          payment_provider?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          provider_transaction_id?: string | null
+          receipt_url?: string | null
+          reference_number?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          subscription_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          failed_reason?: string | null
+          id?: string
+          invoice_id?: string
+          metadata?: Json | null
+          notes?: string | null
+          payment_method?: string
+          payment_provider?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          provider_transaction_id?: string | null
+          receipt_url?: string | null
+          reference_number?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          subscription_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          created_at: string
+          currency: string
+          description: string | null
+          description_ar: string | null
+          features: Json
+          has_analytics: boolean
+          has_reports: boolean
+          has_whatsapp: boolean
+          id: string
+          is_active: boolean
+          is_popular: boolean
+          max_classes: number | null
+          max_students: number | null
+          max_teachers: number | null
+          name: string
+          name_ar: string
+          price_monthly: number
+          price_quarterly: number | null
+          price_yearly: number | null
+          sort_order: number | null
+          storage_gb: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          description_ar?: string | null
+          features: Json
+          has_analytics?: boolean
+          has_reports?: boolean
+          has_whatsapp?: boolean
+          id?: string
+          is_active?: boolean
+          is_popular?: boolean
+          max_classes?: number | null
+          max_students?: number | null
+          max_teachers?: number | null
+          name: string
+          name_ar: string
+          price_monthly: number
+          price_quarterly?: number | null
+          price_yearly?: number | null
+          sort_order?: number | null
+          storage_gb?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          description_ar?: string | null
+          features?: Json
+          has_analytics?: boolean
+          has_reports?: boolean
+          has_whatsapp?: boolean
+          id?: string
+          is_active?: boolean
+          is_popular?: boolean
+          max_classes?: number | null
+          max_students?: number | null
+          max_teachers?: number | null
+          name?: string
+          name_ar?: string
+          price_monthly?: number
+          price_quarterly?: number | null
+          price_yearly?: number | null
+          sort_order?: number | null
+          storage_gb?: number | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       reports: {
         Row: {
@@ -930,6 +1225,168 @@ export type Database = {
             foreignKeyName: "students_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_history: {
+        Row: {
+          action: string
+          changed_by: string | null
+          created_at: string
+          id: string
+          new_plan_id: string | null
+          new_status: Database["public"]["Enums"]["subscription_status"] | null
+          notes: string | null
+          old_plan_id: string | null
+          old_status: Database["public"]["Enums"]["subscription_status"] | null
+          reason: string | null
+          subscription_id: string
+          tenant_id: string
+        }
+        Insert: {
+          action: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_plan_id?: string | null
+          new_status?: Database["public"]["Enums"]["subscription_status"] | null
+          notes?: string | null
+          old_plan_id?: string | null
+          old_status?: Database["public"]["Enums"]["subscription_status"] | null
+          reason?: string | null
+          subscription_id: string
+          tenant_id: string
+        }
+        Update: {
+          action?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_plan_id?: string | null
+          new_status?: Database["public"]["Enums"]["subscription_status"] | null
+          notes?: string | null
+          old_plan_id?: string | null
+          old_status?: Database["public"]["Enums"]["subscription_status"] | null
+          reason?: string | null
+          subscription_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_history_new_plan_id_fkey"
+            columns: ["new_plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_history_old_plan_id_fkey"
+            columns: ["old_plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_history_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_history_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          amount: number
+          billing_interval: Database["public"]["Enums"]["billing_interval"]
+          cancel_at_period_end: boolean
+          cancelled_at: string | null
+          created_at: string
+          currency: string
+          current_period_end: string
+          current_period_start: string
+          failed_payments_count: number | null
+          grace_period_end: string | null
+          id: string
+          metadata: Json | null
+          next_billing_date: string | null
+          payment_method: string | null
+          plan_id: string
+          status: Database["public"]["Enums"]["subscription_status"]
+          tenant_id: string
+          trial_end: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          billing_interval?: Database["public"]["Enums"]["billing_interval"]
+          cancel_at_period_end?: boolean
+          cancelled_at?: string | null
+          created_at?: string
+          currency?: string
+          current_period_end: string
+          current_period_start: string
+          failed_payments_count?: number | null
+          grace_period_end?: string | null
+          id?: string
+          metadata?: Json | null
+          next_billing_date?: string | null
+          payment_method?: string | null
+          plan_id: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          tenant_id: string
+          trial_end?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          billing_interval?: Database["public"]["Enums"]["billing_interval"]
+          cancel_at_period_end?: boolean
+          cancelled_at?: string | null
+          created_at?: string
+          currency?: string
+          current_period_end?: string
+          current_period_start?: string
+          failed_payments_count?: number | null
+          grace_period_end?: string | null
+          id?: string
+          metadata?: Json | null
+          next_billing_date?: string | null
+          payment_method?: string | null
+          plan_id?: string
+          status?: Database["public"]["Enums"]["subscription_status"]
+          tenant_id?: string
+          trial_end?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -1173,6 +1630,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_invoice_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_tenant_id: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1184,8 +1645,16 @@ export type Database = {
     }
     Enums: {
       attendance_status: "present" | "absent" | "late" | "excused"
+      billing_interval: "monthly" | "quarterly" | "yearly"
       dismissal_status: "pending" | "approved" | "rejected" | "completed"
+      invoice_status: "draft" | "sent" | "paid" | "overdue" | "cancelled"
       message_status: "pending" | "sent" | "delivered" | "failed"
+      payment_status:
+        | "pending"
+        | "completed"
+        | "failed"
+        | "cancelled"
+        | "refunded"
       reward_type: "star" | "badge" | "certificate" | "achievement"
       subscription_status: "active" | "past_due" | "cancelled" | "suspended"
       tenant_status: "pending" | "approved" | "suspended" | "cancelled"
@@ -1324,8 +1793,17 @@ export const Constants = {
   public: {
     Enums: {
       attendance_status: ["present", "absent", "late", "excused"],
+      billing_interval: ["monthly", "quarterly", "yearly"],
       dismissal_status: ["pending", "approved", "rejected", "completed"],
+      invoice_status: ["draft", "sent", "paid", "overdue", "cancelled"],
       message_status: ["pending", "sent", "delivered", "failed"],
+      payment_status: [
+        "pending",
+        "completed",
+        "failed",
+        "cancelled",
+        "refunded",
+      ],
       reward_type: ["star", "badge", "certificate", "achievement"],
       subscription_status: ["active", "past_due", "cancelled", "suspended"],
       tenant_status: ["pending", "approved", "suspended", "cancelled"],
