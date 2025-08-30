@@ -37,12 +37,12 @@ const Index = () => {
       {/* الشريط العلوي */}
       <header className="relative z-10 bg-white/80 backdrop-blur-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-[120px]">
             <Link to="/" className="flex items-center space-x-reverse space-x-3">
               <img 
                 src={smartKindyLogo} 
                 alt="SmartKindy Logo" 
-                className="h-16 w-16 object-contain"
+                className="h-[100px] w-[100px] object-contain"
               />
               <h1 className="text-xl font-bold text-gray-900">SmartKindy</h1>
             </Link>
