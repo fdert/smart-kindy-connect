@@ -69,7 +69,7 @@ interface PageForm {
 }
 
 interface BlockForm {
-  block_type: 'hero' | 'features' | 'testimonials' | 'cta';
+  block_type: 'hero' | 'features' | 'testimonials' | 'pricing' | 'faq' | 'cta' | 'gallery' | 'stats' | 'about' | 'contact';
   title: string;
   title_ar: string;
   content: any;
@@ -174,7 +174,7 @@ const CMSManagement = () => {
 
   const resetBlockForm = () => {
     setBlockForm({
-      block_type: 'text',
+      block_type: 'hero',
       title: '',
       title_ar: '',
       content: {},
@@ -412,68 +412,77 @@ const CMSManagement = () => {
 
   const getBlockTypeIcon = (type: string) => {
     const icons = {
-      text: Type,
-      image: Image,
       hero: Layout,
       features: List,
       testimonials: Quote,
-      cta: Globe
+      cta: Globe,
+      pricing: Image,
+      faq: Type,
+      gallery: Image,
+      stats: List,
+      about: Type,
+      contact: Globe
     };
     return icons[type as keyof typeof icons] || Type;
   };
 
   const renderBlockContentForm = () => {
     switch (blockForm.block_type) {
-      case 'text':
+      case 'hero':
         return (
           <div className="space-y-4">
             <div>
-              <Label>النص (عربي)</Label>
+              <Label>النص الرئيسي (عربي)</Label>
               <Textarea
-                value={blockForm.content.text_ar || ''}
+                value={blockForm.content.main_text_ar || ''}
                 onChange={(e) => setBlockForm(prev => ({
                   ...prev,
-                  content: { ...prev.content, text_ar: e.target.value }
+                  content: { ...prev.content, main_text_ar: e.target.value }
                 }))}
-                rows={4}
+                rows={3}
               />
             </div>
             <div>
-              <Label>النص (إنجليزي)</Label>
+              <Label>النص الفرعي (عربي)</Label>
               <Textarea
-                value={blockForm.content.text_en || ''}
+                value={blockForm.content.sub_text_ar || ''}
                 onChange={(e) => setBlockForm(prev => ({
                   ...prev,
-                  content: { ...prev.content, text_en: e.target.value }
+                  content: { ...prev.content, sub_text_ar: e.target.value }
                 }))}
-                rows={4}
+                rows={2}
               />
             </div>
-          </div>
-        );
-      case 'image':
-        return (
-          <div className="space-y-4">
             <div>
-              <Label>رابط الصورة</Label>
+              <Label>رابط الصورة الخلفية</Label>
               <Input
-                value={blockForm.content.image_url || ''}
+                value={blockForm.content.background_image || ''}
                 onChange={(e) => setBlockForm(prev => ({
                   ...prev,
-                  content: { ...prev.content, image_url: e.target.value }
+                  content: { ...prev.content, background_image: e.target.value }
                 }))}
                 placeholder="https://example.com/image.jpg"
               />
             </div>
+          </div>
+        );
+      case 'features':
+        return (
+          <div className="space-y-4">
             <div>
-              <Label>النص البديل</Label>
-              <Input
-                value={blockForm.content.alt_text || ''}
-                onChange={(e) => setBlockForm(prev => ({
-                  ...prev,
-                  content: { ...prev.content, alt_text: e.target.value }
-                }))}
-                placeholder="وصف الصورة"
+              <Label>قائمة الميزات (JSON)</Label>
+              <Textarea
+                value={JSON.stringify(blockForm.content.features || [], null, 2)}
+                onChange={(e) => {
+                  try {
+                    const features = JSON.parse(e.target.value);
+                    setBlockForm(prev => ({ ...prev, content: { ...prev.content, features } }));
+                  } catch {
+                    // Invalid JSON, ignore
+                  }
+                }}
+                rows={6}
+                placeholder='[{"title": "الميزة الأولى", "description": "وصف الميزة", "icon": "icon-name"}]'
               />
             </div>
           </div>
@@ -758,14 +767,18 @@ const CMSManagement = () => {
                                   <SelectTrigger>
                                     <SelectValue />
                                   </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="text">نص</SelectItem>
-                                    <SelectItem value="image">صورة</SelectItem>
-                                    <SelectItem value="hero">قسم رئيسي</SelectItem>
-                                    <SelectItem value="features">ميزات</SelectItem>
-                                    <SelectItem value="testimonials">آراء العملاء</SelectItem>
-                                    <SelectItem value="cta">دعوة للعمل</SelectItem>
-                                  </SelectContent>
+                                   <SelectContent>
+                                     <SelectItem value="hero">قسم رئيسي</SelectItem>
+                                     <SelectItem value="features">ميزات</SelectItem>
+                                     <SelectItem value="testimonials">آراء العملاء</SelectItem>
+                                     <SelectItem value="cta">دعوة للعمل</SelectItem>
+                                     <SelectItem value="pricing">الأسعار</SelectItem>
+                                     <SelectItem value="faq">الأسئلة الشائعة</SelectItem>
+                                     <SelectItem value="gallery">معرض الصور</SelectItem>
+                                     <SelectItem value="stats">الإحصائيات</SelectItem>
+                                     <SelectItem value="about">نبذة عنا</SelectItem>
+                                     <SelectItem value="contact">تواصل معنا</SelectItem>
+                                   </SelectContent>
                                 </Select>
                               </div>
                               <div>
@@ -861,17 +874,17 @@ const CMSManagement = () => {
                                 </Button>
                               </div>
                             </div>
-                            <div className="text-sm text-gray-600">
-                              {block.block_type === 'text' && (
-                                <p>{block.content?.text_ar || block.content?.text_en || 'محتوى نصي'}</p>
-                              )}
-                              {block.block_type === 'image' && (
-                                <p>صورة: {block.content?.alt_text || 'بدون وصف'}</p>
-                              )}
-                              {!['text', 'image'].includes(block.block_type) && (
-                                <p>محتوى {block.block_type}</p>
-                              )}
-                            </div>
+                             <div className="text-sm text-gray-600">
+                               {block.block_type === 'hero' && (
+                                 <p>{block.content?.main_text_ar || block.content?.sub_text_ar || 'محتوى رئيسي'}</p>
+                               )}
+                               {block.block_type === 'features' && (
+                                 <p>ميزات: {block.content?.features?.length || 0} عنصر</p>
+                               )}
+                               {!['hero', 'features'].includes(block.block_type) && (
+                                 <p>محتوى {block.block_type}</p>
+                               )}
+                             </div>
                           </div>
                         );
                       })}
