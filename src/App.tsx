@@ -13,6 +13,9 @@ import Attendance from "./pages/Attendance";
 import Rewards from "./pages/Rewards";
 import Classes from "./pages/Classes";
 import Media from "./pages/Media";
+import Guardians from "./pages/Guardians";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
 import TenantRegistration from "./pages/TenantRegistration";
 import SuperAdmin from "./pages/SuperAdmin";
 import NotFound from "./pages/NotFound";
@@ -105,6 +108,21 @@ const AppRoutes = () => (
     <Route path="/media" element={
       <ProtectedRoute>
         <Media />
+      </ProtectedRoute>
+    } />
+    <Route path="/guardians" element={
+      <ProtectedRoute>
+        <Guardians />
+      </ProtectedRoute>
+    } />
+    <Route path="/reports" element={
+      <ProtectedRoute>
+        <Reports />
+      </ProtectedRoute>
+    } />
+    <Route path="/settings" element={
+      <ProtectedRoute>
+        <Settings />
       </ProtectedRoute>
     } />
     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

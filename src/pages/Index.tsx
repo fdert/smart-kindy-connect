@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart, Star, Users, MessageCircle, Calendar, Settings, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Heart, Star, Users, MessageCircle, Calendar, Settings, ArrowLeft } from "lucide-react";
 
 const Index = () => {
   return (
@@ -25,6 +25,11 @@ const Index = () => {
               <h1 className="text-xl font-bold text-gray-900">SmartKindy</h1>
             </div>
             <div className="flex items-center space-x-reverse space-x-4">
+              <Link to="/register">
+                <Button variant="secondary" size="sm">
+                  تسجيل حضانة
+                </Button>
+              </Link>
               <Link to="/auth">
                 <Button variant="outline" size="sm">
                   تسجيل الدخول
