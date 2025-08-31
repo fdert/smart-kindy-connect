@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      assignment_evaluations: {
+        Row: {
+          assignment_id: string
+          completion_date: string | null
+          created_at: string
+          evaluated_at: string
+          evaluated_by: string
+          evaluation_score: number | null
+          evaluation_status: string
+          id: string
+          student_id: string
+          teacher_feedback: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          assignment_id: string
+          completion_date?: string | null
+          created_at?: string
+          evaluated_at?: string
+          evaluated_by: string
+          evaluation_score?: number | null
+          evaluation_status: string
+          id?: string
+          student_id: string
+          teacher_feedback?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          assignment_id?: string
+          completion_date?: string | null
+          created_at?: string
+          evaluated_at?: string
+          evaluated_by?: string
+          evaluation_score?: number | null
+          evaluation_status?: string
+          id?: string
+          student_id?: string
+          teacher_feedback?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       assignment_submissions: {
         Row: {
           assignment_id: string

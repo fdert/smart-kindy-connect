@@ -43,13 +43,26 @@ interface Class {
   name: string;
 }
 
+interface AssignmentEvaluation {
+  id: string;
+  assignment_id: string;
+  evaluation_status: 'completed' | 'not_completed';
+  evaluation_score?: number;
+  teacher_feedback?: string;
+  completion_date?: string;
+  student_id: string;
+}
+
 export default function Assignments() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [classes, setClasses] = useState<Class[]>([]);
+  const [evaluations, setEvaluations] = useState<AssignmentEvaluation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);
+  const [isEvaluationDialogOpen, setIsEvaluationDialogOpen] = useState(false);
+  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>();
   const { toast } = useToast();
   const { tenant } = useTenant();
@@ -74,11 +87,21 @@ export default function Assignments() {
     difficulty: "medium"
   });
 
+  // Evaluation form states
+  const [evalForm, setEvalForm] = useState({
+    evaluation_status: 'completed' as 'completed' | 'not_completed',
+    evaluation_score: '',
+    teacher_feedback: '',
+    completion_date: format(new Date(), 'yyyy-MM-dd'),
+    student_id: ''
+  });
+
   useEffect(() => {
     if (tenant?.id) {
       loadAssignments();
       loadStudents();
       loadClasses();
+      loadEvaluations();
     }
   }, [tenant]);
 
@@ -137,6 +160,118 @@ export default function Assignments() {
     } catch (error) {
       console.error('Error loading classes:', error);
     }
+  };
+
+  const loadEvaluations = async () => {
+    if (!tenant?.id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('assignment_evaluations')
+        .select('*')
+        .eq('tenant_id', tenant.id);
+
+      if (error) throw error;
+      
+      // Type assertion to ensure evaluation_status matches our interface
+      const typedData = (data || []).map(evaluation => ({
+        ...evaluation,
+        evaluation_status: evaluation.evaluation_status as 'completed' | 'not_completed'
+      }));
+      
+      setEvaluations(typedData);
+    } catch (error) {
+      console.error('Error loading evaluations:', error);
+    }
+  };
+
+  const handleCreateEvaluation = async () => {
+    if (!tenant?.id || !selectedAssignment || !evalForm.student_id) {
+      toast({
+        title: "خطأ",
+        description: "يرجى ملء جميع الحقول المطلوبة",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
+      const evaluationData = {
+        tenant_id: tenant.id,
+        assignment_id: selectedAssignment.id,
+        student_id: evalForm.student_id,
+        evaluation_status: evalForm.evaluation_status,
+        evaluation_score: evalForm.evaluation_score ? parseFloat(evalForm.evaluation_score) : null,
+        teacher_feedback: evalForm.teacher_feedback || null,
+        completion_date: evalForm.completion_date || null,
+        evaluated_by: user.id
+      };
+
+      const { error } = await supabase
+        .from('assignment_evaluations')
+        .insert([evaluationData]);
+
+      if (error) throw error;
+
+      // Send WhatsApp notifications immediately
+      try {
+        await supabase.functions.invoke('assignment-notifications', {
+          body: {
+            processImmediate: true,
+            evaluationNotification: true,
+            assignmentId: selectedAssignment.id,
+            studentId: evalForm.student_id
+          }
+        });
+      } catch (notificationError) {
+        console.error('Error sending evaluation notifications:', notificationError);
+      }
+
+      toast({
+        title: "تم بنجاح",
+        description: "تم حفظ التقييم وإرسال الإشعار لولي الأمر"
+      });
+
+      setIsEvaluationDialogOpen(false);
+      resetEvalForm();
+      loadEvaluations();
+    } catch (error) {
+      console.error('Error creating evaluation:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في إنشاء التقييم",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const resetEvalForm = () => {
+    setEvalForm({
+      evaluation_status: 'completed',
+      evaluation_score: '',
+      teacher_feedback: '',
+      completion_date: format(new Date(), 'yyyy-MM-dd'),
+      student_id: ''
+    });
+  };
+
+  const openEvaluationDialog = (assignment: Assignment) => {
+    setSelectedAssignment(assignment);
+    setIsEvaluationDialogOpen(true);
+  };
+
+  const getEvaluationsForAssignment = (assignmentId: string) => {
+    return evaluations.filter(evaluation => evaluation.assignment_id === assignmentId);
+  };
+
+  const getStudentEvaluationStatus = (assignmentId: string, studentId: string) => {
+    const evaluation = evaluations.find(evaluation => 
+      evaluation.assignment_id === assignmentId && evaluation.student_id === studentId
+    );
+    return evaluation?.evaluation_status;
   };
 
   const handleCreateAssignment = async () => {
@@ -586,33 +721,77 @@ export default function Assignments() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                <p className="text-sm text-muted-foreground line-clamp-3">
-                  {assignment.description}
-                </p>
-                
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <BookOpen className="w-4 h-4" />
-                    <span>{assignment.subject}</span>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {assignment.description}
+                    </p>
                   </div>
-                  {assignment.is_group_assignment && (
-                    <div className="flex items-center gap-1">
-                      <Users className="w-4 h-4" />
-                      <span>جماعي</span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEvaluationDialog(assignment)}
+                    >
+                      تقييم الطلاب
+                    </Button>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span className="font-medium">المادة:</span>
+                    <p className="text-muted-foreground">{assignment.subject}</p>
+                  </div>
+                  <div>
+                    <span className="font-medium">موعد التسليم:</span>
+                    <p className="text-muted-foreground">
+                      {format(new Date(assignment.due_date), "PPP", { locale: ar })}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="font-medium">الحالة:</span>
+                    <div className="mt-1">{getStatusBadge(assignment.status)}</div>
+                  </div>
+                  <div>
+                    <span className="font-medium">الأولوية:</span>
+                    <div className="mt-1">{getPriorityBadge(assignment.priority)}</div>
+                  </div>
+                </div>
+
+                {/* Display evaluations for this assignment */}
+                {getEvaluationsForAssignment(assignment.id).length > 0 && (
+                  <div className="mt-4 p-3 bg-muted rounded-lg">
+                    <h4 className="font-medium mb-2">تقييمات الطلاب:</h4>
+                    <div className="space-y-2">
+                      {getEvaluationsForAssignment(assignment.id).map((evaluation) => {
+                        const student = students.find(s => s.id === evaluation.student_id);
+                        return (
+                          <div key={evaluation.id} className="flex items-center justify-between text-sm">
+                            <span>{student?.full_name || 'طالب غير معروف'}</span>
+                            <div className="flex items-center gap-2">
+                              {evaluation.evaluation_status === 'completed' ? (
+                                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                                  مكتمل ✅
+                                </Badge>
+                              ) : (
+                                <Badge variant="destructive">
+                                  غير مكتمل ❌
+                                </Badge>
+                              )}
+                              {evaluation.evaluation_score && (
+                                <span className="text-muted-foreground">
+                                  ({evaluation.evaluation_score})
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  )}
-                </div>
-                
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Clock className="w-4 h-4" />
-                  <span>تاريخ التسليم: {format(new Date(assignment.due_date), "dd/MM/yyyy")}</span>
-                </div>
-                
-                <Badge variant="outline" className="w-fit">
-                  {assignment.assignment_type === 'homework' ? 'واجب منزلي' : 
-                   assignment.assignment_type === 'task' ? 'مهمة' : 'مشروع'}
-                </Badge>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -634,6 +813,97 @@ export default function Assignments() {
           </div>
         )}
       </div>
+
+      {/* Evaluation Dialog */}
+      <Dialog open={isEvaluationDialogOpen} onOpenChange={setIsEvaluationDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>تقييم الواجب: {selectedAssignment?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="eval-student">الطالب</Label>
+              <Select onValueChange={(value) => setEvalForm(prev => ({ ...prev, student_id: value }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر الطالب" />
+                </SelectTrigger>
+                <SelectContent>
+                  {students.map((student) => (
+                    <SelectItem key={student.id} value={student.id}>
+                      {student.full_name} ({student.student_id})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="eval-status">حالة الإنجاز</Label>
+              <Select 
+                value={evalForm.evaluation_status}
+                onValueChange={(value: 'completed' | 'not_completed') => 
+                  setEvalForm(prev => ({ ...prev, evaluation_status: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر حالة الإنجاز" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="completed">مكتمل ✅</SelectItem>
+                  <SelectItem value="not_completed">غير مكتمل ❌</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="eval-score">النتيجة (اختياري)</Label>
+              <Input
+                id="eval-score"
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                value={evalForm.evaluation_score}
+                onChange={(e) => setEvalForm(prev => ({ ...prev, evaluation_score: e.target.value }))}
+                placeholder="أدخل النتيجة من 100"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="eval-date">تاريخ الإكمال</Label>
+              <Input
+                id="eval-date"
+                type="date"
+                value={evalForm.completion_date}
+                onChange={(e) => setEvalForm(prev => ({ ...prev, completion_date: e.target.value }))}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="eval-feedback">ملاحظات المعلمة</Label>
+              <Textarea
+                id="eval-feedback"
+                value={evalForm.teacher_feedback}
+                onChange={(e) => setEvalForm(prev => ({ ...prev, teacher_feedback: e.target.value }))}
+                placeholder="أدخل ملاحظاتك على أداء الطالب"
+                rows={4}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsEvaluationDialogOpen(false)}
+              >
+                إلغاء
+              </Button>
+              <Button onClick={handleCreateEvaluation}>
+                حفظ التقييم وإرسال الإشعار
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
