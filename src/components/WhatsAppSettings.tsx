@@ -72,13 +72,11 @@ const WhatsAppSettings = () => {
         throw new Error('قوالب الرسائل يجب أن تكون بصيغة JSON صحيحة');
       }
 
-      // Save all settings
-      await Promise.all([
-        updateSetting('wa_provider', config.wa_provider),
-        updateSetting('wa_webhook_url', config.wa_webhook_url),
-        updateSetting('wa_webhook_secret', config.wa_webhook_secret),
-        updateSetting('wa_templates_json', templatesJson)
-      ]);
+      // Save settings one by one to avoid race condition
+      await updateSetting('wa_provider', config.wa_provider);
+      await updateSetting('wa_webhook_url', config.wa_webhook_url);
+      await updateSetting('wa_webhook_secret', config.wa_webhook_secret);
+      await updateSetting('wa_templates_json', templatesJson);
 
       toast({
         title: "تم الحفظ",
