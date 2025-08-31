@@ -129,10 +129,6 @@ serve(async (req) => {
 
 ينتهي الطلب في: ${templateData.expiresAt || 'غير محدد'}
 
-رمز التأكيد: ${templateData.otpToken || ''}
-
-يرجى الرد بـ "موافق" أو "غير موافق" مع رمز التأكيد.
-
 مع تحيات
 ${templateData.nurseryName || 'الحضانة'}`;
       } else if (templateName === 'survey_notification' && templateData) {
