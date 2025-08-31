@@ -212,8 +212,12 @@ Deno.serve(async (req) => {
 
         // Process responses based on question type
         if (question.question_type === 'yes_no') {
-          const yesCount = responses?.filter(r => r.response_text === 'yes').length || 0;
-          const noCount = responses?.filter(r => r.response_text === 'no').length || 0;
+          const yesCount = responses?.filter(r => 
+            r.response_text === 'yes' || r.response_text === 'نعم'
+          ).length || 0;
+          const noCount = responses?.filter(r => 
+            r.response_text === 'no' || r.response_text === 'لا'
+          ).length || 0;
           questionResult.yesCount = yesCount;
           questionResult.noCount = noCount;
           questionResult.yesPercentage = totalResponses > 0 ? Math.round((yesCount / totalResponses) * 100) : 0;
@@ -402,9 +406,13 @@ Deno.serve(async (req) => {
   } catch (error: any) {
     console.error('Error in surveys-api:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: error.message || 'Internal server error',
+        details: error.toString()
+      }),
       { 
-        status: 400,
+        status: 500,
         headers: { 
           ...corsHeaders, 
           'Content-Type': 'application/json' 

@@ -163,6 +163,7 @@ const SurveyDashboard = () => {
 
   const loadSurveyResults = async (survey: Survey) => {
     try {
+      console.log('Loading survey results for:', survey.id);
       const { data, error } = await supabase.functions.invoke('surveys-api', {
         body: {
           action: 'getResults',
@@ -170,10 +171,24 @@ const SurveyDashboard = () => {
         }
       });
 
-      if (error) throw error;
-      setSurveyResults(data?.results || []);
-    } catch (error) {
+      console.log('Survey results response:', { data, error });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
+
+      if (data?.success) {
+        setSurveyResults(data?.results || []);
+        console.log('Survey results loaded successfully:', data.results);
+      } else {
+        console.error('API returned non-success:', data);
+        throw new Error(data?.error || 'Failed to load results');
+      }
+    } catch (error: any) {
       console.error('Error loading survey results:', error);
+      // Show user-friendly error message
+      alert('حدث خطأ في تحميل النتائج: ' + (error.message || 'خطأ غير معروف'));
     }
   };
 
