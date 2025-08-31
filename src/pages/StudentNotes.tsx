@@ -143,40 +143,18 @@ export default function StudentNotes() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
       
-      console.log('User authenticated:', user.id);
+        console.log('User authenticated:', user.id);
 
-      // First, get AI analysis
-      let aiAnalysis = '';
-      let aiSuggestions = '';
-
-      try {
-        console.log('Calling AI analysis...');
-        const { data: aiData, error: aiError } = await supabase.functions.invoke('assignments-ai', {
-          body: {
-            action: 'analyze_note',
-            noteContent: formData.content,
-            noteType: formData.note_type
-          }
-        });
-
-        if (!aiError && aiData) {
-          aiAnalysis = aiData.analysis;
-          aiSuggestions = aiData.suggestions;
-          console.log('AI analysis successful');
-        }
-      } catch (aiError) {
-        console.log('AI analysis failed, continuing without it:', aiError);
-      }
-
-      const noteData = {
-        ...formData,
-        tenant_id: tenant.id,
-        teacher_id: user.id,
-        ai_analysis: aiAnalysis,
-        ai_suggestions: aiSuggestions,
-        follow_up_date: formData.follow_up_required && selectedDate ? 
-          format(selectedDate, 'yyyy-MM-dd') : null
-      };
+        // Create note data (skip AI analysis for now to avoid errors)
+        const noteData = {
+          ...formData,
+          tenant_id: tenant.id,
+          teacher_id: user.id,
+          ai_analysis: null,
+          ai_suggestions: null,
+          follow_up_date: formData.follow_up_required && selectedDate ? 
+            format(selectedDate, 'yyyy-MM-dd') : null
+        };
 
       console.log('Inserting note data:', noteData);
 
@@ -193,20 +171,23 @@ export default function StudentNotes() {
 
       console.log('Note created successfully:', newNote);
 
-      // Send WhatsApp notifications immediately
+      // Send WhatsApp notifications immediately (optional)
       try {
         console.log('Triggering WhatsApp notifications...');
         await supabase.functions.invoke('student-note-notifications', {
           body: {
-            processImmediate: true,
             noteId: newNote.id,
-            type: 'student_note'
+            tenantId: tenant.id,
+            studentId: formData.student_id,
+            noteTitle: formData.title,
+            isPrivate: formData.is_private,
+            processImmediate: true
           }
         });
-        console.log('WhatsApp notifications triggered');
-      } catch (notificationError) {
-        console.error('Error sending notifications:', notificationError);
-        // Don't fail the note creation if notifications fail
+        console.log('Notifications sent successfully');
+      } catch (notifError) {
+        console.log('Failed to send notifications, but note was created:', notifError);
+        // Don't fail the whole operation if notifications fail
       }
 
       toast({

@@ -1,152 +1,170 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
+
+interface NotificationRequest {
+  noteId?: string;
+  tenantId: string;
+  studentId?: string;
+  noteTitle?: string;
+  isPrivate?: boolean;
+  processImmediate?: boolean;
+}
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
+    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Processing student note notifications...');
+    // Parse request body
+    const { noteId, tenantId, studentId, isPrivate }: NotificationRequest = await req.json();
 
-    // Get all pending student note notifications
-    const { data: notifications, error: notificationsError } = await supabase
-      .from('notification_reminders')
-      .select(`
-        *,
-        students (
-          full_name,
-          student_id
-        )
-      `)
-      .eq('status', 'pending')
-      .lte('scheduled_date', new Date().toISOString().split('T')[0])
-      .in('reminder_type', ['student_note_notification', 'follow_up_reminder']);
+    console.log('Processing student note notification:', { noteId, tenantId, studentId, isPrivate });
 
-    if (notificationsError) {
-      throw new Error(`Error fetching notifications: ${notificationsError.message}`);
+    if (!tenantId) {
+      return new Response(JSON.stringify({ 
+        error: 'Missing required parameters: tenantId' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    console.log(`Found ${notifications?.length || 0} pending student note notifications`);
+    // Skip if note is private
+    if (isPrivate) {
+      console.log('Note is private, skipping notifications');
+      return new Response(JSON.stringify({ 
+        success: true,
+        message: 'Note is private, no notifications sent'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    let successCount = 0;
-    let errorCount = 0;
+    if (noteId) {
+      // Process specific note immediately
+      const { data: noteData, error: noteError } = await supabase
+        .from('student_notes')
+        .select(`
+          *,
+          students (
+            id,
+            full_name,
+            student_id
+          )
+        `)
+        .eq('id', noteId)
+        .eq('tenant_id', tenantId)
+        .single();
 
-    if (notifications && notifications.length > 0) {
-      for (const notification of notifications) {
-        try {
-          // Get guardians for this student
-          const { data: guardianLinks, error: guardiansError } = await supabase
-            .from('guardian_student_links')
-            .select(`
-              guardians (
-                id,
-                full_name,
-                whatsapp_number
-              )
-            `)
-            .eq('student_id', notification.student_id);
+      if (noteError || !noteData) {
+        throw new Error('Note not found');
+      }
 
-          if (guardiansError) {
-            console.error('Error fetching guardians:', guardiansError);
-            continue;
-          }
+      // Get guardians for this student
+      const { data: guardians, error: guardiansError } = await supabase
+        .from('guardian_student_links')
+        .select(`
+          guardians (
+            id,
+            full_name,
+            whatsapp_number,
+            phone
+          )
+        `)
+        .eq('student_id', noteData.student_id)
+        .eq('tenant_id', tenantId);
 
-          // Get tenant information
-          const { data: tenant, error: tenantError } = await supabase
-            .from('tenants')
-            .select('name')
-            .eq('id', notification.tenant_id)
-            .single();
+      if (guardiansError) {
+        console.error('Error getting guardians:', guardiansError);
+        throw guardiansError;
+      }
 
-          if (tenantError) {
-            console.error('Error fetching tenant:', tenantError);
-            continue;
-          }
+      // Get tenant info
+      const { data: tenantData } = await supabase
+        .from('tenants')
+        .select('name')
+        .eq('id', tenantId)
+        .single();
 
-          // Send WhatsApp notifications to each guardian
-          for (const link of guardianLinks || []) {
-            const guardian = link.guardians;
-            if (guardian && guardian.whatsapp_number) {
-              try {
-                // Prepare the full message with tenant signature
-                const fullMessage = `${notification.message_content}
+      if (guardians && guardians.length > 0) {
+        for (const guardianLink of guardians) {
+          const guardian = guardianLink.guardians;
+          if (guardian && (guardian.whatsapp_number || guardian.phone)) {
+            const phone = guardian.whatsapp_number || guardian.phone;
+            
+            // Prepare notification message
+            const message = `📝 ملاحظة جديدة عن طفلكم
 
-من: ${tenant.name}`;
+الطالب: ${noteData.students.full_name} (${noteData.students.student_id})
+نوع الملاحظة: ${noteData.note_type === 'academic' ? 'أكاديمية' :
+                  noteData.note_type === 'behavioral' ? 'سلوكية' :
+                  noteData.note_type === 'health' ? 'صحية' :
+                  noteData.note_type === 'social' ? 'اجتماعية' : noteData.note_type}
+مستوى الأهمية: ${noteData.severity === 'high' ? 'عالية' :
+                   noteData.severity === 'medium' ? 'متوسطة' : 'منخفضة'}
 
-                // Call WhatsApp outbound function
-                const { error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
-                  body: {
-                    tenantId: notification.tenant_id,
-                    to: guardian.whatsapp_number,
-                    message: fullMessage,
-                    context: {
-                      type: notification.reminder_type,
-                      studentId: notification.student_id,
-                      guardianId: guardian.id
-                    }
-                  }
-                });
+العنوان: ${noteData.title}
 
-                if (whatsappError) {
-                  console.error(`WhatsApp send error for guardian ${guardian.id}:`, whatsappError);
-                  errorCount++;
-                } else {
-                  console.log(`Student note notification sent successfully to ${guardian.full_name} (${guardian.whatsapp_number})`);
-                  successCount++;
+المحتوى: ${noteData.content}
+
+${noteData.follow_up_required ? '⚠️ تتطلب هذه الملاحظة متابعة' : ''}
+
+من: ${tenantData?.name || 'الروضة'}
+يرجى مراجعة المعلمة للمزيد من التفاصيل.`;
+
+            // Send WhatsApp message
+            try {
+              await supabase.functions.invoke('whatsapp-outbound', {
+                body: {
+                  tenantId: tenantId,
+                  to: phone,
+                  message: message,
+                  contextType: 'student_note',
+                  contextId: noteId
                 }
-              } catch (error) {
-                console.error(`Error sending to guardian ${guardian.id}:`, error);
-                errorCount++;
-              }
+              });
+
+              console.log(`Notification sent to guardian: ${phone}`);
+            } catch (whatsappError) {
+              console.error('Failed to send WhatsApp message:', whatsappError);
+              // Don't fail the whole operation
             }
           }
-
-          // Mark notification as sent
-          const { error: updateError } = await supabase
-            .from('notification_reminders')
-            .update({ 
-              status: 'sent', 
-              sent_at: new Date().toISOString() 
-            })
-            .eq('id', notification.id);
-
-          if (updateError) {
-            console.error('Error updating notification status:', updateError);
-          }
-
-        } catch (error) {
-          console.error(`Error processing student note notification ${notification.id}:`, error);
-          errorCount++;
         }
       }
     }
 
-    return new Response(JSON.stringify({
+    return new Response(JSON.stringify({ 
       success: true,
-      message: 'Student note notifications processed successfully',
-      processed: notifications?.length || 0,
-      successCount,
-      errorCount
+      message: 'Notifications processed successfully'
     }), {
-      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
-  } catch (error: any) {
-    console.error('Error in student-note-notifications function:', error);
-    return new Response(JSON.stringify({
-      success: false,
-      error: error.message
+  } catch (error) {
+    console.error('Error processing student note notifications:', error);
+    return new Response(JSON.stringify({ 
+      error: 'Failed to process notifications',
+      details: error.message 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

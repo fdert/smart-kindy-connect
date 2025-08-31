@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/hooks/useTenant';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from '@/components/ImageUpload';
-import { Plus, Search, Users, Calendar, Edit, Trash2, Send, FileText } from 'lucide-react';
+import { Plus, Search, Users, Calendar, Edit, Trash2, Send, FileText, Share, ExternalLink } from 'lucide-react';
 
 interface Student {
   id: string;
@@ -321,185 +321,224 @@ const Students = () => {
             </h1>
             <p className="text-gray-600 mt-1">إدارة معلومات الطلاب والفصول</p>
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={resetForm} className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                إضافة طالب جديد
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>
-                  {selectedStudent ? 'تعديل بيانات الطالب' : 'إضافة طالب جديد'}
-                </DialogTitle>
-                <DialogDescription>
-                  املأ جميع المعلومات المطلوبة للطالب
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit}>
-                <div className="grid gap-4 py-4">
-                  {/* Photo Upload */}
-                  <ImageUpload
-                    currentImage={formData.photo_url}
-                    onImageChange={(imageUrl) => setFormData(prev => ({ ...prev, photo_url: imageUrl }))}
-                    studentName={formData.full_name}
-                  />
+          <div className="flex gap-2">
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={resetForm} className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  إضافة طالب جديد
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {selectedStudent ? 'تعديل بيانات الطالب' : 'إضافة طالب جديد'}
+                  </DialogTitle>
+                  <DialogDescription>
+                    املأ جميع المعلومات المطلوبة للطالب
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleSubmit}>
+                  <div className="grid gap-4 py-4">
+                    {/* Photo Upload */}
+                    <ImageUpload
+                      currentImage={formData.photo_url}
+                      onImageChange={(imageUrl) => setFormData(prev => ({ ...prev, photo_url: imageUrl }))}
+                      studentName={formData.full_name}
+                    />
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="student_id">رقم الطالب</Label>
-                      <Input
-                        id="student_id"
-                        value={formData.student_id}
-                        onChange={(e) => setFormData(prev => ({ ...prev, student_id: e.target.value }))}
-                        placeholder="مثال: STD001"
-                        required
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="student_id">رقم الطالب</Label>
+                        <Input
+                          id="student_id"
+                          value={formData.student_id}
+                          onChange={(e) => setFormData(prev => ({ ...prev, student_id: e.target.value }))}
+                          placeholder="مثال: STD001"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="full_name">الاسم الكامل</Label>
+                        <Input
+                          id="full_name"
+                          value={formData.full_name}
+                          onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+                          placeholder="الاسم الكامل للطالب"
+                          required
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <Label htmlFor="full_name">الاسم الكامل</Label>
-                      <Input
-                        id="full_name"
-                        value={formData.full_name}
-                        onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
-                        placeholder="الاسم الكامل للطالب"
-                        required
-                      />
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="date_of_birth">تاريخ الميلاد</Label>
+                        <Input
+                          id="date_of_birth"
+                          type="date"
+                          value={formData.date_of_birth}
+                          onChange={(e) => setFormData(prev => ({ ...prev, date_of_birth: e.target.value }))}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="gender">الجنس</Label>
+                        <Select value={formData.gender} onValueChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر الجنس" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="male">ذكر</SelectItem>
+                            <SelectItem value="female">أنثى</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
+
                     <div>
-                      <Label htmlFor="date_of_birth">تاريخ الميلاد</Label>
-                      <Input
-                        id="date_of_birth"
-                        type="date"
-                        value={formData.date_of_birth}
-                        onChange={(e) => setFormData(prev => ({ ...prev, date_of_birth: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="gender">الجنس</Label>
-                      <Select value={formData.gender} onValueChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}>
+                      <Label htmlFor="class_id">الفصل</Label>
+                      <Select value={formData.class_id} onValueChange={(value) => setFormData(prev => ({ ...prev, class_id: value }))}>
                         <SelectTrigger>
-                          <SelectValue placeholder="اختر الجنس" />
+                          <SelectValue placeholder="اختر الفصل" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="male">ذكر</SelectItem>
-                          <SelectItem value="female">أنثى</SelectItem>
+                          {classes.map((cls) => (
+                            <SelectItem key={cls.id} value={cls.id}>
+                              {cls.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
 
-                  <div>
-                    <Label htmlFor="class_id">الفصل</Label>
-                    <Select value={formData.class_id} onValueChange={(value) => setFormData(prev => ({ ...prev, class_id: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر الفصل" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {classes.map((cls) => (
-                          <SelectItem key={cls.id} value={cls.id}>
-                            {cls.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    {/* Emergency Contact */}
+                    <div className="border-t pt-4">
+                      <h4 className="font-semibold mb-3">جهة الاتصال في الطوارئ</h4>
+                      <div className="grid gap-3">
+                        <Input
+                          placeholder="اسم جهة الاتصال"
+                          value={formData.emergency_contact.name}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            emergency_contact: { ...prev.emergency_contact, name: e.target.value }
+                          }))}
+                        />
+                        <Input
+                          placeholder="رقم الهاتف"
+                          value={formData.emergency_contact.phone}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            emergency_contact: { ...prev.emergency_contact, phone: e.target.value }
+                          }))}
+                        />
+                        <Input
+                          placeholder="صلة القرابة"
+                          value={formData.emergency_contact.relationship}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            emergency_contact: { ...prev.emergency_contact, relationship: e.target.value }
+                          }))}
+                        />
+                      </div>
+                    </div>
 
-                  {/* Emergency Contact */}
-                  <div className="border-t pt-4">
-                    <h4 className="font-semibold mb-3">جهة الاتصال في الطوارئ</h4>
-                    <div className="grid gap-3">
-                      <Input
-                        placeholder="اسم جهة الاتصال"
-                        value={formData.emergency_contact.name}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          emergency_contact: { ...prev.emergency_contact, name: e.target.value }
-                        }))}
-                      />
-                      <Input
-                        placeholder="رقم الهاتف"
-                        value={formData.emergency_contact.phone}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          emergency_contact: { ...prev.emergency_contact, phone: e.target.value }
-                        }))}
-                      />
-                      <Input
-                        placeholder="صلة القرابة"
-                        value={formData.emergency_contact.relationship}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          emergency_contact: { ...prev.emergency_contact, relationship: e.target.value }
-                        }))}
-                      />
+                    {/* Medical Info */}
+                    <div className="border-t pt-4">
+                      <h4 className="font-semibold mb-3">المعلومات الطبية</h4>
+                      <div className="grid gap-3">
+                        <Textarea
+                          placeholder="الحساسية (إن وجدت)"
+                          value={formData.medical_info.allergies}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            medical_info: { ...prev.medical_info, allergies: e.target.value }
+                          }))}
+                        />
+                        <Textarea
+                          placeholder="الأدوية (إن وجدت)"
+                          value={formData.medical_info.medications}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            medical_info: { ...prev.medical_info, medications: e.target.value }
+                          }))}
+                        />
+                        <Textarea
+                          placeholder="احتياجات خاصة (إن وجدت)"
+                          value={formData.medical_info.special_needs}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            medical_info: { ...prev.medical_info, special_needs: e.target.value }
+                          }))}
+                        />
+                      </div>
                     </div>
                   </div>
-
-                  {/* Medical Info */}
-                  <div className="border-t pt-4">
-                    <h4 className="font-semibold mb-3">المعلومات الطبية</h4>
-                    <div className="grid gap-3">
-                      <Textarea
-                        placeholder="الحساسية (إن وجدت)"
-                        value={formData.medical_info.allergies}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          medical_info: { ...prev.medical_info, allergies: e.target.value }
-                        }))}
-                      />
-                      <Textarea
-                        placeholder="الأدوية (إن وجدت)"
-                        value={formData.medical_info.medications}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          medical_info: { ...prev.medical_info, medications: e.target.value }
-                        }))}
-                      />
-                      <Textarea
-                        placeholder="احتياجات خاصة (إن وجدت)"
-                        value={formData.medical_info.special_needs}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          medical_info: { ...prev.medical_info, special_needs: e.target.value }
-                        }))}
-                      />
-                    </div>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                    إلغاء
-                  </Button>
-                  <Button type="submit">
-                    {selectedStudent ? 'حفظ التعديلات' : 'إضافة الطالب'}
-                  </Button>
-                  {!selectedStudent && formData.emergency_contact.phone && (
-                    <Button 
-                      type="button" 
-                      variant="secondary"
-                      onClick={() => {
-                        // We need the student ID first, so this will be called after save
-                        toast({
-                          title: "احفظ الطالب أولاً",
-                          description: "يرجى حفظ بيانات الطالب أولاً ثم إرسال رابط التسجيل",
-                        });
-                      }}
-                      className="flex items-center gap-2"
-                    >
-                      <Send className="h-4 w-4" />
-                      إرسال رابط التسجيل
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                      إلغاء
                     </Button>
-                  )}
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+                    <Button type="submit">
+                      {selectedStudent ? 'حفظ التعديلات' : 'إضافة الطالب'}
+                    </Button>
+                    {!selectedStudent && formData.emergency_contact.phone && (
+                      <Button 
+                        type="button" 
+                        variant="secondary"
+                        onClick={() => {
+                          // We need the student ID first, so this will be called after save
+                          toast({
+                            title: "احفظ الطالب أولاً",
+                            description: "يرجى حفظ بيانات الطالب أولاً ثم إرسال رابط التسجيل",
+                          });
+                        }}
+                        className="flex items-center gap-2"
+                      >
+                        <Send className="h-4 w-4" />
+                        إرسال رابط التسجيل
+                      </Button>
+                    )}
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+            
+            <Button 
+              variant="outline"
+              onClick={async () => {
+                if (!tenant) return;
+                
+                try {
+                  // Create a shareable registration form link
+                  const registrationUrl = `${window.location.origin}/register?tenant=${tenant.id}`;
+                  
+                  // Copy to clipboard
+                  await navigator.clipboard.writeText(registrationUrl);
+                  
+                  toast({
+                    title: "تم نسخ الرابط",
+                    description: "تم نسخ رابط نموذج التسجيل. يمكنك مشاركته مع أولياء الأمور الجدد.",
+                  });
+                } catch (error) {
+                  // Fallback for older browsers
+                  const textArea = document.createElement('textarea');
+                  textArea.value = `${window.location.origin}/register?tenant=${tenant?.id}`;
+                  document.body.appendChild(textArea);
+                  textArea.select();
+                  document.execCommand('copy');
+                  document.body.removeChild(textArea);
+                  
+                  toast({
+                    title: "تم نسخ الرابط",
+                    description: "تم نسخ رابط نموذج التسجيل. يمكنك مشاركته مع أولياء الأمور الجدد.",
+                  });
+                }
+              }}
+              className="flex items-center gap-2"
+            >
+              <Share className="h-4 w-4" />
+              مشاركة رابط التسجيل
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -589,15 +628,15 @@ const Students = () => {
                      >
                        <Send className="h-4 w-4" />
                      </Button>
-                     <Button
-                       size="sm"
-                       variant="ghost"
-                       onClick={() => window.open(`/student-report/${student.id}`, '_blank')}
-                       className="text-blue-500 hover:text-blue-700"
-                       title="عرض التقرير الشامل"
-                     >
-                       <FileText className="h-4 w-4" />
-                     </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => window.open(`/student-report/${student.id}`, '_blank')}
+                        className="text-blue-500 hover:text-blue-700"
+                        title="عرض التقرير الشامل"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
                     <Button
                       size="sm"
                       variant="ghost"

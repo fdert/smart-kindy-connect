@@ -161,26 +161,49 @@ export default function StudentReport() {
         throw new Error('لا يمكن العثور على بيانات الطالب أو ليس لديك صلاحية للوصول');
       }
 
-      // Load assignments data
+      // Load assignments data with better error handling
       const { data: assignmentsData } = await supabase
         .from('assignment_evaluations')
         .select(`
+          id,
           evaluation_status,
           evaluation_score,
-          assignments (title, assignment_type)
+          evaluated_at,
+          completion_date,
+          teacher_feedback,
+          assignment_id
         `)
         .eq('student_id', studentId)
         .eq('tenant_id', tenant.id)
-        .gte('created_at', dateRange.from.toISOString())
-        .lte('created_at', dateRange.to.toISOString());
+        .gte('evaluated_at', dateRange.from.toISOString())
+        .lte('evaluated_at', dateRange.to.toISOString());
 
-      // Calculate assignment stats
+      // Get assignment details separately to avoid join issues
+      const assignmentDetails = [];
+      if (assignmentsData && assignmentsData.length > 0) {
+        for (const evaluation of assignmentsData) {
+          const { data: assignment } = await supabase
+            .from('assignments')
+            .select('title, assignment_type, due_date, priority')
+            .eq('id', evaluation.assignment_id)
+            .single();
+          
+          if (assignment) {
+            assignmentDetails.push({
+              ...evaluation,
+              assignment: assignment
+            });
+          }
+        }
+      }
+
+      // Calculate assignment stats using the combined data
       const assignmentStats = {
-        total: assignmentsData?.length || 0,
-        completed: assignmentsData?.filter(a => a.evaluation_status === 'completed').length || 0,
-        pending: assignmentsData?.filter(a => a.evaluation_status === 'not_completed').length || 0,
-        score_average: assignmentsData?.length ? 
-          assignmentsData.reduce((sum, a) => sum + (a.evaluation_score || 0), 0) / assignmentsData.length : 0
+        total: assignmentDetails.length || 0,
+        completed: assignmentDetails.filter(a => a.evaluation_status === 'completed').length || 0,
+        pending: assignmentDetails.filter(a => a.evaluation_status === 'not_completed').length || 0,
+        score_average: assignmentDetails.length ? 
+          assignmentDetails.reduce((sum, a) => sum + (a.evaluation_score || 0), 0) / assignmentDetails.length : 0
       };
 
       // Load attendance data
@@ -559,7 +582,8 @@ export default function StudentReport() {
                 {reportData.rewards.map((reward) => (
                   <div
                     key={reward.id}
-                    className="p-4 rounded-lg border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-orange-50"
+                    className="p-4 rounded-lg border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-orange-50 cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => navigate(`/student-rewards/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
                   >
                     <div className="flex items-center gap-3 mb-2">
                       <div className={`w-3 h-3 rounded-full ${getRewardTypeColor(reward.type)}`}></div>
@@ -580,18 +604,23 @@ export default function StudentReport() {
         {reportData.notes.length > 0 && (
           <Card 
             id="notes-section"
-            className="mt-8 bg-white/90 backdrop-blur-sm"
+            className="mt-8 bg-white/90 backdrop-blur-sm cursor-pointer hover:shadow-lg transform hover:scale-102 transition-all duration-200"
+            onClick={() => navigate(`/student-notes/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
           >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Brain className="h-5 w-5 text-purple-500" />
                 الملاحظات والمتابعة
+                <span className="text-sm text-muted-foreground mr-auto">اضغط للتفاصيل ←</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {reportData.notes.map((note) => (
-                  <div key={note.id} className="p-4 border rounded-lg">
+                  <div 
+                    key={note.id} 
+                    className="p-4 border rounded-lg hover:shadow-md transition-shadow"
+                  >
                     <div className="flex items-center gap-2 mb-2">
                       {getNoteTypeIcon(note.note_type)}
                       <Badge className={getNoteTypeColor(note.note_type)}>
@@ -727,7 +756,10 @@ export default function StudentReport() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {reportData.media.map((media) => (
-                  <div key={media.id} className="group relative">
+                  <div 
+                    key={media.id} 
+                    className="group relative hover:shadow-lg transition-shadow"
+                  >
                     <img
                       src={media.file_path}
                       alt={media.caption || media.file_name}
