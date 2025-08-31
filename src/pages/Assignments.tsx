@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { CalendarIcon, Plus, Clock, BookOpen, Users, Brain } from "lucide-react";
@@ -61,7 +62,7 @@ export default function Assignments() {
     subject: "",
     priority: "medium",
     is_group_assignment: false,
-    student_id: "",
+    student_ids: [] as string[],
     class_id: ""
   });
 
@@ -152,31 +153,60 @@ export default function Assignments() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
-      const assignmentData = {
-        ...formData,
-        tenant_id: tenant.id,
-        teacher_id: user.id,
-        due_date: format(selectedDate, 'yyyy-MM-dd'),
-        student_id: formData.student_id || null,
-        class_id: formData.class_id || null
-      };
+      // Create assignments for each selected student or class
+      const assignmentsToCreate = [];
 
-      const { data: newAssignment, error } = await supabase
+      if (formData.student_ids.length > 0) {
+        // Create individual assignments for selected students
+        for (const studentId of formData.student_ids) {
+          assignmentsToCreate.push({
+            title: formData.title,
+            description: formData.description,
+            assignment_type: formData.assignment_type,
+            subject: formData.subject,
+            priority: formData.priority,
+            is_group_assignment: formData.is_group_assignment,
+            tenant_id: tenant.id,
+            teacher_id: user.id,
+            due_date: format(selectedDate, 'yyyy-MM-dd'),
+            student_id: studentId,
+            class_id: formData.class_id || null
+          });
+        }
+      } else {
+        // Create a general assignment for the class
+        assignmentsToCreate.push({
+          title: formData.title,
+          description: formData.description,
+          assignment_type: formData.assignment_type,
+          subject: formData.subject,
+          priority: formData.priority,
+          is_group_assignment: formData.is_group_assignment,
+          tenant_id: tenant.id,
+          teacher_id: user.id,
+          due_date: format(selectedDate, 'yyyy-MM-dd'),
+          student_id: null,
+          class_id: formData.class_id || null
+        });
+      }
+
+      const { data: newAssignments, error } = await supabase
         .from('assignments')
-        .insert([assignmentData])
-        .select()
-        .single();
+        .insert(assignmentsToCreate)
+        .select();
 
       if (error) throw error;
 
-      // Send WhatsApp notifications immediately
+      // Send WhatsApp notifications immediately for each assignment
       try {
-        await supabase.functions.invoke('assignment-notifications', {
-          body: {
-            processImmediate: true,
-            assignmentId: newAssignment.id
-          }
-        });
+        for (const assignment of newAssignments || []) {
+          await supabase.functions.invoke('assignment-notifications', {
+            body: {
+              processImmediate: true,
+              assignmentId: assignment.id
+            }
+          });
+        }
       } catch (notificationError) {
         console.error('Error sending notifications:', notificationError);
         // Don't fail the assignment creation if notifications fail
@@ -184,7 +214,7 @@ export default function Assignments() {
 
       toast({
         title: "تم بنجاح",
-        description: "تم إنشاء الواجب وإرسال الإشعارات لأولياء الأمور"
+        description: `تم إنشاء ${assignmentsToCreate.length} واجب وإرسال الإشعارات لأولياء الأمور`
       });
 
       setIsCreateDialogOpen(false);
@@ -253,10 +283,29 @@ export default function Assignments() {
       subject: "",
       priority: "medium",
       is_group_assignment: false,
-      student_id: "",
+      student_ids: [],
       class_id: ""
     });
     setSelectedDate(undefined);
+  };
+
+  const handleStudentSelection = (studentId: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      student_ids: checked 
+        ? [...prev.student_ids, studentId]
+        : prev.student_ids.filter(id => id !== studentId)
+    }));
+  };
+
+  const handleSelectAllStudents = () => {
+    const allStudentIds = students.map(student => student.id);
+    const isAllSelected = formData.student_ids.length === students.length;
+    
+    setFormData(prev => ({
+      ...prev,
+      student_ids: isAllSelected ? [] : allStudentIds
+    }));
   };
 
   const getStatusBadge = (status: string) => {
@@ -467,20 +516,48 @@ export default function Assignments() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label htmlFor="student_id">الطالب (اختياري)</Label>
-                  <Select onValueChange={(value) => setFormData(prev => ({ ...prev, student_id: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="اختر الطالب" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {students.map((student) => (
-                        <SelectItem key={student.id} value={student.id}>
-                          {student.full_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="md:col-span-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <Label>الطلاب (اختياري)</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSelectAllStudents}
+                    >
+                      {formData.student_ids.length === students.length ? "إلغاء تحديد الكل" : "اختيار الكل"}
+                    </Button>
+                  </div>
+                  <div className="border rounded-md p-3 max-h-40 overflow-y-auto">
+                    {students.length === 0 ? (
+                      <p className="text-muted-foreground text-sm">لا توجد طلاب متاحين</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {students.map((student) => (
+                          <div key={student.id} className="flex items-center space-x-2 space-x-reverse">
+                            <Checkbox
+                              id={`student-${student.id}`}
+                              checked={formData.student_ids.includes(student.id)}
+                              onCheckedChange={(checked) => 
+                                handleStudentSelection(student.id, checked as boolean)
+                              }
+                            />
+                            <Label 
+                              htmlFor={`student-${student.id}`}
+                              className="text-sm cursor-pointer"
+                            >
+                              {student.full_name}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {formData.student_ids.length > 0 && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      تم اختيار {formData.student_ids.length} من {students.length} طالب
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex justify-end space-x-2 space-x-reverse mt-6">
