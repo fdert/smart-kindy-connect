@@ -1,5 +1,4 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,246 +16,312 @@ interface CreatePermissionRequest {
 interface RespondToPermissionRequest {
   response: 'approved' | 'declined';
   notes?: string;
-  otpToken: string;
+  guardianId: string;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false }
-    });
+    // Initialize Supabase client
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
-    const url = new URL(req.url);
-    const pathParts = url.pathname.split('/');
+    // Get the authenticated user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
 
-    // Create permission
-    if (req.method === 'POST' && pathParts.length === 1) {
-      const authHeader = req.headers.get('authorization');
-      if (!authHeader) {
-        return new Response('Unauthorized', { status: 401, headers: corsHeaders });
-      }
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
 
-      const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-      if (!user) {
-        return new Response('Unauthorized', { status: 401, headers: corsHeaders });
-      }
+    if (authError || !user) {
+      throw new Error('Unauthorized');
+    }
 
-      const { data: userData } = await supabase
-        .from('users')
-        .select('tenant_id')
-        .eq('id', user.id)
-        .single();
+    // Get user's tenant
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('tenant_id, tenants(*)')
+      .eq('id', user.id)
+      .single();
 
-      if (!userData?.tenant_id) {
-        return new Response('Tenant not found', { status: 404, headers: corsHeaders });
-      }
+    if (userError || !userData?.tenant_id) {
+      throw new Error('User has no associated tenant');
+    }
 
-      const requestData: CreatePermissionRequest = await req.json();
+    const body = await req.json();
+    console.log('Request body:', body);
+
+    // Handle different actions based on request body
+    if (body.action === 'notify' && body.permissionId) {
+      // Send Permission Notifications
+      const permissionId = body.permissionId;
       
-      // Create permission
+      console.log('Sending notifications for permission:', permissionId);
+
+      // Get permission details with pending responses
       const { data: permission, error: permissionError } = await supabase
         .from('permissions')
-        .insert({
-          tenant_id: userData.tenant_id,
-          title: requestData.title,
-          description: requestData.description,
-          permission_type: requestData.permissionType,
-          expires_at: requestData.expiresAt,
-          created_by: user.id
-        })
-        .select('id')
+        .select(`
+          *,
+          permission_responses!inner (
+            id,
+            guardian_id,
+            student_id,
+            response,
+            guardians (
+              full_name,
+              whatsapp_number
+            ),
+            students (
+              full_name,
+              student_id
+            )
+          )
+        `)
+        .eq('id', permissionId)
+        .eq('tenant_id', userData.tenant_id)
+        .eq('permission_responses.response', 'pending')
         .single();
 
-      if (permissionError) throw permissionError;
+      if (permissionError) {
+        throw permissionError;
+      }
 
-      // Create responses for each student and their guardians
-      for (const studentId of requestData.studentIds) {
-        const { data: guardianLinks } = await supabase
-          .from('guardian_student_links')
-          .select('guardian_id, guardians(*)')
-          .eq('student_id', studentId)
-          .eq('tenant_id', userData.tenant_id);
+      // Send WhatsApp notifications for pending responses
+      let notificationsSent = 0;
+      const responses = permission.permission_responses || [];
+      
+      for (const response of responses) {
+        if (response.guardians?.whatsapp_number && response.response === 'pending') {
+          try {
+            // Generate OTP token for response
+            const otpToken = Math.random().toString(36).substring(2, 8).toUpperCase();
+            const otpExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-        for (const link of guardianLinks || []) {
-          const otpToken = crypto.randomUUID();
-          const otpExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+            // Update response with OTP
+            await supabase
+              .from('permission_responses')
+              .update({
+                otp_token: otpToken,
+                otp_expires_at: otpExpires.toISOString()
+              })
+              .eq('id', response.id);
 
-          await supabase
-            .from('permission_responses')
-            .insert({
-              tenant_id: userData.tenant_id,
-              permission_id: permission.id,
-              guardian_id: link.guardian_id,
-              student_id: studentId,
-              response: 'pending',
-              otp_token: otpToken,
-              otp_expires_at: otpExpiresAt.toISOString()
+            // Send WhatsApp notification
+            await supabase.functions.invoke('whatsapp-outbound', {
+              body: {
+                to: response.guardians.whatsapp_number,
+                template: 'permission_request',
+                data: {
+                  guardianName: response.guardians.full_name,
+                  studentName: response.students?.full_name || '',
+                  permissionTitle: permission.title,
+                  permissionDescription: permission.description || '',
+                  expiresAt: permission.expires_at,
+                  nurseryName: userData.tenants?.name || '',
+                  otpToken: otpToken
+                }
+              }
             });
+            notificationsSent++;
+          } catch (error) {
+            console.error('Failed to send notification:', error);
+          }
         }
       }
 
-      return new Response(JSON.stringify({ 
-        success: true, 
-        permissionId: permission.id 
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+      return new Response(
+        JSON.stringify({ success: true, notificationsSent }),
+        { 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        }
+      );
 
-    // Respond to permission
-    if (req.method === 'POST' && pathParts[2] === 'respond') {
-      const permissionId = pathParts[1];
-      const requestData: RespondToPermissionRequest = await req.json();
+    } else if (body.action === 'getResponses' && body.permissionId) {
+      // Get Permission Responses
+      const permissionId = body.permissionId;
+      
+      console.log('Getting responses for permission:', permissionId);
 
-      // Verify OTP token
-      const { data: response, error: responseError } = await supabase
+      const { data: responses, error: responsesError } = await supabase
+        .from('permission_responses')
+        .select(`
+          *,
+          guardians (
+            full_name,
+            whatsapp_number
+          ),
+          students (
+            full_name
+          )
+        `)
+        .eq('permission_id', permissionId)
+        .eq('tenant_id', userData.tenant_id);
+
+      if (responsesError) {
+        throw responsesError;
+      }
+
+      return new Response(
+        JSON.stringify(responses || []),
+        { 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        }
+      );
+
+    } else if (body.permissionId && body.response && body.otpToken) {
+      // Respond to Permission
+      const { permissionId, response: responseValue, otpToken, notes } = body;
+      
+      console.log('Processing permission response:', { permissionId, responseValue, otpToken });
+
+      // Verify OTP and check expiration
+      const { data: permissionResponse, error: responseError } = await supabase
         .from('permission_responses')
         .select('*')
         .eq('permission_id', permissionId)
-        .eq('otp_token', requestData.otpToken)
+        .eq('otp_token', otpToken)
         .gt('otp_expires_at', new Date().toISOString())
         .single();
 
-      if (responseError || !response) {
-        return new Response('Invalid or expired token', { 
-          status: 400, 
-          headers: corsHeaders 
-        });
+      if (responseError || !permissionResponse) {
+        throw new Error('Invalid or expired OTP token');
       }
 
       // Update response
       const { error: updateError } = await supabase
         .from('permission_responses')
         .update({
-          response: requestData.response,
-          notes: requestData.notes,
+          response: responseValue,
+          notes: notes || null,
           responded_at: new Date().toISOString()
         })
-        .eq('id', response.id);
+        .eq('id', permissionResponse.id);
 
-      if (updateError) throw updateError;
-
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Send notifications
-    if (req.method === 'POST' && pathParts[2] === 'notify') {
-      const permissionId = pathParts[1];
-      
-      const authHeader = req.headers.get('authorization');
-      if (!authHeader) {
-        return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+      if (updateError) {
+        throw updateError;
       }
 
-      const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-      if (!user) {
-        return new Response('Unauthorized', { status: 401, headers: corsHeaders });
-      }
-
-      const { data: userData } = await supabase
-        .from('users')
-        .select('tenant_id')
-        .eq('id', user.id)
-        .single();
-
-      // Get permission and pending responses
-      const { data: permission } = await supabase
-        .from('permissions')
-        .select(`
-          *,
-          permission_responses(
-            *,
-            guardians(*),
-            students(*)
-          )
-        `)
-        .eq('id', permissionId)
-        .eq('tenant_id', userData?.tenant_id)
-        .single();
-
-      if (!permission) {
-        return new Response('Permission not found', { status: 404, headers: corsHeaders });
-      }
-
-      // Send WhatsApp notifications for pending responses
-      const pendingResponses = permission.permission_responses.filter(
-        (r: any) => r.response === 'pending'
+      return new Response(
+        JSON.stringify({ success: true, message: 'Response recorded successfully' }),
+        { 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        }
       );
 
-      for (const response of pendingResponses) {
-        if (response.guardians?.whatsapp_number) {
-          const responseUrl = `${req.headers.get('origin') || 'https://smartkindy.com'}/permissions/respond?token=${response.otp_token}`;
-          
-          await supabase.functions.invoke('whatsapp-outbound', {
-            body: {
-              tenantId: userData?.tenant_id,
-              to: response.guardians.whatsapp_number,
-              templateName: 'permission_request',
-              templateData: {
-                studentName: response.students?.full_name,
-                permissionTitle: permission.title,
-                permissionDescription: permission.description,
-                responseUrl: responseUrl,
-                nurseryName: 'الحضانة'
-              },
-              contextType: 'permission',
-              contextId: permissionId,
-              studentId: response.student_id
-            }
-          });
+    } else {
+      // Create Permission (default action)
+      const permissionData: CreatePermissionRequest = body;
+      
+      console.log('Creating permission:', permissionData);
+
+      // Insert permission
+      const { data: permission, error: permissionError } = await supabase
+        .from('permissions')
+        .insert({
+          title: permissionData.title,
+          description: permissionData.description,
+          permission_type: permissionData.permissionType,
+          expires_at: permissionData.expiresAt,
+          tenant_id: userData.tenant_id,
+          created_by: user.id,
+          is_active: true
+        })
+        .select()
+        .single();
+
+      if (permissionError) {
+        console.error('Permission creation error:', permissionError);
+        throw permissionError;
+      }
+
+      console.log('Permission created:', permission);
+
+      // Create pending responses for each student's guardians
+      if (permissionData.studentIds && permissionData.studentIds.length > 0) {
+        // Get guardians for selected students
+        const { data: guardianLinks, error: linksError } = await supabase
+          .from('guardian_student_links')
+          .select(`
+            guardian_id,
+            student_id,
+            guardians (
+              id,
+              full_name,
+              whatsapp_number
+            )
+          `)
+          .eq('tenant_id', userData.tenant_id)
+          .in('student_id', permissionData.studentIds);
+
+        if (linksError) {
+          console.error('Error fetching guardian links:', linksError);
+          throw linksError;
+        }
+
+        // Create permission responses
+        const responses = guardianLinks?.map(link => ({
+          permission_id: permission.id,
+          guardian_id: link.guardian_id,
+          student_id: link.student_id,
+          response: 'pending',
+          tenant_id: userData.tenant_id
+        })) || [];
+
+        if (responses.length > 0) {
+          const { error: responsesError } = await supabase
+            .from('permission_responses')
+            .insert(responses);
+
+          if (responsesError) {
+            console.error('Error creating permission responses:', responsesError);
+            throw responsesError;
+          }
+
+          console.log('Permission responses created successfully');
         }
       }
 
-      return new Response(JSON.stringify({ 
-        success: true, 
-        notificationsSent: pendingResponses.length 
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      return new Response(
+        JSON.stringify({ success: true, permission }),
+        { 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        }
+      );
     }
 
-    // Get permission responses
-    if (req.method === 'GET' && pathParts[2] === 'responses') {
-      const permissionId = pathParts[1];
-      
-      const authHeader = req.headers.get('authorization');
-      if (!authHeader) {
-        return new Response('Unauthorized', { status: 401, headers: corsHeaders });
+  } catch (error: any) {
+    console.error('Error in permissions-api:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 400,
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
       }
-
-      const { data: responses } = await supabase
-        .from('permission_responses')
-        .select(`
-          *,
-          guardians(*),
-          students(*)
-        `)
-        .eq('permission_id', permissionId);
-
-      return new Response(JSON.stringify(responses), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    return new Response('Not found', { status: 404, headers: corsHeaders });
-
-  } catch (error) {
-    console.error('Permissions API error:', error);
-    return new Response(JSON.stringify({
-      success: false,
-      error: 'Internal server error'
-    }), { 
-      status: 500, 
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    );
   }
 });
