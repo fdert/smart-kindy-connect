@@ -63,9 +63,8 @@ serve(async (req) => {
       throw new Error('Student not found');
     }
 
-    // Create registration link with student info
-    const baseUrl = 'https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev';
-    const registrationLink = `${baseUrl}/student-report/${studentId}?guardian=true`;
+    // Create registration link with student info - use the production URL instead of sandbox
+    const registrationLink = `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/student-report/${studentId}?guardian=true`;
 
     // Prepare WhatsApp message
     const message = `🎓 مرحباً بكم في ${studentData.tenants?.name}

@@ -57,7 +57,7 @@ export default function StudentMedia() {
         .select('full_name, student_id, photo_url, classes(name)')
         .eq('id', studentId)
         .eq('tenant_id', tenant.id)
-        .single();
+        .maybeSingle();
 
       if (studentError) throw studentError;
       setStudentInfo(studentData);

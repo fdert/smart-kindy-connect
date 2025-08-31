@@ -99,7 +99,7 @@ const AppRoutes = () => (
         <Route path="/student-attendance/:studentId" element={<StudentAttendance />} />
         <Route path="/student-rewards/:studentId" element={<StudentRewards />} />
         <Route path="/student-media/:studentId" element={<StudentMedia />} />
-        <Route path="/student-notes/:studentId" element={<StudentNotesDetail />} />
+        <Route path="/student-notes-detail/:studentId" element={<StudentNotesDetail />} />
     <Route path="/super-admin" element={
       <ProtectedRoute>
         <SuperAdmin />

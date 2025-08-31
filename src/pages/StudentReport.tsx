@@ -475,7 +475,7 @@ export default function StudentReport() {
 
           <Card 
             className="bg-gradient-to-br from-pink-500 to-pink-600 text-white cursor-pointer hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-            onClick={() => navigate(`/student-notes/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
+            onClick={() => navigate(`/student-notes-detail/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">الملاحظات</CardTitle>
@@ -605,7 +605,7 @@ export default function StudentReport() {
           <Card 
             id="notes-section"
             className="mt-8 bg-white/90 backdrop-blur-sm cursor-pointer hover:shadow-lg transform hover:scale-102 transition-all duration-200"
-            onClick={() => navigate(`/student-notes/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
+            onClick={() => navigate(`/student-notes-detail/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
           >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
