@@ -129,6 +129,7 @@ Deno.serve(async (req) => {
                   permissionDescription: permission.description || '',
                   expiresAt: new Date(permission.expires_at).toLocaleDateString('ar-SA'),
                   nurseryName: userData.tenants?.name || '',
+                  permissionLink: `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/permission/${permissionId}`,
                   otpToken: otpToken
                 },
                 contextType: 'permission',
@@ -346,6 +347,7 @@ Deno.serve(async (req) => {
                       permissionDescription: permission.description || '',
                       expiresAt: new Date(permission.expires_at).toLocaleDateString('ar-SA'),
                       nurseryName: userData.tenants?.name || '',
+                      permissionLink: `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/permission/${permission.id}`,
                       otpToken: otpToken
                     },
                     contextType: 'permission',
