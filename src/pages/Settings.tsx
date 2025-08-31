@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import { formatSaudiPhoneNumber, displaySaudiPhoneNumber } from '@/lib/phoneUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/hooks/useTenant';
 import { useToast } from '@/hooks/use-toast';
@@ -579,8 +580,11 @@ const Settings = () => {
                         <Label htmlFor="tenant_phone">رقم الهاتف</Label>
                         <Input
                           id="tenant_phone"
-                          value={tenantInfo.phone || ''}
-                          onChange={(e) => setTenantInfo(prev => prev ? { ...prev, phone: e.target.value } : null)}
+                          value={displaySaudiPhoneNumber(tenantInfo.phone || '')}
+                          onChange={(e) => {
+                            const formatted = formatSaudiPhoneNumber(e.target.value);
+                            setTenantInfo(prev => prev ? { ...prev, phone: formatted } : null);
+                          }}
                         />
                       </div>
                       <div>

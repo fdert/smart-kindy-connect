@@ -13,13 +13,16 @@ export function formatSaudiPhoneNumber(phoneNumber: string): string {
   // Remove all non-digit characters
   const digitsOnly = phoneNumber.replace(/\D/g, '');
   
-  // If already starts with 966, add + and return
-  if (digitsOnly.startsWith('966')) {
+  // Return empty if no digits
+  if (!digitsOnly) return '';
+  
+  // If already starts with 966 and is complete, add + and return
+  if (digitsOnly.startsWith('966') && digitsOnly.length === 12) {
     return `+${digitsOnly}`;
   }
   
-  // If starts with 05, replace with +9665
-  if (digitsOnly.startsWith('05')) {
+  // If starts with 05 and is 10 digits, replace 0 with +966
+  if (digitsOnly.startsWith('05') && digitsOnly.length === 10) {
     return `+966${digitsOnly.substring(1)}`;
   }
   
@@ -28,23 +31,18 @@ export function formatSaudiPhoneNumber(phoneNumber: string): string {
     return `+966${digitsOnly}`;
   }
   
-  // If it's 9 digits starting with 5, add +966
-  if (digitsOnly.length === 9 && digitsOnly.startsWith('5')) {
+  // For incomplete numbers, just return what was typed (let user continue typing)
+  if (digitsOnly.length < 9) {
+    return digitsOnly;
+  }
+  
+  // If it's a complete number starting with 5, add +966
+  if (digitsOnly.startsWith('5') && digitsOnly.length === 9) {
     return `+966${digitsOnly}`;
   }
   
-  // If it's 10 digits starting with 05, replace 0 with +966
-  if (digitsOnly.length === 10 && digitsOnly.startsWith('05')) {
-    return `+966${digitsOnly.substring(1)}`;
-  }
-  
-  // Default: add +966 if the number looks like a Saudi mobile number
-  if (digitsOnly.length >= 9 && digitsOnly.startsWith('5')) {
-    return `+966${digitsOnly}`;
-  }
-  
-  // If nothing matches, return as is with + if it doesn't start with it
-  return digitsOnly.startsWith('966') ? `+${digitsOnly}` : `+966${digitsOnly}`;
+  // Return as-is if it doesn't match Saudi format
+  return digitsOnly;
 }
 
 /**
@@ -57,22 +55,23 @@ export function displaySaudiPhoneNumber(phoneNumber: string): string {
   
   const digitsOnly = phoneNumber.replace(/\D/g, '');
   
-  // If starts with 966, convert to 05 format
-  if (digitsOnly.startsWith('966')) {
+  // If starts with 966 and is complete, convert to 05 format
+  if (digitsOnly.startsWith('966') && digitsOnly.length === 12) {
     const localNumber = digitsOnly.substring(3);
     return `0${localNumber}`;
   }
   
-  // If it's already in 05 format, return as is
-  if (digitsOnly.startsWith('05')) {
+  // If it's already in 05 format and is 10 digits, return as is
+  if (digitsOnly.startsWith('05') && digitsOnly.length === 10) {
     return digitsOnly;
   }
   
-  // If starts with 5, add 0
+  // If starts with 5 and is 9 digits, add 0
   if (digitsOnly.startsWith('5') && digitsOnly.length === 9) {
     return `0${digitsOnly}`;
   }
   
+  // For incomplete numbers or other formats, return as-is
   return phoneNumber;
 }
 

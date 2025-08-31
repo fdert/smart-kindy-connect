@@ -272,7 +272,7 @@ const Guardians = () => {
 
     setFormData({
       full_name: guardian.full_name,
-      phone: guardian.phone,
+      phone: guardian.phone || '',
       whatsapp_number: guardian.whatsapp_number || '',
       email: guardian.email || '',
       relationship: guardian.relationship || '',
