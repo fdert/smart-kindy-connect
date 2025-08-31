@@ -443,20 +443,54 @@ const Media = () => {
                 </div>
               </div>
 
-              <div style="background: linear-gradient(135deg, #d1f2eb, #fef9e7); padding: 20px; border-radius: 15px; margin: 20px 0; border: 3px dashed #f39c12;">
-                <h2 style="color: #d68910; margin: 0 0 15px 0; font-size: 20px;">🎨 معرض الصور والفيديوهات</h2>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px;">
-                  ${media.slice(0, 12).map(mediaItem => `
-                    <div style="background: white; border-radius: 10px; padding: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center;">
-                      <div style="background: linear-gradient(45deg, #ff9a9e, #fecfef); height: 100px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px;">
-                        <div style="font-size: 30px;">${mediaItem.file_type === 'image' ? '📷' : '🎥'}</div>
+              <!-- روابط الوسائط للوضوح -->
+              <div style="background: linear-gradient(135deg, #e3f2fd, #f3e5f5); padding: 20px; border-radius: 15px; margin: 20px 0; border: 3px dashed #9c27b0;">
+                <h2 style="color: #7b1fa2; margin: 0 0 15px 0; font-size: 20px;">🔗 روابط الصور والفيديوهات للمشاهدة الكاملة</h2>
+                <p style="color: #424242; margin: 0 0 15px 0; font-size: 14px;">انقر على الروابط التالية لمشاهدة الصور والفيديوهات بجودة عالية:</p>
+                <div style="background: white; padding: 15px; border-radius: 10px; margin: 10px 0;">
+                  ${media.map((mediaItem, index) => `
+                    <div style="margin: 8px 0; padding: 8px; background: #f8f9fa; border-radius: 5px; border-right: 4px solid ${mediaItem.file_type === 'image' ? '#4caf50' : '#ff5722'};">
+                      <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <span style="color: #333; font-weight: bold;">${index + 1}. ${mediaItem.file_type === 'image' ? '📷 صورة' : '🎥 فيديو'}</span>
+                        <span style="font-size: 12px; color: #666;">${mediaItem.file_name}</span>
                       </div>
-                      <p style="margin: 0; font-size: 12px; color: #636e72; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${mediaItem.file_name}</p>
-                      ${mediaItem.caption ? `<p style="margin: 5px 0 0 0; font-size: 11px; color: #2d3436; font-style: italic;">${mediaItem.caption}</p>` : ''}
+                      <div style="margin-top: 5px;">
+                        <a href="${mediaItem.file_path}" style="color: #2196f3; text-decoration: underline; font-size: 12px;">
+                          ${mediaItem.file_path}
+                        </a>
+                      </div>
+                      ${mediaItem.caption ? `<p style="margin: 5px 0 0 0; font-size: 11px; color: #666; font-style: italic;">الوصف: ${mediaItem.caption}</p>` : ''}
                     </div>
                   `).join('')}
                 </div>
-                ${media.length > 12 ? `<p style="text-align: center; color: #636e72; font-style: italic; margin-top: 15px;">و ${media.length - 12} ملف إضافي...</p>` : ''}
+              </div>
+
+              <div style="background: linear-gradient(135deg, #d1f2eb, #fef9e7); padding: 20px; border-radius: 15px; margin: 20px 0; border: 3px dashed #f39c12;">
+                <h2 style="color: #d68910; margin: 0 0 15px 0; font-size: 20px;">🎨 معرض الصور والفيديوهات</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 20px;" id="media-gallery-${student.id}">
+                  ${media.slice(0, 12).map((mediaItem, index) => `
+                    <div style="background: white; border-radius: 10px; padding: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center;">
+                      ${mediaItem.file_type === 'image' 
+                        ? `<div style="width: 150px; height: 100px; border-radius: 8px; overflow: hidden; margin: 0 auto 8px auto; background: #f5f5f5; display: flex; align-items: center; justify-content: center;">
+                             <img src="${mediaItem.file_path}" 
+                                  style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" 
+                                  alt="${mediaItem.caption || mediaItem.file_name}"
+                                  crossorigin="anonymous"
+                                  onload="this.style.display='block'"
+                                  onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\"font-size: 30px; color: #ccc;\\">📷</div>'"
+                             />
+                           </div>`
+                        : `<div style="background: linear-gradient(45deg, #ff5722, #ff9800); width: 150px; height: 100px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto; position: relative;">
+                             <div style="font-size: 30px; color: white;">🎥</div>
+                             <div style="position: absolute; bottom: 5px; right: 5px; background: rgba(0,0,0,0.7); color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px;">فيديو</div>
+                           </div>`
+                      }
+                      <p style="margin: 0; font-size: 11px; color: #636e72; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${mediaItem.file_name}</p>
+                      ${mediaItem.caption ? `<p style="margin: 5px 0 0 0; font-size: 10px; color: #2d3436; font-style: italic;">${mediaItem.caption}</p>` : ''}
+                    </div>
+                  `).join('')}
+                </div>
+                ${media.length > 12 ? `<p style="text-align: center; color: #636e72; font-style: italic; margin-top: 15px;">و ${media.length - 12} ملف إضافي في الروابط أعلاه...</p>` : ''}
               </div>
 
               <div style="background: linear-gradient(135deg, #ff9a9e, #fecfef); padding: 20px; border-radius: 15px; margin: 20px 0; text-align: center; border: 3px dashed #e84393;">
@@ -475,13 +509,24 @@ const Media = () => {
 
           document.body.appendChild(reportContainer);
 
-          // Generate PDF
-          const canvas = await html2canvas(reportContainer, {
-            scale: 2,
-            backgroundColor: 'transparent',
-            logging: false,
-            useCORS: true
-          });
+        // Generate high-quality PDF with better image settings
+        const canvas = await html2canvas(reportContainer, {
+          scale: 3, // Increased scale for better quality
+          backgroundColor: 'white',
+          logging: false,
+          useCORS: true,
+          allowTaint: true,
+          imageTimeout: 30000, // Wait longer for images to load
+          onclone: (clonedDoc) => {
+            // Ensure all images are loaded in the cloned document
+            const images = clonedDoc.querySelectorAll('img');
+            images.forEach(img => {
+              if (img.src) {
+                img.crossOrigin = 'anonymous';
+              }
+            });
+          }
+        });
 
           const imgData = canvas.toDataURL('image/png');
           const pdf = new jsPDF('p', 'mm', 'a4');
@@ -660,20 +705,54 @@ const Media = () => {
               </div>
             </div>
 
-            <div style="background: linear-gradient(135deg, #d1f2eb, #fef9e7); padding: 20px; border-radius: 15px; margin: 20px 0; border: 3px dashed #f39c12;">
-              <h2 style="color: #d68910; margin: 0 0 15px 0; font-size: 20px;">🎨 معرض الصور والفيديوهات</h2>
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px;">
-                ${media.slice(0, 12).map(mediaItem => `
-                  <div style="background: white; border-radius: 10px; padding: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center;">
-                    <div style="background: linear-gradient(45deg, #ff9a9e, #fecfef); height: 100px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 8px;">
-                      <div style="font-size: 30px;">${mediaItem.file_type === 'image' ? '📷' : '🎥'}</div>
+            <!-- روابط الوسائط للوضوح -->
+            <div style="background: linear-gradient(135deg, #e3f2fd, #f3e5f5); padding: 20px; border-radius: 15px; margin: 20px 0; border: 3px dashed #9c27b0;">
+              <h2 style="color: #7b1fa2; margin: 0 0 15px 0; font-size: 20px;">🔗 روابط الصور والفيديوهات للمشاهدة الكاملة</h2>
+              <p style="color: #424242; margin: 0 0 15px 0; font-size: 14px;">انقر على الروابط التالية لمشاهدة الصور والفيديوهات بجودة عالية:</p>
+              <div style="background: white; padding: 15px; border-radius: 10px; margin: 10px 0;">
+                ${media.map((mediaItem, index) => `
+                  <div style="margin: 8px 0; padding: 8px; background: #f8f9fa; border-radius: 5px; border-right: 4px solid ${mediaItem.file_type === 'image' ? '#4caf50' : '#ff5722'};">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                      <span style="color: #333; font-weight: bold;">${index + 1}. ${mediaItem.file_type === 'image' ? '📷 صورة' : '🎥 فيديو'}</span>
+                      <span style="font-size: 12px; color: #666;">${mediaItem.file_name}</span>
                     </div>
-                    <p style="margin: 0; font-size: 12px; color: #636e72; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${mediaItem.file_name}</p>
-                    ${mediaItem.caption ? `<p style="margin: 5px 0 0 0; font-size: 11px; color: #2d3436; font-style: italic;">${mediaItem.caption}</p>` : ''}
+                    <div style="margin-top: 5px;">
+                      <a href="${mediaItem.file_path}" style="color: #2196f3; text-decoration: underline; font-size: 12px;">
+                        ${mediaItem.file_path}
+                      </a>
+                    </div>
+                    ${mediaItem.caption ? `<p style="margin: 5px 0 0 0; font-size: 11px; color: #666; font-style: italic;">الوصف: ${mediaItem.caption}</p>` : ''}
                   </div>
                 `).join('')}
               </div>
-              ${media.length > 12 ? `<p style="text-align: center; color: #636e72; font-style: italic; margin-top: 15px;">و ${media.length - 12} ملف إضافي...</p>` : ''}
+            </div>
+
+            <div style="background: linear-gradient(135deg, #d1f2eb, #fef9e7); padding: 20px; border-radius: 15px; margin: 20px 0; border: 3px dashed #f39c12;">
+              <h2 style="color: #d68910; margin: 0 0 15px 0; font-size: 20px;">🎨 معرض الصور والفيديوهات</h2>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 20px;" id="media-gallery-${student.id}">
+                ${media.slice(0, 12).map((mediaItem, index) => `
+                  <div style="background: white; border-radius: 10px; padding: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center;">
+                    ${mediaItem.file_type === 'image' 
+                      ? `<div style="width: 150px; height: 100px; border-radius: 8px; overflow: hidden; margin: 0 auto 8px auto; background: #f5f5f5; display: flex; align-items: center; justify-content: center;">
+                           <img src="${mediaItem.file_path}" 
+                                style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" 
+                                alt="${mediaItem.caption || mediaItem.file_name}"
+                                crossorigin="anonymous"
+                                onload="this.style.display='block'"
+                                onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\"font-size: 30px; color: #ccc;\\">📷</div>'"
+                           />
+                         </div>`
+                      : `<div style="background: linear-gradient(45deg, #ff5722, #ff9800); width: 150px; height: 100px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto; position: relative;">
+                           <div style="font-size: 30px; color: white;">🎥</div>
+                           <div style="position: absolute; bottom: 5px; right: 5px; background: rgba(0,0,0,0.7); color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px;">فيديو</div>
+                         </div>`
+                    }
+                    <p style="margin: 0; font-size: 11px; color: #636e72; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${mediaItem.file_name}</p>
+                    ${mediaItem.caption ? `<p style="margin: 5px 0 0 0; font-size: 10px; color: #2d3436; font-style: italic;">${mediaItem.caption}</p>` : ''}
+                  </div>
+                `).join('')}
+              </div>
+              ${media.length > 12 ? `<p style="text-align: center; color: #636e72; font-style: italic; margin-top: 15px;">و ${media.length - 12} ملف إضافي في الروابط أعلاه...</p>` : ''}
             </div>
 
             <div style="background: linear-gradient(135deg, #ff9a9e, #fecfef); padding: 20px; border-radius: 15px; margin: 20px 0; text-align: center; border: 3px dashed #e84393;">
@@ -692,12 +771,23 @@ const Media = () => {
 
         document.body.appendChild(reportContainer);
 
-        // Generate PDF
+        // Generate high-quality PDF with better image settings
         const canvas = await html2canvas(reportContainer, {
-          scale: 2,
-          backgroundColor: 'transparent',
+          scale: 3, // Increased scale for better quality
+          backgroundColor: 'white',
           logging: false,
-          useCORS: true
+          useCORS: true,
+          allowTaint: true,
+          imageTimeout: 30000, // Wait longer for images to load
+          onclone: (clonedDoc) => {
+            // Ensure all images are loaded in the cloned document
+            const images = clonedDoc.querySelectorAll('img');
+            images.forEach(img => {
+              if (img.src) {
+                img.crossOrigin = 'anonymous';
+              }
+            });
+          }
         });
 
         const imgData = canvas.toDataURL('image/png');

@@ -136,7 +136,8 @@ serve(async (req) => {
                 className: student.classes?.name || 'غير محدد',
                 nurseryName: tenant.name,
                 photoCount: photoCount,
-                videoCount: videoCount
+                videoCount: videoCount,
+                linksMessage: 'يحتوي التقرير على روابط مباشرة للصور والفيديوهات للمشاهدة بجودة عالية'
               },
               mediaUrl: pdfUrl,
               contextType: 'album_report',
