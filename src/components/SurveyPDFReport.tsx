@@ -66,13 +66,23 @@ interface SurveyPDFReportProps {
   results: SurveyResult[];
   tenantInfo: TenantInfo;
   onGenerateReport: () => Promise<void>;
+  aiAnalysis?: {
+    summary: string;
+    keyInsights: string[];
+    recommendations: string[];
+    sentiment: 'positive' | 'neutral' | 'negative';
+    participationRate: string;
+    strengths: string[];
+    improvements: string[];
+  };
 }
 
 export const SurveyPDFReport: React.FC<SurveyPDFReportProps> = ({
   survey,
   results,
   tenantInfo,
-  onGenerateReport
+  onGenerateReport,
+  aiAnalysis
 }) => {
   const generatePDF = async () => {
     try {
@@ -146,6 +156,73 @@ export const SurveyPDFReport: React.FC<SurveyPDFReportProps> = ({
             <p style="font-size: 16px; margin: 0; opacity: 0.9;">${survey.description || 'لا يوجد وصف'}</p>
           </div>
         </div>
+
+        ${aiAnalysis ? `
+          <!-- AI Analysis Section -->
+          <div style="background: white; border-radius: 15px; padding: 30px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+            <h3 style="color: #667eea; font-size: 24px; font-weight: bold; margin-bottom: 25px; display: flex; align-items: center;">
+              <span style="margin-left: 10px;">🤖</span> التحليل الذكي
+            </h3>
+            
+            <!-- Summary -->
+            <div style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+              <h4 style="font-size: 18px; font-weight: bold; margin-bottom: 10px;">الملخص التنفيذي</h4>
+              <p style="font-size: 14px; line-height: 1.6; margin: 0;">${aiAnalysis.summary}</p>
+              <div style="margin-top: 15px; display: flex; gap: 15px;">
+                <span style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-size: 12px;">
+                  الإجمالي: ${aiAnalysis.sentiment === 'positive' ? '😊 إيجابي' : aiAnalysis.sentiment === 'negative' ? '😟 يحتاج تحسين' : '😐 متوازن'}
+                </span>
+                <span style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-size: 12px;">
+                  المشاركة: ${aiAnalysis.participationRate}
+                </span>
+              </div>
+            </div>
+            
+            <!-- Key Insights -->
+            <div style="margin-bottom: 20px;">
+              <h4 style="color: #4299e1; font-size: 16px; font-weight: bold; margin-bottom: 15px;">🔍 الرؤى الرئيسية</h4>
+              ${aiAnalysis.keyInsights.map(insight => `
+                <div style="background: #ebf8ff; padding: 12px; margin-bottom: 8px; border-radius: 8px; border-right: 4px solid #4299e1;">
+                  <p style="margin: 0; font-size: 13px; color: #2b6cb0;">${insight}</p>
+                </div>
+              `).join('')}
+            </div>
+
+            ${aiAnalysis.strengths.length > 0 ? `
+              <!-- Strengths -->
+              <div style="margin-bottom: 20px;">
+                <h4 style="color: #48bb78; font-size: 16px; font-weight: bold; margin-bottom: 15px;">✅ نقاط القوة</h4>
+                ${aiAnalysis.strengths.map(strength => `
+                  <div style="background: #f0fff4; padding: 12px; margin-bottom: 8px; border-radius: 8px; border-right: 4px solid #48bb78;">
+                    <p style="margin: 0; font-size: 13px; color: #2f855a;">${strength}</p>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+
+            ${aiAnalysis.improvements.length > 0 ? `
+              <!-- Improvements -->
+              <div style="margin-bottom: 20px;">
+                <h4 style="color: #ed8936; font-size: 16px; font-weight: bold; margin-bottom: 15px;">⚠️ مجالات التحسين</h4>
+                ${aiAnalysis.improvements.map(improvement => `
+                  <div style="background: #fffaf0; padding: 12px; margin-bottom: 8px; border-radius: 8px; border-right: 4px solid #ed8936;">
+                    <p style="margin: 0; font-size: 13px; color: #c05621;">${improvement}</p>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+            
+            <!-- Recommendations -->
+            <div>
+              <h4 style="color: #805ad5; font-size: 16px; font-weight: bold; margin-bottom: 15px;">💡 التوصيات</h4>
+              ${aiAnalysis.recommendations.map(rec => `
+                <div style="background: #faf5ff; padding: 12px; margin-bottom: 8px; border-radius: 8px; border-right: 4px solid #805ad5;">
+                  <p style="margin: 0; font-size: 13px; color: #553c9a;">${rec}</p>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
 
         <!-- Summary Section -->
         <div style="background: white; border-radius: 15px; padding: 30px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
@@ -239,30 +316,106 @@ export const SurveyPDFReport: React.FC<SurveyPDFReportProps> = ({
   const generateCharts = async (): Promise<Array<{title: string, dataUrl: string}>> => {
     const charts: Array<{title: string, dataUrl: string}> = [];
     
-    // Create a simple placeholder chart for demonstration
-    // In a real implementation, you would use Chart.js to render actual charts
     for (const result of results.slice(0, 4)) { // Limit to 4 charts for layout
       if (result.totalResponses > 0) {
-        // Create a simple data URL for demonstration
         const canvas = document.createElement('canvas');
-        canvas.width = 300;
-        canvas.height = 200;
+        canvas.width = 400;
+        canvas.height = 300;
         const ctx = canvas.getContext('2d');
         
         if (ctx) {
-          // Simple bar chart simulation
-          ctx.fillStyle = '#667eea';
-          ctx.fillRect(50, 150, 80, -result.totalResponses * 10);
-          ctx.fillStyle = '#48bb78';
-          if (result.yesCount) {
-            ctx.fillRect(150, 150, 80, -result.yesCount * 15);
+          // Clear canvas with white background
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          // Set up chart area
+          const chartArea = { x: 50, y: 40, width: 300, height: 200 };
+          
+          if (result.questionType === 'yes_no' && result.yesCount !== undefined && result.noCount !== undefined) {
+            // Pie chart for yes/no questions
+            const total = result.yesCount + result.noCount;
+            const yesAngle = (result.yesCount / total) * 2 * Math.PI;
+            const centerX = chartArea.x + chartArea.width / 2;
+            const centerY = chartArea.y + chartArea.height / 2;
+            const radius = 80;
+            
+            // Yes slice
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.arc(centerX, centerY, radius, 0, yesAngle);
+            ctx.closePath();
+            ctx.fillStyle = '#48bb78';
+            ctx.fill();
+            
+            // No slice  
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.arc(centerX, centerY, radius, yesAngle, 2 * Math.PI);
+            ctx.closePath();
+            ctx.fillStyle = '#e53e3e';
+            ctx.fill();
+            
+            // Labels
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`نعم: ${result.yesCount}`, centerX - 60, centerY + 120);
+            ctx.fillText(`لا: ${result.noCount}`, centerX + 60, centerY + 120);
+            
+          } else if (result.questionType === 'rating' && result.ratings) {
+            // Bar chart for ratings
+            const ratingCounts = [1, 2, 3, 4, 5].map(rating => 
+              result.ratings?.filter(r => r === rating).length || 0
+            );
+            const maxCount = Math.max(...ratingCounts);
+            const barWidth = chartArea.width / 6;
+            
+            ratingCounts.forEach((count, index) => {
+              const barHeight = maxCount > 0 ? (count / maxCount) * chartArea.height * 0.8 : 0;
+              const x = chartArea.x + (index + 0.5) * barWidth;
+              const y = chartArea.y + chartArea.height - barHeight;
+              
+              // Bar
+              ctx.fillStyle = '#ffd700';
+              ctx.fillRect(x - barWidth/3, y, barWidth*0.6, barHeight);
+              
+              // Label
+              ctx.fillStyle = '#333';
+              ctx.font = '10px Arial';
+              ctx.textAlign = 'center';
+              ctx.fillText(`${index + 1}⭐`, x, chartArea.y + chartArea.height + 15);
+              ctx.fillText(`${count}`, x, y - 5);
+            });
+            
+          } else if (result.optionCounts) {
+            // Bar chart for options
+            const options = Object.entries(result.optionCounts);
+            const maxCount = Math.max(...options.map(([_, count]) => count));
+            const barHeight = chartArea.height / (options.length + 1);
+            
+            options.forEach(([option, count], index) => {
+              const barWidth = maxCount > 0 ? (count / maxCount) * chartArea.width * 0.8 : 0;
+              const y = chartArea.y + (index + 0.5) * barHeight;
+              
+              // Bar
+              ctx.fillStyle = '#667eea';
+              ctx.fillRect(chartArea.x, y - barHeight/3, barWidth, barHeight*0.6);
+              
+              // Label
+              ctx.fillStyle = '#333';
+              ctx.font = '10px Arial';
+              ctx.textAlign = 'left';
+              const shortOption = option.length > 15 ? option.substring(0, 15) + '...' : option;
+              ctx.fillText(`${shortOption}: ${count}`, chartArea.x + 5, y + 3);
+            });
           }
           
-          // Add title
+          // Chart title
           ctx.fillStyle = '#333';
-          ctx.font = '14px Arial';
+          ctx.font = 'bold 14px Arial';
           ctx.textAlign = 'center';
-          ctx.fillText(result.questionText.substring(0, 20) + '...', 150, 190);
+          const shortTitle = result.questionText.length > 40 ? result.questionText.substring(0, 40) + '...' : result.questionText;
+          ctx.fillText(shortTitle, canvas.width / 2, 25);
         }
         
         const dataUrl = canvas.toDataURL();

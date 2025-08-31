@@ -14,10 +14,12 @@ import {
   BarChart3,
   PieChart,
   Calendar,
-  Target
+  Target,
+  Brain
 } from 'lucide-react';
 import { SurveyResultsChart } from './SurveyResultsChart';
 import { SurveyPDFReport } from './SurveyPDFReport';
+import { SurveyAIAnalysis } from './SurveyAIAnalysis';
 
 interface Survey {
   id: string;
@@ -28,6 +30,15 @@ interface Survey {
   expires_at: string;
   created_at: string;
   is_active: boolean;
+  aiAnalysis?: {
+    summary: string;
+    keyInsights: string[];
+    recommendations: string[];
+    sentiment: 'positive' | 'neutral' | 'negative';
+    participationRate: string;
+    strengths: string[];
+    improvements: string[];
+  };
 }
 
 interface DashboardStats {
@@ -412,6 +423,7 @@ const SurveyDashboard = () => {
                     survey={selectedSurvey}
                     results={surveyResults}
                     tenantInfo={tenant || { name: 'المؤسسة' }}
+                    aiAnalysis={selectedSurvey.aiAnalysis}
                     onGenerateReport={async () => {
                       await loadSurveyResults(selectedSurvey);
                     }}
@@ -424,6 +436,16 @@ const SurveyDashboard = () => {
                   </Button>
                 </div>
               </div>
+              {surveyResults.length > 0 && (
+                <SurveyAIAnalysis 
+                  survey={selectedSurvey}
+                  results={surveyResults}
+                  onAnalysisComplete={(analysis) => {
+                    // Store analysis for PDF generation
+                    setSelectedSurvey(prev => prev ? {...prev, aiAnalysis: analysis} : null);
+                  }}
+                />
+              )}
               
               {surveyResults.length > 0 ? (
                 <div className="space-y-4">
