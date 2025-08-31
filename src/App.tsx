@@ -12,6 +12,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
 import Attendance from "./pages/Attendance";
+import Assignments from "./pages/Assignments";
 import Rewards from "./pages/Rewards";
 import Classes from "./pages/Classes";
 import Media from "./pages/Media";
@@ -109,6 +110,11 @@ const AppRoutes = () => (
     <Route path="/attendance" element={
       <ProtectedRoute>
         <Attendance />
+      </ProtectedRoute>
+    } />
+    <Route path="/assignments" element={
+      <ProtectedRoute>
+        <Assignments />
       </ProtectedRoute>
     } />
     <Route path="/rewards" element={

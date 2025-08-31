@@ -18,7 +18,8 @@ import {
   BarChart3,
   Video,
   Building,
-  Baby
+  Baby,
+  PenTool
 } from 'lucide-react';
 
 const smartKindyLogo = "/lovable-uploads/46a447fc-00fa-49c5-b6ae-3f7b46fc4691.png";
@@ -70,6 +71,7 @@ const Navigation = () => {
     { name: 'الطلاب', href: '/students', icon: Users },
     { name: 'الفصول', href: '/classes', icon: BookOpen },
     { name: 'الحضور', href: '/attendance', icon: Calendar },
+    { name: 'الواجبات', href: '/assignments', icon: PenTool },
     { name: 'التحفيز', href: '/rewards', icon: Star },
     { name: 'الألبوم', href: '/media', icon: Image },
     { name: 'أولياء الأمور', href: '/guardians', icon: UserCheck },
@@ -84,6 +86,7 @@ const Navigation = () => {
     { name: 'لوحة التحكم', href: '/dashboard', icon: Settings },
     { name: 'فصولي', href: '/classes', icon: BookOpen },
     { name: 'الحضور', href: '/attendance', icon: Calendar },
+    { name: 'الواجبات', href: '/assignments', icon: PenTool },
     { name: 'التحفيز', href: '/rewards', icon: Star },
     { name: 'الألبوم', href: '/media', icon: Image },
   ];
