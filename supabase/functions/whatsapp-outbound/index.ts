@@ -132,11 +132,11 @@ serve(async (req) => {
 مع تحيات
 ${templateData.nurseryName || 'الحضانة'}`;
       } else if (templateName === 'survey_notification' && templateData) {
-        // Build the survey link with the correct domain
+        // Build the survey link with the correct path
         let surveyLink = templateData.surveyLink;
         if (!surveyLink && contextId) {
-          // Use the project URL directly
-          surveyLink = `https://ytjodudlnfamvnescumu.lovableproject.com/surveys/public/${contextId}`;
+          // Use the correct route: /survey/:id instead of /surveys/public/:id
+          surveyLink = `https://ytjodudlnfamvnescumu.lovableproject.com/survey/${contextId}`;
         }
         
         console.log(`Survey notification - contextId: ${contextId}, surveyLink: ${surveyLink}`);

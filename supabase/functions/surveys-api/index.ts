@@ -132,8 +132,8 @@ Deno.serve(async (req) => {
             });
           }
           
-          // Generate the correct survey link with project domain
-          const surveyLink = `https://ytjodudlnfamvnescumu.lovableproject.com/surveys/public/${survey.id}`;
+          // Generate the correct survey link with the right path
+          const surveyLink = `https://ytjodudlnfamvnescumu.lovableproject.com/survey/${survey.id}`;
           
           console.log(`Manual notification - surveyId: ${survey.id}, surveyLink: ${surveyLink}`);
           
@@ -363,8 +363,8 @@ Deno.serve(async (req) => {
           let autoNotificationsSent = 0;
           for (const contact of contacts) {
             try {
-              // Generate the correct survey link with project domain
-              const surveyLink = `https://ytjodudlnfamvnescumu.lovableproject.com/surveys/public/${survey.id}`;
+              // Generate the correct survey link with the right path
+              const surveyLink = `https://ytjodudlnfamvnescumu.lovableproject.com/survey/${survey.id}`;
               
               console.log(`Auto-notification - surveyId: ${survey.id}, surveyLink: ${surveyLink}`);
               
