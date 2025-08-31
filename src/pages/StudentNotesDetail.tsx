@@ -81,14 +81,9 @@ export default function StudentNotesDetail() {
 
     setLoading(true);
     try {
-      console.log('Loading notes for student:', studentId);
-      
       // Check if this is a guardian access (public access)
       const isGuardianAccess = searchParams.get('guardian') === 'true';
       let tenantId: string;
-
-      console.log('Guardian access mode:', isGuardianAccess);
-      console.log('Date range:', dateRange);
 
       if (isGuardianAccess) {
         // For guardian access, we don't need tenant verification
@@ -113,7 +108,6 @@ export default function StudentNotesDetail() {
           throw new Error('لم يتم العثور على بيانات الطالب');
         }
 
-        console.log('Student data loaded:', studentData);
         setStudentInfo(studentData);
         tenantId = studentData.tenant_id;
         
@@ -136,8 +130,6 @@ export default function StudentNotesDetail() {
         tenantId = tenant.id;
       }
 
-      console.log('Using tenant ID:', tenantId);
-
       // Load notes with exact same query as in StudentReport (only non-private ones)
       const { data: notesData, error: notesError } = await supabase
         .from('student_notes')
@@ -150,11 +142,9 @@ export default function StudentNotesDetail() {
         .order('created_at', { ascending: false });
 
       if (notesError) {
-        console.error('Notes error:', notesError);
         throw notesError;
       }
 
-      console.log('Notes loaded:', notesData?.length || 0, 'records');
       setNotes(notesData || []);
 
     } catch (error: any) {

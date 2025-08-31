@@ -18,7 +18,6 @@ interface AssignmentData {
   teacher_feedback: string | null;
   completion_date: string | null;
   evaluated_at: string;
-  created_at: string;
   assignments: {
     title: string;
     description: string;
@@ -84,14 +83,9 @@ export default function StudentAssignments() {
 
     setLoading(true);
     try {
-      console.log('Loading assignments for student:', studentId);
-      
       // Check if this is a guardian access (public access)
       const isGuardianAccess = searchParams.get('guardian') === 'true';
       let tenantId: string;
-
-      console.log('Guardian access mode:', isGuardianAccess);
-      console.log('Date range:', dateRange);
 
       if (isGuardianAccess) {
         // For guardian access, we don't need tenant verification
@@ -116,7 +110,6 @@ export default function StudentAssignments() {
           throw new Error('لم يتم العثور على بيانات الطالب');
         }
 
-        console.log('Student data loaded:', studentData);
         setStudentInfo(studentData);
         tenantId = studentData.tenant_id;
         
@@ -138,23 +131,20 @@ export default function StudentAssignments() {
         if (!studentData) {
           throw new Error('لم يتم العثور على بيانات الطالب');
         }
-        console.log('Student data loaded (authenticated):', studentData);
         setStudentInfo(studentData);
         tenantId = tenant.id;
       }
 
-      console.log('Using tenant ID:', tenantId);
-
-      // Load assignments with evaluations and proper date filtering
+      // Load assignments with evaluations and proper date filtering (matching StudentReport query)
       const { data: assignmentsData, error: assignmentsError } = await supabase
         .from('assignment_evaluations')
         .select(`
           id,
           evaluation_status,
           evaluation_score,
-          teacher_feedback,
-          completion_date,
           evaluated_at,
+          completion_date,
+          teacher_feedback,
           assignment_id
         `)
         .eq('student_id', studentId)
@@ -164,15 +154,12 @@ export default function StudentAssignments() {
         .order('evaluated_at', { ascending: false });
 
       if (assignmentsError) {
-        console.error('Assignments error:', assignmentsError);
         throw assignmentsError;
       }
 
-      console.log('Assignment evaluations loaded:', assignmentsData?.length || 0, 'records');
-
-      // Get assignment details for each evaluation
+      // Get assignment details for each evaluation (matching StudentReport approach)
       const evaluationsWithAssignments = [];
-      if (assignmentsData) {
+      if (assignmentsData && assignmentsData.length > 0) {
         for (const evaluation of assignmentsData) {
           const { data: assignmentDetail } = await supabase
             .from('assignments')
@@ -189,7 +176,6 @@ export default function StudentAssignments() {
         }
       }
 
-      console.log('Final assignments with details:', evaluationsWithAssignments.length);
       setAssignments(evaluationsWithAssignments);
 
     } catch (error: any) {
@@ -371,7 +357,7 @@ export default function StudentAssignments() {
                   </div>
                      <div className="text-sm text-gray-500 border-t pt-3">
                        <div className="flex justify-between">
-                         <span>تاريخ التقييم: {format(new Date(assignment.evaluated_at || assignment.created_at), 'dd MMM yyyy', { locale: ar })}</span>
+                         <span>تاريخ التقييم: {format(new Date(assignment.evaluated_at), 'dd MMM yyyy', { locale: ar })}</span>
                          {assignment.completion_date && (
                            <span>تاريخ الإكمال: {format(new Date(assignment.completion_date), 'dd MMM yyyy', { locale: ar })}</span>
                          )}
