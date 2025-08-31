@@ -10,7 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/hooks/useTenant';
 import { useToast } from '@/hooks/use-toast';
-import { Clock, Calendar, Users, CheckCircle, XCircle, AlertCircle, Search } from 'lucide-react';
+import { Clock, Calendar, Users, CheckCircle, XCircle, AlertCircle, Search, FileText } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface Student {
   id: string;
@@ -317,9 +318,17 @@ const Attendance = () => {
                 className="w-40"
               />
             </div>
-            <Button onClick={markAllPresent} disabled={totalStudents === 0}>
-              تسجيل حضور للجميع
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button onClick={markAllPresent} disabled={totalStudents === 0}>
+                تسجيل حضور للجميع
+              </Button>
+              <Link to="/reports">
+                <Button variant="outline" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  التقارير
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
 
