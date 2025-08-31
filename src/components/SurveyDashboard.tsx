@@ -393,8 +393,9 @@ const SurveyDashboard = () => {
                     <div className="flex items-center gap-3">
                       <SurveyPDFReport 
                         survey={survey}
-                        results={surveyResults}
+                        results={selectedSurvey?.id === survey.id ? surveyResults : []}
                         tenantInfo={tenant || { name: 'المؤسسة' }}
+                        aiAnalysis={selectedSurvey?.id === survey.id ? selectedSurvey.aiAnalysis : undefined}
                         onGenerateReport={async () => {
                           await loadSurveyResults(survey);
                         }}
