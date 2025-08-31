@@ -57,10 +57,13 @@ const PublicSurvey = () => {
 
   const loadSurvey = async () => {
     try {
-      // Load survey details
+      // Load survey details (public access, no auth needed)
       const { data: surveyData, error: surveyError } = await supabase
         .from('surveys')
-        .select('*')
+        .select(`
+          *,
+          tenants!inner(name, logo_url)
+        `)
         .eq('id', surveyId)
         .eq('is_active', true)
         .single();
@@ -76,7 +79,12 @@ const PublicSurvey = () => {
 
       setSurvey(surveyData);
 
-      // Load questions
+      // Set tenant info from joined data
+      if (surveyData.tenants) {
+        setTenantInfo(surveyData.tenants);
+      }
+
+      // Load questions (public access)
       const { data: questionsData, error: questionsError } = await supabase
         .from('survey_questions')
         .select('*')
@@ -90,16 +98,6 @@ const PublicSurvey = () => {
         options: Array.isArray(q.options) ? q.options : (q.options ? [q.options] : [])
       }));
       setQuestions(processedQuestions);
-
-      // Load tenant info
-      const { data: tenantData, error: tenantError } = await supabase
-        .from('tenants')
-        .select('name, logo_url')
-        .eq('id', surveyData.tenant_id)
-        .single();
-
-      if (tenantError) throw tenantError;
-      setTenantInfo(tenantData);
 
     } catch (error: any) {
       toast({
@@ -141,8 +139,8 @@ const PublicSurvey = () => {
     try {
       setSubmitting(true);
 
-      // Submit responses
-      const responsePromises = questions.map(question => {
+      // Prepare responses for edge function
+      const formattedResponses = questions.map(question => {
         const responseValue = responses[question.id];
         
         let responseText = null;
@@ -160,25 +158,23 @@ const PublicSurvey = () => {
           responseText = responseValue?.toString();
         }
 
-        return supabase
-          .from('survey_responses')
-          .insert({
-            survey_id: survey.id,
-            question_id: question.id,
-            tenant_id: survey.tenant_id,
-            response_text: responseText,
-            response_options: responseOptions,
-            respondent_type: 'public'
-          });
-      });
+        return {
+          questionId: question.id,
+          responseText,
+          responseOptions
+        };
+      }).filter(response => response.responseText !== null || response.responseOptions !== null);
 
-      const results = await Promise.all(responsePromises);
+      // Submit responses via edge function
+      const { data, error } = await supabase.functions.invoke('surveys-api', {
+        body: {
+          action: 'publicResponse',
+          surveyId: survey.id,
+          responses: formattedResponses
+        }
+      });
       
-      // Check if any insertions failed
-      const failedInserts = results.filter(result => result.error);
-      if (failedInserts.length > 0) {
-        throw new Error('فشل في حفظ بعض الردود');
-      }
+      if (error) throw error;
 
       setSubmitted(true);
       toast({
@@ -187,9 +183,10 @@ const PublicSurvey = () => {
       });
 
     } catch (error: any) {
+      console.error('Error submitting survey responses:', error);
       toast({
         title: "خطأ في إرسال الردود",
-        description: error.message,
+        description: error.message || "حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى",
         variant: "destructive",
       });
     } finally {
