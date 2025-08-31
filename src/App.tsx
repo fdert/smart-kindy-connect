@@ -27,6 +27,7 @@ import VirtualClasses from "./pages/VirtualClasses";
 import PlansManagement from "./pages/PlansManagement";
 import CMSManagement from "./pages/CMSManagement";
 import SharedRewardCard from "./pages/SharedRewardCard";
+import PublicSurvey from "./pages/PublicSurvey";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -77,11 +78,12 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 
 const AppRoutes = () => (
   <Routes>
-    <Route path="/" element={<Index />} />
-    <Route path="/tour" element={<Tour />} />
-    <Route path="/demo" element={<Demo />} />
-    <Route path="/register" element={<TenantRegistration />} />
-    <Route path="/pricing" element={<Pricing />} />
+        <Route path="/" element={<Index />} />
+        <Route path="/tour" element={<Tour />} />
+        <Route path="/demo" element={<Demo />} />
+        <Route path="/register" element={<TenantRegistration />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/survey/:surveyId" element={<PublicSurvey />} />
     <Route path="/super-admin" element={
       <ProtectedRoute>
         <SuperAdmin />

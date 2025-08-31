@@ -33,7 +33,15 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get the authenticated user
+    const requestBody = await req.json();
+    const { action } = requestBody;
+
+    // For public survey responses, skip authentication
+    if (action === 'publicResponse') {
+      return await handlePublicResponse(supabase, requestBody);
+    }
+
+    // For all other actions, require authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('No authorization header');
@@ -407,3 +415,75 @@ Deno.serve(async (req) => {
     );
   }
 });
+
+// Handle public survey responses without authentication
+async function handlePublicResponse(supabase: any, requestBody: any) {
+  const { surveyId, responses } = requestBody;
+  
+  if (!surveyId || !responses) {
+    throw new Error('Missing required fields: surveyId and responses');
+  }
+
+  console.log('Processing public survey response:', { surveyId, responseCount: responses.length });
+
+  try {
+    // Verify survey exists and is active
+    const { data: survey, error: surveyError } = await supabase
+      .from('surveys')
+      .select('id, tenant_id, is_active, expires_at')
+      .eq('id', surveyId)
+      .single();
+
+    if (surveyError || !survey) {
+      throw new Error('Survey not found');
+    }
+
+    if (!survey.is_active) {
+      throw new Error('Survey is not active');
+    }
+
+    if (new Date(survey.expires_at) < new Date()) {
+      throw new Error('Survey has expired');
+    }
+
+    // Insert responses
+    const responseInserts = responses.map((response: any) => ({
+      survey_id: surveyId,
+      question_id: response.questionId,
+      tenant_id: survey.tenant_id,
+      response_text: response.responseText,
+      response_options: response.responseOptions,
+      respondent_type: 'public'
+    }));
+
+    const { error: insertError } = await supabase
+      .from('survey_responses')
+      .insert(responseInserts);
+
+    if (insertError) {
+      throw insertError;
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        success: true, 
+        message: 'Responses saved successfully',
+        responsesCount: responses.length
+      }),
+      { 
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        status: 200
+      }
+    );
+
+  } catch (error: any) {
+    console.error('Error saving public survey responses:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        status: 400
+      }
+    );
+  }
+}

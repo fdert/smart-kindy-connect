@@ -13,10 +13,12 @@ import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/hooks/useTenant';
 import { useToast } from '@/hooks/use-toast';
-import { BarChart3, Plus, Send, Eye, CalendarIcon, Trash2, Users, PieChart } from 'lucide-react';
+import { BarChart3, Plus, Eye, CalendarIcon, Trash2, Users, PieChart, Link, Copy, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { SurveyResultsChart } from '@/components/SurveyResultsChart';
+import SurveyDashboard from '@/components/SurveyDashboard';
+import SurveyLinkShare from '@/components/SurveyLinkShare';
 
 interface Survey {
   id: string;
@@ -173,28 +175,30 @@ const Surveys = () => {
     });
   };
 
-  const handleSendNotifications = async (surveyId: string) => {
+  const generateSurveyLink = (surveyId: string) => {
+    return `${window.location.origin}/survey/${surveyId}`;
+  };
+
+  const copySurveyLink = async (surveyId: string) => {
+    const link = generateSurveyLink(surveyId);
     try {
-      const { data, error } = await supabase.functions.invoke('surveys-api', {
-        body: {
-          action: 'notify',
-          surveyId: surveyId
-        }
-      });
-
-      if (error) throw error;
-
+      await navigator.clipboard.writeText(link);
       toast({
-        title: "تم إرسال الإشعارات",
-        description: `تم إرسال ${data?.notificationsSent || 0} إشعار عبر واتساب`,
+        title: "تم نسخ الرابط",
+        description: "تم نسخ رابط الاستطلاع إلى الحافظة",
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
-        title: "خطأ في إرسال الإشعارات",
-        description: error.message,
+        title: "خطأ في النسخ",
+        description: "فشل في نسخ الرابط",
         variant: "destructive",
       });
     }
+  };
+
+  const openSurveyLink = (surveyId: string) => {
+    const link = generateSurveyLink(surveyId);
+    window.open(link, '_blank');
   };
 
   const handleViewResults = async (survey: Survey) => {
@@ -321,7 +325,7 @@ const Surveys = () => {
               <BarChart3 className="h-8 w-8 text-primary" />
               الاستطلاعات
             </h1>
-            <p className="text-gray-600 mt-1">إدارة استطلاعات الرأي وجمع التقييمات</p>
+            <p className="text-gray-600 mt-1">إدارة استطلاعات الرأي وجمع التقييمات عبر الروابط الإلكترونية</p>
           </div>
           
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
@@ -547,8 +551,15 @@ const Surveys = () => {
           </Dialog>
         </div>
 
+        {/* Dashboard */}
+        <div className="mb-8">
+          <SurveyDashboard />
+        </div>
+
         {/* Surveys List */}
-        <div className="grid gap-4">
+        <div className="space-y-6">
+          <h2 className="text-2xl font-semibold text-gray-800">إدارة الاستطلاعات</h2>
+          <div className="grid gap-4">
           {surveys.length === 0 ? (
             <Card className="bg-white/80 backdrop-blur-sm">
               <CardContent className="flex flex-col items-center justify-center py-12">
@@ -593,33 +604,70 @@ const Surveys = () => {
                         <PieChart className="h-4 w-4" />
                         النتائج
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSendNotifications(survey.id)}
-                        className="flex items-center gap-1"
-                      >
-                        <Send className="h-4 w-4" />
-                        إرسال دعوات
-                      </Button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <SurveyLinkShare survey={survey} />
+                      <div>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleViewResults(survey)}
+                          className="flex items-center gap-2 w-full mb-2"
+                        >
+                          <Eye className="h-4 w-4" />
+                          عرض النتائج
+                        </Button>
+                        <div className="text-sm text-gray-600">
+                          <div>الردود: {/* يمكن إضافة عداد الردود هنا */}</div>
+                          <div>آخر تحديث: {format(new Date(survey.created_at), 'PPP', { locale: ar })}</div>
+                        </div>
+                      </div>
+                    </div>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-between text-sm text-gray-500">
-                    <div className="flex items-center gap-4">
-                      <span>الأسئلة: {survey.questions?.length || 0}</span>
-                      <span>تاريخ الإنشاء: {format(new Date(survey.created_at), 'PPP', { locale: ar })}</span>
-                      <span>ينتهي في: {format(new Date(survey.expires_at), 'PPP', { locale: ar })}</span>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <div className="flex items-center gap-4">
+                        <span>الأسئلة: {survey.questions?.length || 0}</span>
+                        <span>تاريخ الإنشاء: {format(new Date(survey.created_at), 'PPP', { locale: ar })}</span>
+                        <span>ينتهي في: {format(new Date(survey.expires_at), 'PPP', { locale: ar })}</span>
+                      </div>
+                      <Badge variant={survey.is_active ? 'default' : 'secondary'}>
+                        {survey.is_active ? 'نشط' : 'غير نشط'}
+                      </Badge>
                     </div>
-                    <Badge variant={survey.is_active ? 'default' : 'secondary'}>
-                      {survey.is_active ? 'نشط' : 'غير نشط'}
-                    </Badge>
+                    
+                    {/* Survey Link Display */}
+                    <div className="bg-gray-50 p-3 rounded-lg">
+                      <Label className="text-sm font-medium text-gray-700 mb-2 block">رابط الاستطلاع:</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={generateSurveyLink(survey.id)}
+                          readOnly
+                          className="text-sm bg-white"
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => copySurveyLink(survey.id)}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openSurveyLink(survey.id)}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             ))
           )}
+          </div>
         </div>
 
         {/* Results Dialog */}
