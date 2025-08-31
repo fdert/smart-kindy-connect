@@ -24,6 +24,21 @@ interface DismissalRequestData {
   reason?: string;
 }
 
+interface SurveyResponseData {
+  surveyId?: string;
+  responses: Array<{
+    questionNumber: number;
+    answer: string;
+    options?: string[];
+  }>;
+}
+
+interface PermissionResponseData {
+  permissionId?: string;
+  response: 'approve' | 'reject';
+  reason?: string;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -181,6 +196,125 @@ serve(async (req) => {
       .select('id')
       .single();
 
+    // First, check for survey responses
+    const surveyResponse = await parseSurveyResponse(supabase, tenant.id, guardianData.id, messageText);
+    
+    if (surveyResponse) {
+      console.log('Processing survey response:', surveyResponse);
+      
+      // Save survey responses
+      for (const response of surveyResponse.responses) {
+        const { data: question } = await supabase
+          .from('survey_questions')
+          .select('id, question_type')
+          .eq('survey_id', surveyResponse.surveyId)
+          .eq('sort_order', response.questionNumber - 1)
+          .single();
+
+        if (question) {
+          const responseData: any = {
+            tenant_id: tenant.id,
+            survey_id: surveyResponse.surveyId,
+            question_id: question.id,
+            respondent_id: guardianData.id,
+            respondent_type: 'guardian'
+          };
+
+          // Handle different question types
+          if (question.question_type === 'single_choice' || question.question_type === 'multiple_choice') {
+            responseData.response_options = response.options || [response.answer];
+          } else if (question.question_type === 'yes_no') {
+            responseData.response_text = response.answer.toLowerCase() === 'نعم' || response.answer.toLowerCase() === 'yes' ? 'yes' : 'no';
+          } else if (question.question_type === 'rating') {
+            const rating = parseInt(response.answer);
+            responseData.response_text = isNaN(rating) ? '0' : rating.toString();
+          } else {
+            responseData.response_text = response.answer;
+          }
+
+          await supabase.from('survey_responses').insert(responseData);
+        }
+      }
+
+      // Update message context
+      if (messageRecord) {
+        await supabase
+          .from('wa_messages')
+          .update({
+            context_type: 'survey_response',
+            context_id: surveyResponse.surveyId,
+            processed: true,
+            status: 'delivered'
+          })
+          .eq('id', messageRecord.id);
+      }
+
+      // Send confirmation
+      await sendWhatsAppMessage(supabase, tenant.id, {
+        to: from,
+        message: `شكراً لك على المشاركة في الاستطلاع! ✅\n\nتم استلام إجاباتك بنجاح.\n\nنقدر وقتكم ومشاركتكم في تحسين خدماتنا.\n\nمع تحيات\n${tenant.name}`,
+        contextType: 'survey_response_confirmation',
+        contextId: surveyResponse.surveyId,
+        messageId: messageRecord?.id
+      });
+
+      return new Response('Survey response processed', { 
+        status: 200, 
+        headers: corsHeaders 
+      });
+    }
+
+    // Check for permission responses
+    const permissionResponse = await parsePermissionResponse(supabase, tenant.id, guardianData.id, messageText);
+    
+    if (permissionResponse) {
+      console.log('Processing permission response:', permissionResponse);
+
+      // Save permission response
+      const { error: responseError } = await supabase
+        .from('permission_responses')
+        .insert({
+          tenant_id: tenant.id,
+          permission_id: permissionResponse.permissionId,
+          guardian_id: guardianData.id,
+          response: permissionResponse.response,
+          notes: permissionResponse.reason,
+          responded_at: new Date().toISOString()
+        });
+
+      if (responseError) {
+        console.error('Error saving permission response:', responseError);
+      } else {
+        // Update message context
+        if (messageRecord) {
+          await supabase
+            .from('wa_messages')
+            .update({
+              context_type: 'permission_response',
+              context_id: permissionResponse.permissionId,
+              processed: true,
+              status: 'delivered'
+            })
+            .eq('id', messageRecord.id);
+        }
+
+        // Send confirmation
+        const responseText = permissionResponse.response === 'approve' ? 'موافقة' : 'رفض';
+        await sendWhatsAppMessage(supabase, tenant.id, {
+          to: from,
+          message: `تم استلام ردكم: ${responseText} ✅\n\nشكراً لتفاعلكم مع طلب الإذن.\n\nمع تحيات\n${tenant.name}`,
+          contextType: 'permission_response_confirmation',
+          contextId: permissionResponse.permissionId,
+          messageId: messageRecord?.id
+        });
+
+        return new Response('Permission response processed', { 
+          status: 200, 
+          headers: corsHeaders 
+        });
+      }
+    }
+
     // Parse dismissal request
     const dismissalData = parseDismissalRequest(messageText);
     
@@ -269,7 +403,7 @@ serve(async (req) => {
       // General message - send auto-reply with instructions
       await sendWhatsAppMessage(supabase, tenant.id, {
         to: from,
-        message: `مرحباً بك في ${tenant.name} 🌟\n\nلطلب استئذان طفلك، يرجى إرسال رسالة بالصيغة التالية:\n\nاستئذان [اسم الطالب] [الوقت]\nمثال: استئذان سارة 12:30\n\nللاستفسارات الأخرى، يرجى التواصل مع إدارة الحضانة.`,
+        message: `مرحباً بك في ${tenant.name} 🌟\n\nيمكنك:\n\n📊 الرد على الاستطلاعات المرسلة\n🔔 الرد على طلبات الأذونات بـ "موافق" أو "غير موافق"\n📝 طلب استئذان: استئذان [اسم الطالب] [الوقت]\n\nمثال: استئذان سارة 12:30\n\nللاستفسارات الأخرى، يرجى التواصل مع إدارة الحضانة.`,
         contextType: 'general_help',
         messageId: messageRecord?.id
       });
@@ -439,5 +573,174 @@ async function sendWhatsAppMessage(
     
   } catch (error) {
     console.error('Error sending WhatsApp message:', error);
+  }
+}
+
+// Helper function to parse survey responses
+async function parseSurveyResponse(
+  supabase: any, 
+  tenantId: string, 
+  guardianId: string, 
+  text: string
+): Promise<SurveyResponseData | null> {
+  try {
+    // Get active surveys for this guardian
+    const { data: activeSurveys } = await supabase
+      .from('surveys')
+      .select(`
+        id, title,
+        survey_questions (id, question_text, question_type, options, sort_order)
+      `)
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false });
+
+    if (!activeSurveys || activeSurveys.length === 0) {
+      return null;
+    }
+
+    // Try to parse structured responses
+    const responses: Array<{
+      questionNumber: number;
+      answer: string;
+      options?: string[];
+    }> = [];
+
+    // Look for numbered responses (1. answer, 2. answer, etc.)
+    const numberedPattern = /(\d+)[.\)]\s*([^\d\n]+?)(?=\d+[.\)]|$)/g;
+    let match;
+    
+    while ((match = numberedPattern.exec(text)) !== null) {
+      const questionNum = parseInt(match[1]);
+      let answer = match[2].trim();
+      
+      // Handle multiple choice by looking for letters (a, b, c, etc.)
+      const choicePattern = /([أابتثجحخدذرزسشصضطظعغفقكلمنهوي])\)/g;
+      const choices: string[] = [];
+      let choiceMatch;
+      
+      while ((choiceMatch = choicePattern.exec(answer)) !== null) {
+        choices.push(choiceMatch[1]);
+      }
+      
+      responses.push({
+        questionNumber: questionNum,
+        answer: answer,
+        options: choices.length > 0 ? choices : undefined
+      });
+    }
+
+    // If no structured responses found, try to match simple yes/no or approval patterns
+    if (responses.length === 0) {
+      const yesNoPattern = /^(نعم|لا|yes|no|موافق|غير موافق|أوافق|لا أوافق)$/i;
+      const ratingPattern = /^[1-5]$/;
+      
+      if (yesNoPattern.test(text.trim())) {
+        responses.push({
+          questionNumber: 1,
+          answer: text.trim()
+        });
+      } else if (ratingPattern.test(text.trim())) {
+        responses.push({
+          questionNumber: 1,
+          answer: text.trim()
+        });
+      }
+    }
+
+    if (responses.length > 0) {
+      // Use the most recent active survey
+      const survey = activeSurveys[0];
+      return {
+        surveyId: survey.id,
+        responses
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error parsing survey response:', error);
+    return null;
+  }
+}
+
+// Helper function to parse permission responses
+async function parsePermissionResponse(
+  supabase: any,
+  tenantId: string,
+  guardianId: string,
+  text: string
+): Promise<PermissionResponseData | null> {
+  try {
+    // Get active permissions for this guardian's students
+    const { data: activePermissions } = await supabase
+      .from('permissions')
+      .select(`
+        id, title,
+        permission_responses!left (id, guardian_id)
+      `)
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false });
+
+    if (!activePermissions || activePermissions.length === 0) {
+      return null;
+    }
+
+    // Find permissions that haven't been responded to by this guardian
+    const pendingPermissions = activePermissions.filter(permission => 
+      !permission.permission_responses.some((response: any) => response.guardian_id === guardianId)
+    );
+
+    if (pendingPermissions.length === 0) {
+      return null;
+    }
+
+    const normalizedText = text.toLowerCase().trim();
+    
+    // Check for approval patterns
+    const approvalPatterns = [
+      'موافق', 'أوافق', 'نعم', 'yes', 'موافقة', 'اوافق', 'نعام'
+    ];
+    
+    // Check for rejection patterns
+    const rejectionPatterns = [
+      'غير موافق', 'لا أوافق', 'لا', 'no', 'رفض', 'غير موافقة', 'لا اوافق', 'مش موافق'
+    ];
+
+    let response: 'approve' | 'reject' | null = null;
+    let reason: string | undefined;
+
+    // Check for approval
+    if (approvalPatterns.some(pattern => normalizedText.includes(pattern.toLowerCase()))) {
+      response = 'approve';
+    }
+    // Check for rejection
+    else if (rejectionPatterns.some(pattern => normalizedText.includes(pattern.toLowerCase()))) {
+      response = 'reject';
+      
+      // Extract reason if provided
+      const reasonMatch = text.match(/(?:سبب|لأن|بسبب|reason)[:\s]*(.+)/i);
+      if (reasonMatch) {
+        reason = reasonMatch[1].trim();
+      }
+    }
+
+    if (response) {
+      // Use the most recent pending permission
+      const permission = pendingPermissions[0];
+      return {
+        permissionId: permission.id,
+        response,
+        reason
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error parsing permission response:', error);
+    return null;
   }
 }
