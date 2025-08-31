@@ -35,6 +35,7 @@ Deno.serve(async (req) => {
 
     const requestBody = await req.json();
     const { action } = requestBody;
+    console.log('Request body:', requestBody);
 
     // For public survey responses, skip authentication
     if (action === 'publicResponse') {
@@ -66,13 +67,10 @@ Deno.serve(async (req) => {
       throw new Error('User has no associated tenant');
     }
 
-    const body = await req.json();
-    console.log('Request body:', body);
-
     // Handle different actions based on request body
-    if (body.action === 'notify' && body.surveyId) {
+    if (requestBody.action === 'notify' && requestBody.surveyId) {
       // Send Survey Notifications
-      const surveyId = body.surveyId;
+      const surveyId = requestBody.surveyId;
       
       console.log('Sending notifications for survey:', surveyId);
 
@@ -173,9 +171,9 @@ Deno.serve(async (req) => {
         }
       );
 
-    } else if (body.action === 'getResults' && body.surveyId) {
+    } else if (requestBody.action === 'getResults' && requestBody.surveyId) {
       // Get Survey Results
-      const surveyId = body.surveyId;
+      const surveyId = requestBody.surveyId;
       
       console.log('Getting results for survey:', surveyId);
 
@@ -251,7 +249,7 @@ Deno.serve(async (req) => {
 
     } else {
       // Create Survey (default action)
-      const surveyData: CreateSurveyRequest = body;
+      const surveyData: CreateSurveyRequest = requestBody;
       
       console.log('Creating survey:', surveyData);
 
