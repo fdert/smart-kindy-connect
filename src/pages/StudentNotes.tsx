@@ -127,7 +127,10 @@ export default function StudentNotes() {
   };
 
   const handleCreateNote = async () => {
+    console.log('Starting note creation...', { tenant, formData });
+    
     if (!tenant?.id || !formData.student_id || !formData.title || !formData.content) {
+      console.log('Validation failed:', { tenant_id: tenant?.id, student_id: formData.student_id, title: formData.title, content: formData.content });
       toast({
         title: "خطأ",
         description: "يرجى ملء جميع الحقول المطلوبة",
@@ -139,12 +142,15 @@ export default function StudentNotes() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
+      
+      console.log('User authenticated:', user.id);
 
       // First, get AI analysis
       let aiAnalysis = '';
       let aiSuggestions = '';
 
       try {
+        console.log('Calling AI analysis...');
         const { data: aiData, error: aiError } = await supabase.functions.invoke('assignments-ai', {
           body: {
             action: 'analyze_note',
@@ -156,6 +162,7 @@ export default function StudentNotes() {
         if (!aiError && aiData) {
           aiAnalysis = aiData.analysis;
           aiSuggestions = aiData.suggestions;
+          console.log('AI analysis successful');
         }
       } catch (aiError) {
         console.log('AI analysis failed, continuing without it:', aiError);
@@ -171,24 +178,32 @@ export default function StudentNotes() {
           format(selectedDate, 'yyyy-MM-dd') : null
       };
 
+      console.log('Inserting note data:', noteData);
+
       const { data: newNote, error } = await supabase
         .from('student_notes')
         .insert([noteData])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database insert error:', error);
+        throw error;
+      }
 
-      // Send WhatsApp notifications immediately (the database trigger handles this automatically)
-      // But we can also manually trigger notifications for immediate sending
+      console.log('Note created successfully:', newNote);
+
+      // Send WhatsApp notifications immediately
       try {
-        await supabase.functions.invoke('assignment-notifications', {
+        console.log('Triggering WhatsApp notifications...');
+        await supabase.functions.invoke('student-note-notifications', {
           body: {
             processImmediate: true,
             noteId: newNote.id,
             type: 'student_note'
           }
         });
+        console.log('WhatsApp notifications triggered');
       } catch (notificationError) {
         console.error('Error sending notifications:', notificationError);
         // Don't fail the note creation if notifications fail
