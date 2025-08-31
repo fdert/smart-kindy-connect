@@ -65,6 +65,7 @@ const Permissions = () => {
     permissionType: 'activity',
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default: 7 days from now
     selectedStudents: [] as string[],
+    selectAllStudents: false,
     responseOptions: ['موافق', 'غير موافق'] as string[],
     customOption: ''
   });
@@ -131,10 +132,10 @@ const Permissions = () => {
 
   const handleCreatePermission = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tenant || formData.selectedStudents.length === 0) {
+    if (!tenant || (!formData.selectAllStudents && formData.selectedStudents.length === 0)) {
       toast({
         title: "خطأ",
-        description: "يرجى اختيار طالب واحد على الأقل",
+        description: "يرجى اختيار طالب واحد على الأقل أو تحديد جميع الطلاب",
         variant: "destructive",
       });
       return;
@@ -149,7 +150,7 @@ const Permissions = () => {
           description: formData.description,
           permissionType: formData.permissionType,
           expiresAt: formData.expiresAt.toISOString(),
-          studentIds: formData.selectedStudents,
+          studentIds: formData.selectAllStudents ? students.map(s => s.id) : formData.selectedStudents,
           responseOptions: formData.responseOptions
         }
       });
@@ -168,6 +169,7 @@ const Permissions = () => {
         permissionType: 'activity',
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         selectedStudents: [],
+        selectAllStudents: false,
         responseOptions: ['موافق', 'غير موافق'],
         customOption: ''
       });
@@ -423,33 +425,65 @@ const Permissions = () => {
                 
                 <div>
                   <Label>الطلاب المستهدفين</Label>
-                  <div className="border rounded-md p-2 max-h-40 overflow-y-auto">
-                    {students.map((student) => (
-                      <div key={student.id} className="flex items-center space-x-2 py-1">
-                        <input
-                          type="checkbox"
-                          id={student.id}
-                          checked={formData.selectedStudents.includes(student.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setFormData(prev => ({
-                                ...prev,
-                                selectedStudents: [...prev.selectedStudents, student.id]
-                              }));
-                            } else {
-                              setFormData(prev => ({
-                                ...prev,
-                                selectedStudents: prev.selectedStudents.filter(id => id !== student.id)
-                              }));
-                            }
-                          }}
-                          className="rounded"
-                        />
-                        <label htmlFor={student.id} className="text-sm cursor-pointer flex-1">
-                          {student.full_name} ({student.student_id})
-                        </label>
+                  <div className="space-y-3">
+                    {/* خيار جميع الطلاب */}
+                    <div className="flex items-center space-x-2 p-2 bg-muted rounded-md">
+                      <input
+                        type="checkbox"
+                        id="selectAll"
+                        checked={formData.selectAllStudents}
+                        onChange={(e) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            selectAllStudents: e.target.checked,
+                            selectedStudents: e.target.checked ? [] : prev.selectedStudents
+                          }));
+                        }}
+                        className="rounded"
+                      />
+                      <label htmlFor="selectAll" className="text-sm font-medium cursor-pointer flex-1">
+                        <Users className="h-4 w-4 inline mr-2" />
+                        جميع الطلاب ({students.length} طالب)
+                      </label>
+                    </div>
+                    
+                    {/* قائمة الطلاب الفردية */}
+                    {!formData.selectAllStudents && (
+                      <div className="border rounded-md p-2 max-h-40 overflow-y-auto">
+                        {students.map((student) => (
+                          <div key={student.id} className="flex items-center space-x-2 py-1">
+                            <input
+                              type="checkbox"
+                              id={student.id}
+                              checked={formData.selectedStudents.includes(student.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    selectedStudents: [...prev.selectedStudents, student.id]
+                                  }));
+                                } else {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    selectedStudents: prev.selectedStudents.filter(id => id !== student.id)
+                                  }));
+                                }
+                              }}
+                              className="rounded"
+                            />
+                            <label htmlFor={student.id} className="text-sm cursor-pointer flex-1">
+                              {student.full_name} ({student.student_id})
+                            </label>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
+                    
+                    {formData.selectAllStudents && (
+                      <div className="text-sm text-muted-foreground p-2 bg-primary/5 rounded-md">
+                        سيتم إرسال الإذن لجميع الطلاب المسجلين ({students.length} طالب)
+                      </div>
+                    )}
                   </div>
                 </div>
                 
