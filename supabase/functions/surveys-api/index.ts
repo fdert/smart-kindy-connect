@@ -132,7 +132,11 @@ Deno.serve(async (req) => {
             });
           }
           
-          const surveyLink = `${Deno.env.get('SUPABASE_URL')?.replace('/supabase', '') || 'https://your-domain.com'}/surveys/public/${survey.id}`;
+          // Generate the correct survey link
+          const baseUrl = Deno.env.get('SUPABASE_URL')?.replace('/supabase', '') || 'https://your-domain.com';
+          const surveyLink = `${baseUrl}/surveys/public/${survey.id}`;
+          
+          console.log(`Manual notification - baseUrl: ${baseUrl}, surveyId: ${survey.id}, surveyLink: ${surveyLink}`);
           
           const { data: whatsappResult, error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
             body: {
@@ -360,7 +364,11 @@ Deno.serve(async (req) => {
           let autoNotificationsSent = 0;
           for (const contact of contacts) {
             try {
-              const surveyLink = `${Deno.env.get('SUPABASE_URL')?.replace('/supabase', '') || 'https://your-domain.com'}/surveys/public/${survey.id}`;
+              // Generate the correct survey link
+              const baseUrl = Deno.env.get('SUPABASE_URL')?.replace('/supabase', '') || 'https://your-domain.com';
+              const surveyLink = `${baseUrl}/surveys/public/${survey.id}`;
+              
+              console.log(`Auto-notification - baseUrl: ${baseUrl}, surveyId: ${survey.id}, surveyLink: ${surveyLink}`);
               
               const { data: whatsappResult, error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
                 body: {

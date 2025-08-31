@@ -132,7 +132,11 @@ serve(async (req) => {
 مع تحيات
 ${templateData.nurseryName || 'الحضانة'}`;
       } else if (templateName === 'survey_notification' && templateData) {
-        const surveyLink = templateData.surveyLink || `${Deno.env.get('SUPABASE_URL')?.replace('/supabase', '') || 'https://your-domain.com'}/surveys/public/${contextId}`;
+        // Build the survey link based on the current environment
+        const baseUrl = Deno.env.get('SUPABASE_URL')?.replace('/supabase', '') || 'https://your-domain.com';
+        const surveyLink = templateData.surveyLink || `${baseUrl}/surveys/public/${contextId}`;
+        
+        console.log(`Survey notification - baseUrl: ${baseUrl}, contextId: ${contextId}, surveyLink: ${surveyLink}`);
         
         messageText = `📊 استطلاع رأي جديد
 
@@ -149,6 +153,8 @@ ${templateData.surveyQuestions || ''}
 
 مع أطيب التحيات 💝
 ${templateData.nurseryName || 'إدارة الحضانة'}`;
+        
+        console.log(`Generated survey message: ${messageText}`);
       } else {
         // Use fallback message if template is missing
         messageText = message || `رسالة من ${templateData?.nurseryName || 'الحضانة'}`;
