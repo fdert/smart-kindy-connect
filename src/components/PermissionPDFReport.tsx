@@ -74,146 +74,138 @@ export const PermissionPDFReport = ({ permission, responses }: PermissionPDFRepo
     try {
       setIsGenerating(true);
       
-      const doc = new jsPDF();
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
       const stats = getResponseStats();
       
-      // Configure PDF for Arabic text (right-to-left)
-      doc.setR2L(true);
+      // Use built-in fonts with Unicode support
+      doc.setFont('helvetica');
       
-      // Title
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 20;
+      
+      // Title - centered
       doc.setFontSize(20);
-      doc.setFont('helvetica', 'bold');
-      doc.text('تقرير ردود الأذونات', 105, 20, { align: 'center' });
+      doc.text('تقرير ردود الأذونات', pageWidth / 2, 30, { align: 'center' });
       
-      // Permission details
+      
+      // Permission details section
       doc.setFontSize(16);
-      doc.text('تفاصيل الطلب', 20, 40);
+      doc.text('تفاصيل الطلب', pageWidth / 2, 50, { align: 'center' });
       
       doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
+      let yPosition = 65;
       
-      let yPosition = 55;
+      // Permission info helper function
+      const addText = (label: string, value: string, y: number) => {
+        const text = `${label}: ${value}`;
+        doc.text(text, pageWidth / 2, y, { align: 'center' });
+        return y + 8;
+      };
       
-      // Permission info
-      doc.text(`عنوان الطلب: ${permission.title}`, 20, yPosition);
-      yPosition += 10;
-      
-      doc.text(`نوع الطلب: ${getPermissionTypeLabel(permission.permission_type)}`, 20, yPosition);
-      yPosition += 10;
+      yPosition = addText('عنوان الطلب', permission.title, yPosition);
+      yPosition = addText('نوع الطلب', getPermissionTypeLabel(permission.permission_type), yPosition);
       
       if (permission.description) {
-        doc.text(`الوصف: ${permission.description}`, 20, yPosition);
-        yPosition += 10;
+        yPosition = addText('الوصف', permission.description, yPosition);
       }
       
-      doc.text(`تاريخ الإنشاء: ${format(new Date(permission.created_at), 'PPP', { locale: ar })}`, 20, yPosition);
-      yPosition += 10;
-      
-      doc.text(`تاريخ الانتهاء: ${format(new Date(permission.expires_at), 'PPP', { locale: ar })}`, 20, yPosition);
-      yPosition += 20;
+      yPosition = addText('تاريخ الإنشاء', format(new Date(permission.created_at), 'PPP', { locale: ar }), yPosition);
+      yPosition = addText('تاريخ الانتهاء', format(new Date(permission.expires_at), 'PPP', { locale: ar }), yPosition);
+      yPosition += 15;
       
       // Statistics section
       doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.text('إحصائيات الردود', 20, yPosition);
+      doc.text('إحصائيات الردود', pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 15;
       
       doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
+      yPosition = addText('إجمالي الردود المرسلة', stats.total.toString(), yPosition);
+      yPosition = addText('الردود بالموافقة', `${stats.approved} (${stats.approvedPercentage}%)`, yPosition);
+      yPosition = addText('الردود بالرفض', `${stats.declined} (${stats.declinedPercentage}%)`, yPosition);
+      yPosition = addText('الردود المعلقة', `${stats.pending} (${stats.pendingPercentage}%)`, yPosition);
+      yPosition += 15;
       
-      doc.text(`إجمالي الردود المرسلة: ${stats.total}`, 20, yPosition);
-      yPosition += 10;
-      
-      doc.text(`الردود بالموافقة: ${stats.approved} (${stats.approvedPercentage}%)`, 20, yPosition);
-      yPosition += 10;
-      
-      doc.text(`الردود بالرفض: ${stats.declined} (${stats.declinedPercentage}%)`, 20, yPosition);
-      yPosition += 10;
-      
-      doc.text(`الردود المعلقة: ${stats.pending} (${stats.pendingPercentage}%)`, 20, yPosition);
-      yPosition += 20;
-      
-      // Responses details
+      // Responses details section
       doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.text('تفاصيل الردود', 20, yPosition);
+      doc.text('تفاصيل الردود', pageWidth / 2, yPosition, { align: 'center' });
       yPosition += 15;
       
       doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
       
       responses.forEach((response, index) => {
         if (yPosition > 250) {
           doc.addPage();
-          yPosition = 20;
+          yPosition = 30;
         }
         
-        doc.setFont('helvetica', 'bold');
-        doc.text(`${index + 1}. ${response.guardians.full_name}`, 20, yPosition);
-        yPosition += 8;
-        
-        doc.setFont('helvetica', 'normal');
-        doc.text(`الطالب: ${response.students.full_name}`, 25, yPosition);
+        // Response details
+        doc.text(`${index + 1}. ${response.guardians.full_name}`, margin, yPosition);
         yPosition += 6;
-        
-        doc.text(`الرد: ${response.response}`, 25, yPosition);
+        doc.text(`   الطالب: ${response.students.full_name}`, margin + 5, yPosition);
+        yPosition += 6;
+        doc.text(`   الرد: ${response.response}`, margin + 5, yPosition);
         yPosition += 6;
         
         if (response.responded_at) {
-          doc.text(`تاريخ الرد: ${format(new Date(response.responded_at), 'PPP p', { locale: ar })}`, 25, yPosition);
-          yPosition += 6;
+          doc.text(`   تاريخ الرد: ${format(new Date(response.responded_at), 'PPP p', { locale: ar })}`, margin + 5, yPosition);
         } else {
-          doc.text('حالة الرد: لم يرد بعد', 25, yPosition);
-          yPosition += 6;
+          doc.text('   حالة الرد: لم يرد بعد', margin + 5, yPosition);
         }
+        yPosition += 6;
         
         if (response.notes) {
-          doc.text(`ملاحظات: ${response.notes}`, 25, yPosition);
+          doc.text(`   ملاحظات: ${response.notes}`, margin + 5, yPosition);
           yPosition += 6;
         }
         
-        doc.text(`رقم الواتساب: ${response.guardians.whatsapp_number}`, 25, yPosition);
+        doc.text(`   رقم الواتساب: ${response.guardians.whatsapp_number}`, margin + 5, yPosition);
         yPosition += 10;
       });
+      
       
       // Non-respondents section
       const nonRespondents = responses.filter(r => r.response === 'pending');
       if (nonRespondents.length > 0) {
         if (yPosition > 220) {
           doc.addPage();
-          yPosition = 20;
+          yPosition = 30;
         }
         
         doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text('قائمة من لم يرد', 20, yPosition);
+        doc.text('قائمة من لم يرد', pageWidth / 2, yPosition, { align: 'center' });
         yPosition += 15;
         
         doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
         
         nonRespondents.forEach((response, index) => {
           if (yPosition > 250) {
             doc.addPage();
-            yPosition = 20;
+            yPosition = 30;
           }
           
-          doc.text(`${index + 1}. ${response.guardians.full_name} - ${response.students.full_name} - ${response.guardians.whatsapp_number}`, 20, yPosition);
+          const text = `${index + 1}. ${response.guardians.full_name} - ${response.students.full_name} - ${response.guardians.whatsapp_number}`;
+          doc.text(text, margin, yPosition);
           yPosition += 8;
         });
       }
+      
       
       // Footer
       const pageCount = doc.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
-        doc.text(`تم إنشاء التقرير في: ${format(new Date(), 'PPP p', { locale: ar })}`, 20, 285);
-        doc.text(`صفحة ${i} من ${pageCount}`, 180, 285);
+        doc.text(`تم إنشاء التقرير في: ${format(new Date(), 'PPP p', { locale: ar })}`, pageWidth / 2, 285, { align: 'center' });
+        doc.text(`صفحة ${i} من ${pageCount}`, pageWidth - margin, 285, { align: 'right' });
       }
       
       // Save the PDF
-      const fileName = `تقرير_${permission.title.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      const fileName = `تقرير_ردود_الاذونات_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
       doc.save(fileName);
       
       toast({
