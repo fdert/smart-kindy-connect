@@ -19,7 +19,8 @@ import {
   Video,
   Building,
   Baby,
-  PenTool
+  PenTool,
+  ClipboardList
 } from 'lucide-react';
 
 const smartKindyLogo = "/lovable-uploads/46a447fc-00fa-49c5-b6ae-3f7b46fc4691.png";
@@ -72,6 +73,7 @@ const Navigation = () => {
     { name: 'الفصول', href: '/classes', icon: BookOpen },
     { name: 'الحضور', href: '/attendance', icon: Calendar },
     { name: 'الواجبات', href: '/assignments', icon: PenTool },
+    { name: 'ملاحظات الطلاب', href: '/student-notes', icon: ClipboardList },
     { name: 'التحفيز', href: '/rewards', icon: Star },
     { name: 'الألبوم', href: '/media', icon: Image },
     { name: 'أولياء الأمور', href: '/guardians', icon: UserCheck },
@@ -87,6 +89,7 @@ const Navigation = () => {
     { name: 'فصولي', href: '/classes', icon: BookOpen },
     { name: 'الحضور', href: '/attendance', icon: Calendar },
     { name: 'الواجبات', href: '/assignments', icon: PenTool },
+    { name: 'ملاحظات الطلاب', href: '/student-notes', icon: ClipboardList },
     { name: 'التحفيز', href: '/rewards', icon: Star },
     { name: 'الألبوم', href: '/media', icon: Image },
   ];

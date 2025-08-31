@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
 import Attendance from "./pages/Attendance";
 import Assignments from "./pages/Assignments";
+import StudentNotes from "./pages/StudentNotes";
 import Rewards from "./pages/Rewards";
 import Classes from "./pages/Classes";
 import Media from "./pages/Media";
@@ -115,6 +116,11 @@ const AppRoutes = () => (
     <Route path="/assignments" element={
       <ProtectedRoute>
         <Assignments />
+      </ProtectedRoute>
+    } />
+    <Route path="/student-notes" element={
+      <ProtectedRoute>
+        <StudentNotes />
       </ProtectedRoute>
     } />
     <Route path="/rewards" element={
