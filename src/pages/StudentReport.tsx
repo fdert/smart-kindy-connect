@@ -42,6 +42,7 @@ interface StudentReportData {
     date_of_birth: string;
     gender: string;
     class_name?: string;
+    tenant_name?: string;
   };
   assignments: {
     total: number;
@@ -123,44 +124,108 @@ export default function StudentReport() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (tenant && studentId) {
-      loadReportData();
+    // Check if this is guardian access or regular authenticated access
+    const isGuardianAccess = searchParams.get('guardian') === 'true';
+    
+    if (isGuardianAccess) {
+      // For guardian access, we only need studentId
+      if (studentId) {
+        loadReportData();
+      }
+    } else {
+      // For regular access, we need both tenant and studentId
+      if (tenant && studentId) {
+        loadReportData();
+      }
     }
-  }, [tenant, studentId, dateRange]);
+  }, [tenant, studentId, dateRange, searchParams]);
 
   const loadReportData = async () => {
-    if (!tenant || !studentId) return;
+    if (!studentId) return;
 
     setLoading(true);
     try {
-      // Ensure we have valid student ID and tenant ID
-      if (!studentId || !tenant?.id) {
-        throw new Error('معرف الطالب أو الروضة غير صحيح');
-      }
-
-      // Load student basic info
-      const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .select(`
-          id,
-          full_name,
-          student_id,
-          photo_url,
-          date_of_birth,
-          gender,
-          classes (name)
-        `)
-        .eq('id', studentId)
-        .eq('tenant_id', tenant.id)
-        .single();
-
-      if (studentError) throw studentError;
+      // Check if this is a guardian access (public access)
+      const isGuardianAccess = searchParams.get('guardian') === 'true';
       
-      // Verify student belongs to current tenant
-      if (!studentData || studentData.id !== studentId) {
-        throw new Error('لا يمكن العثور على بيانات الطالب أو ليس لديك صلاحية للوصول');
+      if (isGuardianAccess) {
+        // For guardian access, we don't need tenant verification
+        console.log('Guardian access mode - loading public report for student:', studentId);
+        
+        // Load student basic info without tenant restriction for guardian access
+        const { data: studentData, error: studentError } = await supabase
+          .from('students')
+          .select(`
+            id,
+            full_name,
+            student_id,
+            photo_url,
+            date_of_birth,
+            gender,
+            tenant_id,
+            classes (name),
+            tenants (name)
+          `)
+          .eq('id', studentId)
+          .single();
+
+        if (studentError) {
+          console.error('Student data error:', studentError);
+          throw new Error('لم يتم العثور على بيانات الطالب');
+        }
+
+        // For guardian access, use the student's tenant_id
+        const studentTenantId = studentData.tenant_id;
+        
+        // Load all data using the student's tenant_id
+        await loadStudentReportData(studentId, studentTenantId, studentData);
+        
+      } else {
+        // Regular authenticated access - require tenant
+        if (!tenant?.id) {
+          throw new Error('معرف الروضة غير صحيح');
+        }
+
+        // Load student basic info with tenant verification
+        const { data: studentData, error: studentError } = await supabase
+          .from('students')
+          .select(`
+            id,
+            full_name,
+            student_id,
+            photo_url,
+            date_of_birth,
+            gender,
+            classes (name)
+          `)
+          .eq('id', studentId)
+          .eq('tenant_id', tenant.id)
+          .single();
+
+        if (studentError) throw studentError;
+        
+        // Verify student belongs to current tenant
+        if (!studentData || studentData.id !== studentId) {
+          throw new Error('لا يمكن العثور على بيانات الطالب أو ليس لديك صلاحية للوصول');
+        }
+
+        await loadStudentReportData(studentId, tenant.id, studentData);
       }
 
+    } catch (error: any) {
+      console.error('Error loading report data:', error);
+      toast({
+        title: "خطأ في التحميل",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadStudentReportData = async (studentId: string, tenantId: string, studentData: any) => {
+    try {
       // Load assignments data with better error handling
       const { data: assignmentsData } = await supabase
         .from('assignment_evaluations')
@@ -174,7 +239,7 @@ export default function StudentReport() {
           assignment_id
         `)
         .eq('student_id', studentId)
-        .eq('tenant_id', tenant.id)
+        .eq('tenant_id', tenantId)
         .gte('evaluated_at', dateRange.from.toISOString())
         .lte('evaluated_at', dateRange.to.toISOString());
 
@@ -211,7 +276,7 @@ export default function StudentReport() {
         .from('attendance_events')
         .select('status, date')
         .eq('student_id', studentId)
-        .eq('tenant_id', tenant.id)
+        .eq('tenant_id', tenantId)
         .gte('date', format(dateRange.from, 'yyyy-MM-dd'))
         .lte('date', format(dateRange.to, 'yyyy-MM-dd'));
 
@@ -230,7 +295,7 @@ export default function StudentReport() {
         .from('rewards')
         .select('*')
         .eq('student_id', studentId)
-        .eq('tenant_id', tenant.id)
+        .eq('tenant_id', tenantId)
         .gte('awarded_at', dateRange.from.toISOString())
         .lte('awarded_at', dateRange.to.toISOString())
         .order('awarded_at', { ascending: false });
@@ -240,7 +305,7 @@ export default function StudentReport() {
         .from('student_notes')
         .select('*')
         .eq('student_id', studentId)
-        .eq('tenant_id', tenant.id)
+        .eq('tenant_id', tenantId)
         .eq('is_private', false)
         .gte('created_at', dateRange.from.toISOString())
         .lte('created_at', dateRange.to.toISOString())
@@ -251,7 +316,7 @@ export default function StudentReport() {
         .from('health_checks')
         .select('*')
         .eq('student_id', studentId)
-        .eq('tenant_id', tenant.id)
+        .eq('tenant_id', tenantId)
         .gte('check_date', format(dateRange.from, 'yyyy-MM-dd'))
         .lte('check_date', format(dateRange.to, 'yyyy-MM-dd'))
         .order('check_date', { ascending: false });
@@ -270,7 +335,7 @@ export default function StudentReport() {
           )
         `)
         .eq('student_id', studentId)
-        .eq('tenant_id', tenant.id);
+        .eq('tenant_id', tenantId);
 
       // Filter media by date range and ensure tenant isolation
       const mediaFiles = mediaLinks
@@ -278,7 +343,7 @@ export default function StudentReport() {
         .filter(Boolean)
         .filter(media => {
           // Double-check tenant isolation
-          if (media.tenant_id !== tenant.id) return false;
+          if (media.tenant_id !== tenantId) return false;
           const albumDate = new Date(media.album_date);
           return albumDate >= dateRange.from && albumDate <= dateRange.to;
         }) || [];
@@ -288,7 +353,7 @@ export default function StudentReport() {
         .from('development_skills')
         .select('*')
         .eq('student_id', studentId)
-        .eq('tenant_id', tenant.id)
+        .eq('tenant_id', tenantId)
         .gte('assessment_date', format(dateRange.from, 'yyyy-MM-dd'))
         .lte('assessment_date', format(dateRange.to, 'yyyy-MM-dd'))
         .order('assessment_date', { ascending: false });
@@ -296,7 +361,8 @@ export default function StudentReport() {
       setReportData({
         student: {
           ...studentData,
-          class_name: studentData.classes?.name
+          class_name: studentData.classes?.name,
+          tenant_name: studentData.tenants?.name
         },
         assignments: assignmentStats,
         attendance: attendanceStats,
@@ -306,15 +372,9 @@ export default function StudentReport() {
         media: mediaFiles,
         development_skills: skillsData || []
       });
-
     } catch (error: any) {
-      toast({
-        title: "خطأ في تحميل التقرير",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      console.error('Error loading student report data:', error);
+      throw error;
     }
   };
 
@@ -802,7 +862,7 @@ export default function StudentReport() {
         {/* Footer */}
         <div className="mt-12 text-center text-gray-500">
           <p>تقرير شامل للطالب - تم إنشاؤه في {format(new Date(), 'dd MMMM yyyy', { locale: ar })}</p>
-          <p className="text-sm mt-1">روضة {tenant?.name}</p>
+          <p className="text-sm mt-1">روضة {reportData.student.tenant_name || tenant?.name}</p>
         </div>
       </div>
     </div>
