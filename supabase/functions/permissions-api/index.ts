@@ -391,5 +391,90 @@ Deno.serve(async (req) => {
         } 
       }
     );
+}
+
+// Handle public permission response
+async function handlePublicResponse(requestData: PublicResponseRequest, supabase: any) {
+  try {
+    console.log('Processing public permission response:', JSON.stringify({
+      permissionId: requestData.permissionId,
+      response: requestData.response
+    }));
+
+    const { permissionId, response, notes } = requestData;
+
+    // Verify permission exists and is active
+    const { data: permission, error: permissionError } = await supabase
+      .from('permissions')
+      .select('*')
+      .eq('id', permissionId)
+      .eq('is_active', true)
+      .single();
+
+    if (permissionError || !permission) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Permission not found or no longer active'
+      }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Check if permission has expired
+    if (new Date(permission.expires_at) < new Date()) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Permission has expired'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // For public responses, we'll create a temporary response entry
+    // In a real implementation, you might want to collect guardian info first
+    const { data: responseData, error: responseError } = await supabase
+      .from('permission_responses')
+      .insert({
+        permission_id: permissionId,
+        guardian_id: '00000000-0000-0000-0000-000000000000', // Placeholder
+        student_id: '00000000-0000-0000-0000-000000000000', // Placeholder
+        tenant_id: permission.tenant_id,
+        response: response,
+        notes: notes,
+        responded_at: new Date().toISOString()
+      })
+      .select('id')
+      .single();
+
+    if (responseError) {
+      console.error('Error creating permission response:', responseError);
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Failed to save response'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    return new Response(JSON.stringify({
+      success: true,
+      responseId: responseData.id
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+
+  } catch (error: any) {
+    console.error('Public permission response error:', error);
+    return new Response(JSON.stringify({
+      success: false,
+      error: 'Internal server error'
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
   }
 });

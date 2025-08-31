@@ -129,6 +129,9 @@ serve(async (req) => {
 
 ينتهي الطلب في: ${templateData.expiresAt || 'غير محدد'}
 
+🔗 للرد على الطلب انقر الرابط:
+${templateData.permissionLink || `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/permission/${contextId}`}
+
 مع تحيات
 ${templateData.nurseryName || 'الحضانة'}`;
       } else if (templateName === 'survey_notification' && templateData) {

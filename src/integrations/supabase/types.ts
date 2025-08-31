@@ -1159,6 +1159,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           permission_type: string | null
+          response_options: Json | null
           tenant_id: string
           title: string
           updated_at: string | null
@@ -1171,6 +1172,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           permission_type?: string | null
+          response_options?: Json | null
           tenant_id: string
           title: string
           updated_at?: string | null
@@ -1183,6 +1185,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           permission_type?: string | null
+          response_options?: Json | null
           tenant_id?: string
           title?: string
           updated_at?: string | null
