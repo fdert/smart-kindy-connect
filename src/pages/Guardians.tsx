@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/hooks/useTenant';
 import { useToast } from '@/hooks/use-toast';
 import { UserCheck, Plus, Search, Edit, Trash2, Phone, Mail, Users } from 'lucide-react';
+import { formatSaudiPhoneNumber, displaySaudiPhoneNumber } from '@/lib/phoneUtils';
 
 interface Guardian {
   id: string;
@@ -417,12 +418,15 @@ const Guardians = () => {
                         required
                       />
                     </div>
-                    <div>
+                     <div>
                       <Label htmlFor="phone">رقم الهاتف</Label>
                       <Input
                         id="phone"
-                        value={formData.phone}
-                        onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                        value={displaySaudiPhoneNumber(formData.phone)}
+                        onChange={(e) => {
+                          const formatted = formatSaudiPhoneNumber(e.target.value);
+                          setFormData(prev => ({ ...prev, phone: formatted }));
+                        }}
                         placeholder="05xxxxxxxx"
                         required
                       />
@@ -434,8 +438,11 @@ const Guardians = () => {
                       <Label htmlFor="whatsapp_number">رقم الواتساب</Label>
                       <Input
                         id="whatsapp_number"
-                        value={formData.whatsapp_number}
-                        onChange={(e) => setFormData(prev => ({ ...prev, whatsapp_number: e.target.value }))}
+                        value={displaySaudiPhoneNumber(formData.whatsapp_number)}
+                        onChange={(e) => {
+                          const formatted = formatSaudiPhoneNumber(e.target.value);
+                          setFormData(prev => ({ ...prev, whatsapp_number: formatted }));
+                        }}
                         placeholder="05xxxxxxxx"
                       />
                     </div>

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Building, Mail, Phone, MapPin, User, Check } from 'lucide-react';
+import { formatSaudiPhoneNumber, displaySaudiPhoneNumber } from '@/lib/phoneUtils';
 
 interface RegistrationForm {
   name: string;
@@ -260,8 +261,11 @@ const TenantRegistration = () => {
                     <Input
                       id="phone"
                       type="tel"
-                      value={form.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      value={displaySaudiPhoneNumber(form.phone)}
+                      onChange={(e) => {
+                        const formatted = formatSaudiPhoneNumber(e.target.value);
+                        handleInputChange('phone', formatted);
+                      }}
                       placeholder="05xxxxxxxx"
                       className="text-left"
                       dir="ltr"
@@ -318,16 +322,19 @@ const TenantRegistration = () => {
 
                     <div>
                       <Label htmlFor="ownerPhone">رقم الهاتف *</Label>
-                      <Input
-                        id="ownerPhone"
-                        type="tel"
-                        value={form.ownerPhone}
-                        onChange={(e) => handleInputChange('ownerPhone', e.target.value)}
-                        placeholder="05xxxxxxxx"
-                        className="text-left"
-                        dir="ltr"
-                        required
-                      />
+                        <Input
+                          id="ownerPhone"
+                          type="tel"
+                          value={displaySaudiPhoneNumber(form.ownerPhone)}
+                          onChange={(e) => {
+                            const formatted = formatSaudiPhoneNumber(e.target.value);
+                            handleInputChange('ownerPhone', formatted);
+                          }}
+                          placeholder="05xxxxxxxx"
+                          className="text-left"
+                          dir="ltr"
+                          required
+                        />
                     </div>
                   </div>
                 </div>
