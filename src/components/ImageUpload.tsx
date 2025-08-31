@@ -52,7 +52,7 @@ export const ImageUpload = ({ currentImage, onImageChange, studentName }: ImageU
       const filePath = `students/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('media')
+        .from('students')
         .upload(filePath, file);
 
       if (uploadError) {
@@ -60,7 +60,7 @@ export const ImageUpload = ({ currentImage, onImageChange, studentName }: ImageU
       }
 
       const { data } = supabase.storage
-        .from('media')
+        .from('students')
         .getPublicUrl(filePath);
 
       onImageChange(data.publicUrl);
