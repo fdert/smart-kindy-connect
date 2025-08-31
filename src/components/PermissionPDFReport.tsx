@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { FileText, Download, Loader2 } from 'lucide-react';
 import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 
@@ -74,139 +75,280 @@ export const PermissionPDFReport = ({ permission, responses }: PermissionPDFRepo
     try {
       setIsGenerating(true);
       
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-      
       const stats = getResponseStats();
       
-      // Use built-in fonts with Unicode support
-      doc.setFont('helvetica');
+      // Create HTML content with proper Arabic support
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html dir="rtl" lang="ar">
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&display=swap');
+            
+            body {
+              font-family: 'Noto Sans Arabic', Arial, sans-serif;
+              direction: rtl;
+              text-align: right;
+              padding: 20px;
+              line-height: 1.6;
+              background: white;
+              color: #333;
+            }
+            
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+              border-bottom: 2px solid #2563eb;
+              padding-bottom: 20px;
+            }
+            
+            .title {
+              font-size: 24px;
+              font-weight: bold;
+              color: #1e40af;
+              margin-bottom: 10px;
+            }
+            
+            .section {
+              margin-bottom: 25px;
+              background: #f8fafc;
+              padding: 15px;
+              border-radius: 8px;
+              border-right: 4px solid #2563eb;
+            }
+            
+            .section-title {
+              font-size: 18px;
+              font-weight: bold;
+              color: #1e40af;
+              margin-bottom: 15px;
+              text-align: center;
+            }
+            
+            .info-row {
+              margin-bottom: 8px;
+              padding: 5px 0;
+            }
+            
+            .label {
+              font-weight: bold;
+              color: #374151;
+            }
+            
+            .stats-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 15px;
+              margin: 15px 0;
+            }
+            
+            .stat-card {
+              background: white;
+              padding: 15px;
+              text-align: center;
+              border-radius: 8px;
+              border: 1px solid #e5e7eb;
+            }
+            
+            .stat-number {
+              font-size: 24px;
+              font-weight: bold;
+              color: #2563eb;
+            }
+            
+            .stat-label {
+              font-size: 12px;
+              color: #6b7280;
+              margin-top: 5px;
+            }
+            
+            .response-item {
+              background: white;
+              margin-bottom: 10px;
+              padding: 15px;
+              border-radius: 8px;
+              border: 1px solid #e5e7eb;
+            }
+            
+            .response-header {
+              font-weight: bold;
+              color: #1f2937;
+              margin-bottom: 8px;
+            }
+            
+            .response-details {
+              font-size: 14px;
+              color: #6b7280;
+              margin: 5px 0;
+            }
+            
+            .badge {
+              display: inline-block;
+              padding: 4px 8px;
+              border-radius: 4px;
+              font-size: 12px;
+              font-weight: bold;
+            }
+            
+            .badge-approved { background: #dcfce7; color: #166534; }
+            .badge-declined { background: #fef2f2; color: #dc2626; }
+            .badge-pending { background: #f3f4f6; color: #374151; }
+            
+            .footer {
+              margin-top: 30px;
+              padding-top: 20px;
+              border-top: 1px solid #e5e7eb;
+              text-align: center;
+              font-size: 12px;
+              color: #6b7280;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="title">تقرير ردود الأذونات</div>
+          </div>
+          
+          <div class="section">
+            <div class="section-title">تفاصيل الطلب</div>
+            <div class="info-row">
+              <span class="label">عنوان الطلب:</span> ${permission.title}
+            </div>
+            <div class="info-row">
+              <span class="label">نوع الطلب:</span> ${getPermissionTypeLabel(permission.permission_type)}
+            </div>
+            ${permission.description ? `
+            <div class="info-row">
+              <span class="label">الوصف:</span> ${permission.description}
+            </div>
+            ` : ''}
+            <div class="info-row">
+              <span class="label">تاريخ الإنشاء:</span> ${format(new Date(permission.created_at), 'PPP', { locale: ar })}
+            </div>
+            <div class="info-row">
+              <span class="label">تاريخ الانتهاء:</span> ${format(new Date(permission.expires_at), 'PPP', { locale: ar })}
+            </div>
+          </div>
+          
+          <div class="section">
+            <div class="section-title">إحصائيات الردود</div>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-number">${stats.total}</div>
+                <div class="stat-label">إجمالي الردود</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-number">${stats.approved}</div>
+                <div class="stat-label">موافق (${stats.approvedPercentage}%)</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-number">${stats.declined}</div>
+                <div class="stat-label">مرفوض (${stats.declinedPercentage}%)</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-number">${stats.pending}</div>
+                <div class="stat-label">معلق (${stats.pendingPercentage}%)</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="section">
+            <div class="section-title">تفاصيل الردود</div>
+            ${responses.map((response, index) => `
+              <div class="response-item">
+                <div class="response-header">
+                  ${index + 1}. ${response.guardians.full_name}
+                  <span class="badge ${
+                    response.response === 'موافق' || response.response === 'approved' ? 'badge-approved' :
+                    response.response === 'غير موافق' || response.response === 'declined' ? 'badge-declined' :
+                    'badge-pending'
+                  }">${response.response}</span>
+                </div>
+                <div class="response-details">الطالب: ${response.students.full_name}</div>
+                <div class="response-details">
+                  ${response.responded_at ? 
+                    `تاريخ الرد: ${format(new Date(response.responded_at), 'PPP p', { locale: ar })}` : 
+                    'لم يرد بعد'
+                  }
+                </div>
+                ${response.notes ? `<div class="response-details">ملاحظات: ${response.notes}</div>` : ''}
+                <div class="response-details">رقم الواتساب: ${response.guardians.whatsapp_number}</div>
+              </div>
+            `).join('')}
+          </div>
+          
+          ${stats.pending > 0 ? `
+          <div class="section">
+            <div class="section-title">قائمة من لم يرد (${stats.pending})</div>
+            ${responses
+              .filter(r => r.response === 'pending')
+              .map((response, index) => `
+                <div class="info-row">
+                  ${index + 1}. ${response.guardians.full_name} - ${response.students.full_name} - ${response.guardians.whatsapp_number}
+                </div>
+              `).join('')}
+          </div>
+          ` : ''}
+          
+          <div class="footer">
+            تم إنشاء التقرير في: ${format(new Date(), 'PPP p', { locale: ar })}
+          </div>
+        </body>
+        </html>
+      `;
       
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const margin = 20;
+      // Create a temporary div to render HTML
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = htmlContent;
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.width = '794px'; // A4 width in pixels
+      document.body.appendChild(tempDiv);
       
-      // Title - centered
-      doc.setFontSize(20);
-      doc.text('تقرير ردود الأذونات', pageWidth / 2, 30, { align: 'center' });
+      // Wait for fonts to load
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      
-      // Permission details section
-      doc.setFontSize(16);
-      doc.text('تفاصيل الطلب', pageWidth / 2, 50, { align: 'center' });
-      
-      doc.setFontSize(12);
-      let yPosition = 65;
-      
-      // Permission info helper function
-      const addText = (label: string, value: string, y: number) => {
-        const text = `${label}: ${value}`;
-        doc.text(text, pageWidth / 2, y, { align: 'center' });
-        return y + 8;
-      };
-      
-      yPosition = addText('عنوان الطلب', permission.title, yPosition);
-      yPosition = addText('نوع الطلب', getPermissionTypeLabel(permission.permission_type), yPosition);
-      
-      if (permission.description) {
-        yPosition = addText('الوصف', permission.description, yPosition);
-      }
-      
-      yPosition = addText('تاريخ الإنشاء', format(new Date(permission.created_at), 'PPP', { locale: ar }), yPosition);
-      yPosition = addText('تاريخ الانتهاء', format(new Date(permission.expires_at), 'PPP', { locale: ar }), yPosition);
-      yPosition += 15;
-      
-      // Statistics section
-      doc.setFontSize(16);
-      doc.text('إحصائيات الردود', pageWidth / 2, yPosition, { align: 'center' });
-      yPosition += 15;
-      
-      doc.setFontSize(12);
-      yPosition = addText('إجمالي الردود المرسلة', stats.total.toString(), yPosition);
-      yPosition = addText('الردود بالموافقة', `${stats.approved} (${stats.approvedPercentage}%)`, yPosition);
-      yPosition = addText('الردود بالرفض', `${stats.declined} (${stats.declinedPercentage}%)`, yPosition);
-      yPosition = addText('الردود المعلقة', `${stats.pending} (${stats.pendingPercentage}%)`, yPosition);
-      yPosition += 15;
-      
-      // Responses details section
-      doc.setFontSize(16);
-      doc.text('تفاصيل الردود', pageWidth / 2, yPosition, { align: 'center' });
-      yPosition += 15;
-      
-      doc.setFontSize(10);
-      
-      responses.forEach((response, index) => {
-        if (yPosition > 250) {
-          doc.addPage();
-          yPosition = 30;
-        }
-        
-        // Response details
-        doc.text(`${index + 1}. ${response.guardians.full_name}`, margin, yPosition);
-        yPosition += 6;
-        doc.text(`   الطالب: ${response.students.full_name}`, margin + 5, yPosition);
-        yPosition += 6;
-        doc.text(`   الرد: ${response.response}`, margin + 5, yPosition);
-        yPosition += 6;
-        
-        if (response.responded_at) {
-          doc.text(`   تاريخ الرد: ${format(new Date(response.responded_at), 'PPP p', { locale: ar })}`, margin + 5, yPosition);
-        } else {
-          doc.text('   حالة الرد: لم يرد بعد', margin + 5, yPosition);
-        }
-        yPosition += 6;
-        
-        if (response.notes) {
-          doc.text(`   ملاحظات: ${response.notes}`, margin + 5, yPosition);
-          yPosition += 6;
-        }
-        
-        doc.text(`   رقم الواتساب: ${response.guardians.whatsapp_number}`, margin + 5, yPosition);
-        yPosition += 10;
+      // Generate canvas from HTML
+      const canvas = await html2canvas(tempDiv, {
+        width: 794,
+        height: 1123,
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
       });
       
+      // Remove temporary div
+      document.body.removeChild(tempDiv);
       
-      // Non-respondents section
-      const nonRespondents = responses.filter(r => r.response === 'pending');
-      if (nonRespondents.length > 0) {
-        if (yPosition > 220) {
-          doc.addPage();
-          yPosition = 30;
-        }
-        
-        doc.setFontSize(16);
-        doc.text('قائمة من لم يرد', pageWidth / 2, yPosition, { align: 'center' });
-        yPosition += 15;
-        
-        doc.setFontSize(10);
-        
-        nonRespondents.forEach((response, index) => {
-          if (yPosition > 250) {
-            doc.addPage();
-            yPosition = 30;
-          }
-          
-          const text = `${index + 1}. ${response.guardians.full_name} - ${response.students.full_name} - ${response.guardians.whatsapp_number}`;
-          doc.text(text, margin, yPosition);
-          yPosition += 8;
-        });
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL('image/png');
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      // Add first page
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+      
+      // Add additional pages if needed
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
       }
       
-      
-      // Footer
-      const pageCount = doc.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.text(`تم إنشاء التقرير في: ${format(new Date(), 'PPP p', { locale: ar })}`, pageWidth / 2, 285, { align: 'center' });
-        doc.text(`صفحة ${i} من ${pageCount}`, pageWidth - margin, 285, { align: 'right' });
-      }
-      
-      // Save the PDF
+      // Save PDF
       const fileName = `تقرير_ردود_الاذونات_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
-      doc.save(fileName);
+      pdf.save(fileName);
       
       toast({
         title: "تم إنشاء التقرير",
