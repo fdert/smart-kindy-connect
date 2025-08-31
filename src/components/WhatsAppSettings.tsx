@@ -291,10 +291,17 @@ const WhatsAppSettings = () => {
                 يمكنك استخدام المتغيرات التالية: {'{studentName}, {guardianName}, {permissionTitle}, {permissionDescription}, {otpToken}, {expiresAt}, {nurseryName}, {time}, {date}, {pin}, {message}, {className}, {photoCount}, {videoCount}'}
               </p>
               <div className="mt-2 p-3 bg-blue-50 rounded-md">
-                <p className="text-xs font-medium text-blue-800 mb-2">مثال على تمبلت رسالة الأذونات:</p>
-                <pre className="text-xs text-blue-700 whitespace-pre-wrap">{`{
-  "permission_request": "🔔 طلب إذن جديد\\n\\nعزيز/ة {{guardianName}}\\n\\nيطلب منكم الموافقة على: {{permissionTitle}}\\n\\nالتفاصيل: {{permissionDescription}}\\n\\nللطالب/ة: {{studentName}}\\n\\nينتهي الطلب في: {{expiresAt}}\\n\\nللموافقة أرسل: نعم {{otpToken}}\\nللرفض أرسل: لا {{otpToken}}\\n\\nمع تحيات\\n{{nurseryName}}"
-}`}</pre>
+                <p className="text-xs font-medium text-blue-800 mb-2">أمثلة على تمبلت الرسائل:</p>
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-xs font-medium text-blue-700">رسالة الأذونات:</p>
+                    <pre className="text-xs text-blue-600 whitespace-pre-wrap">{`"permission_request": "🔔 طلب إذن جديد\\n\\nعزيز/ة {{guardianName}}\\n\\nيطلب منكم الموافقة على: {{permissionTitle}}\\n\\nالتفاصيل: {{permissionDescription}}\\n\\nللطالب/ة: {{studentName}}\\n\\nينتهي الطلب في: {{expiresAt}}\\n\\nللموافقة أرسل: نعم {{otpToken}}\\nللرفض أرسل: لا {{otpToken}}\\n\\nمع تحيات\\n{{nurseryName}}"`}</pre>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-blue-700">رسالة الاستطلاعات:</p>
+                    <pre className="text-xs text-blue-600 whitespace-pre-wrap">{`"survey_notification": "📊 استطلاع رأي جديد\\n\\nعزيز/ة {{guardianName}}\\n\\nدعوة للمشاركة في: {{surveyTitle}}\\n\\nالوصف: {{surveyDescription}}\\n\\nنقدر مشاركتكم في تحسين خدماتنا\\n\\nمع تحيات\\n{{nurseryName}}"`}</pre>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
       let notificationsSent = 0;
       for (const contact of contacts) {
         try {
-          await supabase.functions.invoke('whatsapp-outbound', {
+          const { data: whatsappResult, error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
             body: {
               tenantId: userData.tenant_id,
               to: contact.whatsapp_number,
@@ -111,7 +111,14 @@ Deno.serve(async (req) => {
               contextId: survey.id
             }
           });
-          notificationsSent++;
+          
+          if (whatsappError) {
+            console.error('WhatsApp notification error:', whatsappError);
+            throw whatsappError;
+          } else {
+            console.log('WhatsApp notification sent successfully:', whatsappResult);
+            notificationsSent++;
+          }
         } catch (error) {
           console.error('Failed to send notification to:', contact.whatsapp_number, error);
         }
@@ -254,6 +261,59 @@ Deno.serve(async (req) => {
         }
 
         console.log('Questions created successfully');
+
+        // Automatically send WhatsApp notifications after creating survey
+        try {
+          console.log('Sending automatic notifications for new survey:', survey.id);
+          
+          // Get target audience contacts based on survey settings
+          let contacts = [];
+          if (survey.target_audience === 'guardians' || survey.target_audience === 'both') {
+            const { data: guardians } = await supabase
+              .from('guardians')
+              .select('whatsapp_number, full_name')
+              .eq('tenant_id', userData.tenant_id)
+              .not('whatsapp_number', 'is', null);
+            
+            contacts.push(...(guardians || []));
+          }
+
+          // Send WhatsApp notifications
+          let autoNotificationsSent = 0;
+          for (const contact of contacts) {
+            try {
+              const { data: whatsappResult, error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
+                body: {
+                  tenantId: userData.tenant_id,
+                  to: contact.whatsapp_number,
+                  templateName: 'survey_notification',
+                  templateData: {
+                    guardianName: contact.full_name,
+                    surveyTitle: survey.title,
+                    surveyDescription: survey.description || '',
+                    nurseryName: userData.tenants?.name || ''
+                  },
+                  contextType: 'survey',
+                  contextId: survey.id
+                }
+              });
+              
+              if (whatsappError) {
+                console.error('WhatsApp auto-notification error:', whatsappError);
+              } else {
+                console.log('WhatsApp auto-notification sent successfully to:', contact.whatsapp_number);
+                autoNotificationsSent++;
+              }
+            } catch (contactError) {
+              console.error('Failed to send auto-notification to:', contact.whatsapp_number, contactError);
+            }
+          }
+          
+          console.log(`Sent ${autoNotificationsSent} automatic notifications for survey`);
+        } catch (autoNotifyError) {
+          console.error('Error sending automatic survey notifications:', autoNotifyError);
+          // Don't throw here, as survey was created successfully
+        }
       }
 
       return new Response(
