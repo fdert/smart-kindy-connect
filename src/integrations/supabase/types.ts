@@ -2527,6 +2527,10 @@ export type Database = {
         Args: { _role: Database["public"]["Enums"]["user_role"] }
         Returns: boolean
       }
+      process_scheduled_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       attendance_status: "present" | "absent" | "late" | "excused"

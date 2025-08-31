@@ -161,15 +161,30 @@ export default function Assignments() {
         class_id: formData.class_id || null
       };
 
-      const { error } = await supabase
+      const { data: newAssignment, error } = await supabase
         .from('assignments')
-        .insert([assignmentData]);
+        .insert([assignmentData])
+        .select()
+        .single();
 
       if (error) throw error;
 
+      // Send WhatsApp notifications immediately
+      try {
+        await supabase.functions.invoke('assignment-notifications', {
+          body: {
+            processImmediate: true,
+            assignmentId: newAssignment.id
+          }
+        });
+      } catch (notificationError) {
+        console.error('Error sending notifications:', notificationError);
+        // Don't fail the assignment creation if notifications fail
+      }
+
       toast({
         title: "تم بنجاح",
-        description: "تم إنشاء الواجب بنجاح"
+        description: "تم إنشاء الواجب وإرسال الإشعارات لأولياء الأمور"
       });
 
       setIsCreateDialogOpen(false);
