@@ -1,5 +1,4 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.56.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,332 +15,266 @@ interface CreateSurveyRequest {
   questions: Array<{
     questionText: string;
     questionType: string;
-    options?: string[];
+    options: string[];
     isRequired: boolean;
   }>;
 }
 
-interface SurveyResponseRequest {
-  surveyId: string;
-  responses: Array<{
-    questionId: string;
-    responseText?: string;
-    responseOptions?: string[];
-  }>;
-  otpToken?: string;
-}
-
-serve(async (req) => {
+Deno.serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false }
-    });
+    // Initialize Supabase client
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
-    const url = new URL(req.url);
-    const pathParts = url.pathname.split('/').filter(p => p);
+    // Get the authenticated user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header');
+    }
 
-    // Create survey
-    if (req.method === 'POST' && pathParts.length === 0) {
-      const authHeader = req.headers.get('authorization');
-      if (!authHeader) {
-        return new Response('Unauthorized', { status: 401, headers: corsHeaders });
-      }
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
 
-      const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-      if (!user) {
-        return new Response('Unauthorized', { status: 401, headers: corsHeaders });
-      }
+    if (authError || !user) {
+      throw new Error('Unauthorized');
+    }
 
-      const { data: userData } = await supabase
-        .from('users')
-        .select('tenant_id')
-        .eq('id', user.id)
-        .single();
+    // Get user's tenant
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('tenant_id')
+      .eq('id', user.id)
+      .single();
 
-      if (!userData?.tenant_id) {
-        return new Response('Tenant not found', { status: 404, headers: corsHeaders });
-      }
+    if (userError || !userData?.tenant_id) {
+      throw new Error('User has no associated tenant');
+    }
 
-      const requestData: CreateSurveyRequest = await req.json();
+    const body = await req.json();
+    console.log('Request body:', body);
+
+    // Handle different actions based on request body
+    if (body.action === 'notify' && body.surveyId) {
+      // Send Survey Notifications
+      const surveyId = body.surveyId;
       
-      // Create survey
+      console.log('Sending notifications for survey:', surveyId);
+
+      // Get survey details
       const { data: survey, error: surveyError } = await supabase
-        .from('surveys')
-        .insert({
-          tenant_id: userData.tenant_id,
-          title: requestData.title,
-          description: requestData.description,
-          survey_type: requestData.surveyType,
-          target_audience: requestData.targetAudience,
-          expires_at: requestData.expiresAt,
-          is_anonymous: requestData.isAnonymous,
-          created_by: user.id
-        })
-        .select('id')
-        .single();
-
-      if (surveyError) throw surveyError;
-
-      // Create questions
-      for (let i = 0; i < requestData.questions.length; i++) {
-        const question = requestData.questions[i];
-        await supabase
-          .from('survey_questions')
-          .insert({
-            survey_id: survey.id,
-            question_text: question.questionText,
-            question_type: question.questionType,
-            options: question.options ? JSON.stringify(question.options) : null,
-            is_required: question.isRequired,
-            sort_order: i
-          });
-      }
-
-      return new Response(JSON.stringify({ 
-        success: true, 
-        surveyId: survey.id 
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Submit survey response
-    if (req.method === 'POST' && pathParts[1] === 'respond') {
-      const surveyId = pathParts[0];
-      const requestData: SurveyResponseRequest = await req.json();
-
-      let respondentId = null;
-      let respondentType = 'anonymous';
-
-      // If not anonymous, verify OTP or auth
-      const authHeader = req.headers.get('authorization');
-      if (authHeader) {
-        const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-        if (user) {
-          const { data: userData } = await supabase
-            .from('users')
-            .select('id, role, tenant_id')
-            .eq('id', user.id)
-            .single();
-
-          if (userData) {
-            respondentId = userData.id;
-            respondentType = userData.role === 'guardian' ? 'guardian' : 
-                           userData.role === 'teacher' ? 'teacher' : 'admin';
-          }
-        }
-      }
-
-      // Get survey and tenant
-      const { data: survey } = await supabase
-        .from('surveys')
-        .select('tenant_id, is_anonymous')
-        .eq('id', surveyId)
-        .single();
-
-      if (!survey) {
-        return new Response('Survey not found', { status: 404, headers: corsHeaders });
-      }
-
-      // Submit responses
-      for (const response of requestData.responses) {
-        await supabase
-          .from('survey_responses')
-          .insert({
-            tenant_id: survey.tenant_id,
-            survey_id: surveyId,
-            question_id: response.questionId,
-            respondent_id: survey.is_anonymous ? null : respondentId,
-            respondent_type: survey.is_anonymous ? 'anonymous' : respondentType,
-            response_text: response.responseText,
-            response_options: response.responseOptions
-          });
-      }
-
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Send survey notifications
-    if (req.method === 'POST' && pathParts[1] === 'notify') {
-      const surveyId = pathParts[0];
-      
-      const authHeader = req.headers.get('authorization');
-      if (!authHeader) {
-        return new Response('Unauthorized', { status: 401, headers: corsHeaders });
-      }
-
-      const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-      if (!user) {
-        return new Response('Unauthorized', { status: 401, headers: corsHeaders });
-      }
-
-      const { data: userData } = await supabase
-        .from('users')
-        .select('tenant_id')
-        .eq('id', user.id)
-        .single();
-
-      // Get survey
-      const { data: survey } = await supabase
         .from('surveys')
         .select('*')
         .eq('id', surveyId)
-        .eq('tenant_id', userData?.tenant_id)
+        .eq('tenant_id', userData.tenant_id)
         .single();
 
-      if (!survey) {
-        return new Response('Survey not found', { status: 404, headers: corsHeaders });
+      if (surveyError) {
+        throw surveyError;
       }
 
-      let recipients = [];
-
-      // Get recipients based on target audience
+      // Get target audience contacts based on survey settings
+      let contacts = [];
       if (survey.target_audience === 'guardians' || survey.target_audience === 'both') {
         const { data: guardians } = await supabase
           .from('guardians')
           .select('whatsapp_number, full_name')
-          .eq('tenant_id', userData?.tenant_id)
+          .eq('tenant_id', userData.tenant_id)
           .not('whatsapp_number', 'is', null);
-
-        recipients.push(...(guardians || []));
+        
+        contacts.push(...(guardians || []));
       }
 
-      if (survey.target_audience === 'teachers' || survey.target_audience === 'both') {
-        const { data: teachers } = await supabase
-          .from('users')
-          .select('phone as whatsapp_number, full_name')
-          .eq('tenant_id', userData?.tenant_id)
-          .in('role', ['teacher', 'admin'])
-          .not('phone', 'is', null);
-
-        recipients.push(...(teachers || []));
-      }
-
-      // Send notifications
-      const surveyUrl = `${req.headers.get('origin') || 'https://smartkindy.com'}/surveys/${surveyId}`;
-      
-      for (const recipient of recipients) {
-        if (recipient.whatsapp_number) {
+      // Send WhatsApp notifications
+      let notificationsSent = 0;
+      for (const contact of contacts) {
+        try {
           await supabase.functions.invoke('whatsapp-outbound', {
             body: {
-              tenantId: userData?.tenant_id,
-              to: recipient.whatsapp_number,
-              templateName: 'survey_invitation',
-              templateData: {
-                recipientName: recipient.full_name,
+              to: contact.whatsapp_number,
+              template: 'survey_notification',
+              data: {
+                guardianName: contact.full_name,
                 surveyTitle: survey.title,
-                surveyDescription: survey.description,
-                surveyUrl: surveyUrl,
-                nurseryName: 'الحضانة'
-              },
-              contextType: 'survey',
-              contextId: surveyId
+                surveyDescription: survey.description || '',
+                nurseryName: userData.tenant_id
+              }
             }
           });
+          notificationsSent++;
+        } catch (error) {
+          console.error('Failed to send notification to:', contact.whatsapp_number, error);
         }
       }
 
-      return new Response(JSON.stringify({ 
-        success: true, 
-        notificationsSent: recipients.length 
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+      return new Response(
+        JSON.stringify({ success: true, notificationsSent }),
+        { 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        }
+      );
 
-    // Get survey results
-    if (req.method === 'GET' && pathParts[1] === 'results') {
-      const surveyId = pathParts[0];
+    } else if (body.action === 'getResults' && body.surveyId) {
+      // Get Survey Results
+      const surveyId = body.surveyId;
       
-      const authHeader = req.headers.get('authorization');
-      if (!authHeader) {
-        return new Response('Unauthorized', { status: 401, headers: corsHeaders });
-      }
+      console.log('Getting results for survey:', surveyId);
 
-      // Get survey with questions and responses
-      const { data: survey } = await supabase
+      // Get survey with questions
+      const { data: survey, error: surveyError } = await supabase
         .from('surveys')
         .select(`
           *,
-          survey_questions(*),
-          survey_responses(*)
+          survey_questions (*)
         `)
         .eq('id', surveyId)
+        .eq('tenant_id', userData.tenant_id)
         .single();
 
-      if (!survey) {
-        return new Response('Survey not found', { status: 404, headers: corsHeaders });
+      if (surveyError) {
+        throw surveyError;
       }
 
-      // Process results
-      const results = survey.survey_questions.map((question: any) => {
-        const questionResponses = survey.survey_responses.filter(
-          (response: any) => response.question_id === question.id
-        );
+      // Get responses for each question
+      const results = [];
+      for (const question of survey.survey_questions || []) {
+        const { data: responses } = await supabase
+          .from('survey_responses')
+          .select('*')
+          .eq('question_id', question.id)
+          .eq('tenant_id', userData.tenant_id);
 
-        const stats: any = {
+        const totalResponses = responses?.length || 0;
+        
+        let questionResult: any = {
           questionId: question.id,
           questionText: question.question_text,
           questionType: question.question_type,
-          totalResponses: questionResponses.length,
-          responses: questionResponses
+          totalResponses
         };
 
-        // Calculate statistics based on question type
+        // Process responses based on question type
         if (question.question_type === 'yes_no') {
-          const yesCount = questionResponses.filter(r => r.response_text === 'yes').length;
-          const noCount = questionResponses.filter(r => r.response_text === 'no').length;
-          stats.yesCount = yesCount;
-          stats.noCount = noCount;
-          stats.yesPercentage = questionResponses.length > 0 ? (yesCount / questionResponses.length * 100) : 0;
+          const yesCount = responses?.filter(r => r.response_text === 'yes').length || 0;
+          const noCount = responses?.filter(r => r.response_text === 'no').length || 0;
+          questionResult.yesCount = yesCount;
+          questionResult.noCount = noCount;
+          questionResult.yesPercentage = totalResponses > 0 ? Math.round((yesCount / totalResponses) * 100) : 0;
         } else if (question.question_type === 'single_choice' || question.question_type === 'multiple_choice') {
           const optionCounts: Record<string, number> = {};
-          questionResponses.forEach((response: any) => {
+          responses?.forEach(response => {
             if (response.response_options) {
               response.response_options.forEach((option: string) => {
                 optionCounts[option] = (optionCounts[option] || 0) + 1;
               });
             }
           });
-          stats.optionCounts = optionCounts;
+          questionResult.optionCounts = optionCounts;
         } else if (question.question_type === 'rating') {
-          const ratings = questionResponses.map(r => parseInt(r.response_text)).filter(r => !isNaN(r));
+          const ratings = responses?.map(r => parseInt(r.response_text)).filter(r => !isNaN(r)) || [];
           const averageRating = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
-          stats.averageRating = averageRating;
-          stats.ratings = ratings;
+          questionResult.ratings = ratings;
+          questionResult.averageRating = Math.round(averageRating * 100) / 100;
         }
 
-        return stats;
-      });
+        results.push(questionResult);
+      }
 
-      return new Response(JSON.stringify({
-        survey,
-        results,
-        totalRespondents: survey.survey_responses.length
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      return new Response(
+        JSON.stringify({ success: true, results }),
+        { 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        }
+      );
+
+    } else {
+      // Create Survey (default action)
+      const surveyData: CreateSurveyRequest = body;
+      
+      console.log('Creating survey:', surveyData);
+
+      // Insert survey
+      const { data: survey, error: surveyError } = await supabase
+        .from('surveys')
+        .insert({
+          title: surveyData.title,
+          description: surveyData.description,
+          survey_type: surveyData.surveyType,
+          target_audience: surveyData.targetAudience,
+          expires_at: surveyData.expiresAt,
+          is_anonymous: surveyData.isAnonymous,
+          tenant_id: userData.tenant_id,
+          created_by: user.id,
+          is_active: true
+        })
+        .select()
+        .single();
+
+      if (surveyError) {
+        console.error('Survey creation error:', surveyError);
+        throw surveyError;
+      }
+
+      console.log('Survey created:', survey);
+
+      // Insert questions
+      if (surveyData.questions && surveyData.questions.length > 0) {
+        const questions = surveyData.questions.map((q, index) => ({
+          survey_id: survey.id,
+          question_text: q.questionText,
+          question_type: q.questionType,
+          options: q.options.length > 0 ? q.options : null,
+          is_required: q.isRequired,
+          sort_order: index
+        }));
+
+        const { error: questionsError } = await supabase
+          .from('survey_questions')
+          .insert(questions);
+
+        if (questionsError) {
+          console.error('Questions creation error:', questionsError);
+          throw questionsError;
+        }
+
+        console.log('Questions created successfully');
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, survey }),
+        { 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        }
+      );
     }
 
-    return new Response('Not found', { status: 404, headers: corsHeaders });
-
-  } catch (error) {
-    console.error('Surveys API error:', error);
-    return new Response(JSON.stringify({
-      success: false,
-      error: 'Internal server error'
-    }), { 
-      status: 500, 
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+  } catch (error: any) {
+    console.error('Error in surveys-api:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 400,
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
+    );
   }
 });

@@ -176,15 +176,17 @@ const Surveys = () => {
   const handleSendNotifications = async (surveyId: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('surveys-api', {
-        body: {},
-        method: 'POST'
+        body: {
+          action: 'notify',
+          surveyId: surveyId
+        }
       });
 
       if (error) throw error;
 
       toast({
         title: "تم إرسال الإشعارات",
-        description: `تم إرسال ${data.notificationsSent} إشعار عبر واتساب`,
+        description: `تم إرسال ${data?.notificationsSent || 0} إشعار عبر واتساب`,
       });
     } catch (error: any) {
       toast({
@@ -200,13 +202,15 @@ const Surveys = () => {
       setSelectedSurvey(survey);
       
       const { data, error } = await supabase.functions.invoke('surveys-api', {
-        body: {},
-        method: 'GET'
+        body: {
+          action: 'getResults',
+          surveyId: survey.id
+        }
       });
 
       if (error) throw error;
       
-      setSurveyResults(data.results || []);
+      setSurveyResults(data?.results || []);
       setShowResultsDialog(true);
     } catch (error: any) {
       toast({
