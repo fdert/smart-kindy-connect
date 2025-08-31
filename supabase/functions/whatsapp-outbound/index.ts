@@ -97,6 +97,11 @@ serve(async (req) => {
     // Use template if specified
     if (templateName && templates[templateName]) {
       messageText = processTemplate(templates[templateName], templateData || {});
+      
+      // Add card URL if it exists in templateData for reward notifications
+      if (templateData?.cardUrl && templateName === 'reward_notification') {
+        messageText += `\n\n🎉 شاهد بطاقة التحفيز:\n${templateData.cardUrl}`;
+      }
     }
 
     if (!messageText && !mediaUrl) {
@@ -163,7 +168,7 @@ serve(async (req) => {
         message_type: mediaUrl ? 'media' : 'text',
         media_url: mediaUrl,
         context_type: contextType || 'general',
-        context_id: contextId,
+        context_id: contextId || crypto.randomUUID(), // Generate UUID if contextId is missing
         student_id: studentId,
         template_name: templateName,
         message_id: result.messageId || result.id,

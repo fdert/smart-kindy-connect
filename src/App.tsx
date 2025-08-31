@@ -26,6 +26,7 @@ import Surveys from "./pages/Surveys";
 import VirtualClasses from "./pages/VirtualClasses";
 import PlansManagement from "./pages/PlansManagement";
 import CMSManagement from "./pages/CMSManagement";
+import SharedRewardCard from "./pages/SharedRewardCard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -161,6 +162,7 @@ const AppRoutes = () => (
         <CMSManagement />
       </ProtectedRoute>
     } />
+    <Route path="/reward-card" element={<SharedRewardCard />} />
     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
     <Route path="*" element={<NotFound />} />
   </Routes>

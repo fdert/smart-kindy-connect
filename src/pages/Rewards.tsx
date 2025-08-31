@@ -218,14 +218,19 @@ const Rewards = () => {
         awarded_at: new Date().toISOString()
       };
 
-      const { error } = await supabase
+      const { data: insertedReward, error } = await supabase
         .from('rewards')
-        .insert(rewardData);
+        .insert(rewardData)
+        .select()
+        .single();
 
       if (error) throw error;
 
       const student = students.find(s => s.id === formData.student_id);
       const rewardType = rewardTypes.find(t => t.value === formData.type);
+      
+      // Generate shareable card URL
+      const cardUrl = `${window.location.origin}/reward-card?id=${insertedReward.id}&tenant=${tenant.id}`;
       
       // Send WhatsApp notification to guardians
       if (student) {
@@ -258,10 +263,11 @@ const Rewards = () => {
                       rewardTitle: formData.title,
                       rewardDescription: formData.description || '',
                       points: formData.points.toString(),
-                      nurseryName: tenant.name
+                      nurseryName: tenant.name,
+                      cardUrl: cardUrl
                     },
                     contextType: 'reward',
-                    contextId: rewardData.tenant_id + '_' + Date.now(), // Using a unique ID since we don't have the reward ID yet
+                    contextId: insertedReward.id,
                     studentId: formData.student_id
                   }
                 });
