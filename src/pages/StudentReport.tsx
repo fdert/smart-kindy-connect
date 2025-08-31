@@ -133,6 +133,11 @@ export default function StudentReport() {
 
     setLoading(true);
     try {
+      // Ensure we have valid student ID and tenant ID
+      if (!studentId || !tenant?.id) {
+        throw new Error('معرف الطالب أو الروضة غير صحيح');
+      }
+
       // Load student basic info
       const { data: studentData, error: studentError } = await supabase
         .from('students')
@@ -150,6 +155,11 @@ export default function StudentReport() {
         .single();
 
       if (studentError) throw studentError;
+      
+      // Verify student belongs to current tenant
+      if (!studentData || studentData.id !== studentId) {
+        throw new Error('لا يمكن العثور على بيانات الطالب أو ليس لديك صلاحية للوصول');
+      }
 
       // Load assignments data
       const { data: assignmentsData } = await supabase
@@ -238,7 +248,14 @@ export default function StudentReport() {
         .eq('student_id', studentId)
         .eq('tenant_id', tenant.id);
 
-      const mediaFiles = mediaData?.map(m => m.media).filter(Boolean) || [];
+      // Filter media by date range and ensure student-specific data only
+      const mediaFiles = mediaData
+        ?.map(m => m.media)
+        .filter(Boolean)
+        .filter(media => {
+          const albumDate = new Date(media.album_date);
+          return albumDate >= dateRange.from && albumDate <= dateRange.to;
+        }) || [];
 
       // Load development skills
       const { data: skillsData } = await supabase
