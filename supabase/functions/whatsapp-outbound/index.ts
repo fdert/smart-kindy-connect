@@ -104,6 +104,7 @@ serve(async (req) => {
     // Use template if specified
     if (templateName && templates[templateName]) {
       console.log(`Using template: ${templateName}`, templates[templateName]);
+      console.log('Template data before processing:', JSON.stringify(templateData, null, 2));
       messageText = processTemplate(templates[templateName], templateData || {});
       console.log(`Processed message text: ${messageText}`);
       
@@ -290,10 +291,21 @@ function processTemplate(template: string, data: Record<string, any>): string {
   let processedTemplate = template;
   
   // Replace placeholders like {{studentName}}, {{time}}, etc.
+  console.log('Processing template with data:', JSON.stringify(data, null, 2));
   Object.keys(data).forEach(key => {
     const placeholder = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
+    const oldTemplate = processedTemplate;
     processedTemplate = processedTemplate.replace(placeholder, data[key] || '');
+    if (oldTemplate !== processedTemplate) {
+      console.log(`Replaced {{${key}}} with: ${data[key]}`);
+    }
   });
+  
+  // Additional specific placeholder replacements
+  if (data.permissionLink) {
+    console.log('Found permissionLink, replacing placeholder');
+    processedTemplate = processedTemplate.replace(/{{permissionLink}}/g, data.permissionLink);
+  }
   
   // Replace common placeholders with current data
   const now = new Date();
