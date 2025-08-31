@@ -181,15 +181,17 @@ const Permissions = () => {
   const handleSendNotifications = async (permissionId: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('permissions-api', {
-        body: {},
-        method: 'POST'
+        body: {
+          action: 'notify',
+          permissionId: permissionId
+        }
       });
 
       if (error) throw error;
 
       toast({
         title: "تم إرسال الإشعارات",
-        description: `تم إرسال ${data.notificationsSent} إشعار عبر واتساب`,
+        description: `تم إرسال ${data?.notificationsSent || 0} إشعار عبر واتساب`,
       });
     } catch (error: any) {
       toast({
@@ -205,8 +207,10 @@ const Permissions = () => {
       setSelectedPermission(permission);
       
       const { data, error } = await supabase.functions.invoke('permissions-api', {
-        body: {},
-        method: 'GET'
+        body: {
+          action: 'getResponses',
+          permissionId: permission.id
+        }
       });
 
       if (error) throw error;

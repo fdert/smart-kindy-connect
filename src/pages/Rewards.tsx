@@ -200,10 +200,21 @@ const Rewards = () => {
     if (!tenant) return;
 
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "خطأ في المصادقة",
+          description: "يجب تسجيل الدخول لمنح الجوائز",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const rewardData = {
         ...formData,
         tenant_id: tenant.id,
-        awarded_by: tenant.id, // Should be actual user ID
+        awarded_by: user.id,
         awarded_at: new Date().toISOString()
       };
 
