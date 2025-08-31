@@ -453,7 +453,7 @@ async function handlePublicResponse(supabase: any, requestBody: any) {
       tenant_id: survey.tenant_id,
       response_text: response.responseText,
       response_options: response.responseOptions,
-      respondent_type: 'public'
+      respondent_type: 'guardian'
     }));
 
     const { error: insertError } = await supabase
