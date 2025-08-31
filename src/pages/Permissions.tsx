@@ -17,6 +17,7 @@ import { Shield, Plus, Send, Eye, CalendarIcon, Check, X, Clock, Users } from 'l
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { PermissionResponseCard } from '@/components/PermissionResponseCard';
+import { PermissionPDFReport } from '@/components/PermissionPDFReport';
 
 interface Permission {
   id: string;
@@ -572,10 +573,20 @@ const Permissions = () => {
         <Dialog open={showResponsesDialog} onOpenChange={setShowResponsesDialog}>
           <DialogContent className="max-w-4xl">
             <DialogHeader>
-              <DialogTitle>ردود الأولياء</DialogTitle>
-              <DialogDescription>
-                {selectedPermission?.title}
-              </DialogDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <DialogTitle>ردود الأولياء</DialogTitle>
+                  <DialogDescription>
+                    {selectedPermission?.title}
+                  </DialogDescription>
+                </div>
+                {selectedPermission && (
+                  <PermissionPDFReport 
+                    permission={selectedPermission} 
+                    responses={responses} 
+                  />
+                )}
+              </div>
             </DialogHeader>
             
             <div className="max-h-96 overflow-y-auto">
