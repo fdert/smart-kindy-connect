@@ -113,8 +113,45 @@ serve(async (req) => {
       }
     } else if (templateName) {
       console.log(`Template '${templateName}' not found in:`, Object.keys(templates));
-      // Use fallback message if template is missing
-      messageText = message || `رسالة من ${templateData?.nurseryName || 'الحضانة'}`;
+      console.log('Template data provided:', templateData);
+      
+      // Create fallback templates for common cases
+      if (templateName === 'permission_request' && templateData) {
+        messageText = `🔔 طلب إذن جديد
+
+عزيز/ة ${templateData.guardianName || 'ولي الأمر'}
+
+يطلب منكم الموافقة على: ${templateData.permissionTitle || 'الإذن'}
+
+التفاصيل: ${templateData.permissionDescription || 'لا توجد تفاصيل'}
+
+للطالب/ة: ${templateData.studentName || 'الطالب'}
+
+ينتهي الطلب في: ${templateData.expiresAt || 'غير محدد'}
+
+رمز التأكيد: ${templateData.otpToken || ''}
+
+يرجى الرد بـ "موافق" أو "غير موافق" مع رمز التأكيد.
+
+مع تحيات
+${templateData.nurseryName || 'الحضانة'}`;
+      } else if (templateName === 'survey_notification' && templateData) {
+        messageText = `📊 استطلاع رأي جديد
+
+عزيز/ة ${templateData.guardianName || 'ولي الأمر'}
+
+دعوة للمشاركة في: ${templateData.surveyTitle || 'الاستطلاع'}
+
+الوصف: ${templateData.surveyDescription || 'لا يوجد وصف'}
+
+نقدر مشاركتكم في تحسين خدماتنا
+
+مع تحيات
+${templateData.nurseryName || 'الحضانة'}`;
+      } else {
+        // Use fallback message if template is missing
+        messageText = message || `رسالة من ${templateData?.nurseryName || 'الحضانة'}`;
+      }
     }
 
     if (!messageText && !mediaUrl) {
