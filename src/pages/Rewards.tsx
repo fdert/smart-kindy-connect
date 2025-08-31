@@ -227,9 +227,56 @@ const Rewards = () => {
       const student = students.find(s => s.id === formData.student_id);
       const rewardType = rewardTypes.find(t => t.value === formData.type);
       
+      // Send WhatsApp notification to guardians
+      if (student) {
+        try {
+          // Get student's guardians
+          const { data: guardianLinks } = await supabase
+            .from('guardian_student_links')
+            .select(`
+              guardian_id,
+              guardians (
+                full_name,
+                whatsapp_number
+              )
+            `)
+            .eq('student_id', formData.student_id)
+            .eq('tenant_id', tenant.id);
+
+          if (guardianLinks && guardianLinks.length > 0) {
+            for (const link of guardianLinks) {
+              if (link.guardians?.whatsapp_number) {
+                await supabase.functions.invoke('whatsapp-outbound', {
+                  body: {
+                    tenantId: tenant.id,
+                    to: link.guardians.whatsapp_number,
+                    templateName: 'reward_notification',
+                    templateData: {
+                      guardianName: link.guardians.full_name,
+                      studentName: student.full_name,
+                      rewardType: rewardType?.label || 'جائزة',
+                      rewardTitle: formData.title,
+                      rewardDescription: formData.description || '',
+                      points: formData.points.toString(),
+                      nurseryName: tenant.name
+                    },
+                    contextType: 'reward',
+                    contextId: rewardData.tenant_id + '_' + Date.now(), // Using a unique ID since we don't have the reward ID yet
+                    studentId: formData.student_id
+                  }
+                });
+              }
+            }
+          }
+        } catch (notificationError) {
+          console.error('خطأ في إرسال الإشعار:', notificationError);
+          // Don't block the success message for notification failures
+        }
+      }
+      
       toast({
         title: "تم منح الجائزة بنجاح",
-        description: `تم منح ${rewardType?.label} للطالب ${student?.full_name}`,
+        description: `تم منح ${rewardType?.label} للطالب ${student?.full_name} وإرسال إشعار لولي الأمر`,
       });
 
       loadData();
