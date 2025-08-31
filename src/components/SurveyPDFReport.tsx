@@ -92,35 +92,62 @@ export const SurveyPDFReport: React.FC<SurveyPDFReportProps> = ({
       const reportElement = document.createElement('div');
       reportElement.style.cssText = `
         width: 210mm;
-        min-height: 297mm;
-        padding: 20mm;
+        padding: 15mm;
         background: white;
         font-family: 'Arial', sans-serif;
         direction: rtl;
         position: absolute;
         top: -9999px;
         left: -9999px;
+        overflow: visible;
       `;
       
       // Generate report content
       reportElement.innerHTML = await generateReportHTML();
       document.body.appendChild(reportElement);
 
-      // Convert to canvas and generate PDF
+      // Wait for content to render
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Convert to canvas and generate multi-page PDF
       const canvas = await html2canvas(reportElement, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
-        width: 794, // A4 width in pixels at 96 DPI
-        height: 1123 // A4 height in pixels at 96 DPI
+        logging: false
       });
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       
-      // Add the image to PDF
-      pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+      const pdfWidth = 210; // A4 width in mm
+      const pdfHeight = 297; // A4 height in mm
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      
+      // Calculate how many pages we need
+      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+      const scaledWidth = imgWidth * ratio;
+      const scaledHeight = imgHeight * ratio;
+      
+      // If content fits in one page
+      if (scaledHeight <= pdfHeight) {
+        pdf.addImage(imgData, 'PNG', 0, 0, scaledWidth, scaledHeight);
+      } else {
+        // Split into multiple pages
+        const pageHeight = pdfHeight;
+        const totalPages = Math.ceil(scaledHeight / pageHeight);
+        
+        for (let i = 0; i < totalPages; i++) {
+          if (i > 0) {
+            pdf.addPage();
+          }
+          
+          const yOffset = -(i * pageHeight);
+          pdf.addImage(imgData, 'PNG', 0, yOffset, scaledWidth, scaledHeight);
+        }
+      }
       
       // Save the PDF
       const fileName = `تقرير_استطلاع_${survey.title.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
@@ -316,78 +343,114 @@ export const SurveyPDFReport: React.FC<SurveyPDFReportProps> = ({
   const generateCharts = async (): Promise<Array<{title: string, dataUrl: string}>> => {
     const charts: Array<{title: string, dataUrl: string}> = [];
     
-    for (const result of results.slice(0, 4)) { // Limit to 4 charts for layout
+    for (const result of results) {
       if (result.totalResponses > 0) {
-        const canvas = document.createElement('canvas');
-        canvas.width = 400;
-        canvas.height = 300;
-        const ctx = canvas.getContext('2d');
-        
-        if (ctx) {
-          // Clear canvas with white background
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = 600;
+          canvas.height = 400;
+          const ctx = canvas.getContext('2d');
           
-          // Set up chart area
-          const chartArea = { x: 50, y: 40, width: 300, height: 200 };
-          
-          if (result.questionType === 'yes_no' && result.yesCount !== undefined && result.noCount !== undefined) {
-            // Pie chart for yes/no questions
-            const total = result.yesCount + result.noCount;
-            const yesAngle = (result.yesCount / total) * 2 * Math.PI;
-            const centerX = chartArea.x + chartArea.width / 2;
-            const centerY = chartArea.y + chartArea.height / 2;
-            const radius = 80;
+          if (ctx) {
+            // Clear canvas with white background
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Yes slice
-            ctx.beginPath();
-            ctx.moveTo(centerX, centerY);
-            ctx.arc(centerX, centerY, radius, 0, yesAngle);
-            ctx.closePath();
-            ctx.fillStyle = '#48bb78';
-            ctx.fill();
+            // Add border
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, 0, canvas.width, canvas.height);
             
-            // No slice  
-            ctx.beginPath();
-            ctx.moveTo(centerX, centerY);
-            ctx.arc(centerX, centerY, radius, yesAngle, 2 * Math.PI);
-            ctx.closePath();
-            ctx.fillStyle = '#e53e3e';
-            ctx.fill();
-            
-            // Labels
-            ctx.fillStyle = '#333';
-            ctx.font = 'bold 12px Arial';
+            // Title
+            ctx.fillStyle = '#2d3748';
+            ctx.font = 'bold 18px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText(`نعم: ${result.yesCount}`, centerX - 60, centerY + 120);
-            ctx.fillText(`لا: ${result.noCount}`, centerX + 60, centerY + 120);
+            const truncatedTitle = result.questionText.length > 50 
+              ? result.questionText.substring(0, 50) + '...'
+              : result.questionText;
+            ctx.fillText(truncatedTitle, canvas.width / 2, 30);
             
-          } else if (result.questionType === 'rating' && result.ratings) {
-            // Bar chart for ratings
-            const ratingCounts = [1, 2, 3, 4, 5].map(rating => 
-              result.ratings?.filter(r => r === rating).length || 0
-            );
-            const maxCount = Math.max(...ratingCounts);
-            const barWidth = chartArea.width / 6;
+            // Set up chart area
+            const chartArea = { x: 80, y: 60, width: 440, height: 280 };
             
-            ratingCounts.forEach((count, index) => {
-              const barHeight = maxCount > 0 ? (count / maxCount) * chartArea.height * 0.8 : 0;
-              const x = chartArea.x + (index + 0.5) * barWidth;
-              const y = chartArea.y + chartArea.height - barHeight;
+            if (result.questionType === 'yes_no') {
+              const yesCount = result.yesCount || 0;
+              const noCount = result.noCount || 0;
+              const total = yesCount + noCount;
               
-              // Bar
-              ctx.fillStyle = '#ffd700';
-              ctx.fillRect(x - barWidth/3, y, barWidth*0.6, barHeight);
+              if (total > 0) {
+                // Pie chart for yes/no questions
+                const centerX = chartArea.x + chartArea.width / 2;
+                const centerY = chartArea.y + chartArea.height / 2;
+                const radius = 100;
+                
+                const yesAngle = (yesCount / total) * 2 * Math.PI;
+                
+                // Yes slice
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, -Math.PI / 2, -Math.PI / 2 + yesAngle);
+                ctx.closePath();
+                ctx.fillStyle = '#48bb78';
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                // No slice  
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, -Math.PI / 2 + yesAngle, -Math.PI / 2 + 2 * Math.PI);
+                ctx.closePath();
+                ctx.fillStyle = '#e53e3e';
+                ctx.fill();
+                ctx.stroke();
+                
+                // Legend
+                ctx.fillStyle = '#48bb78';
+                ctx.fillRect(centerX - 150, centerY + 140, 20, 20);
+                ctx.fillStyle = '#2d3748';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillText(`نعم: ${yesCount} (${((yesCount/total)*100).toFixed(1)}%)`, centerX - 120, centerY + 155);
+                
+                ctx.fillStyle = '#e53e3e';
+                ctx.fillRect(centerX + 20, centerY + 140, 20, 20);
+                ctx.fillStyle = '#2d3748';
+                ctx.fillText(`لا: ${noCount} (${((noCount/total)*100).toFixed(1)}%)`, centerX + 50, centerY + 155);
+              }
               
-              // Label
-              ctx.fillStyle = '#333';
-              ctx.font = '10px Arial';
-              ctx.textAlign = 'center';
-              ctx.fillText(`${index + 1}⭐`, x, chartArea.y + chartArea.height + 15);
-              ctx.fillText(`${count}`, x, y - 5);
-            });
-            
-          } else if (result.optionCounts) {
+            } else if (result.questionType === 'rating' && result.ratings) {
+              // Bar chart for ratings
+              const ratingCounts = [1, 2, 3, 4, 5].map(rating => 
+                result.ratings?.filter(r => r === rating).length || 0
+              );
+              const maxCount = Math.max(...ratingCounts, 1);
+              const barWidth = chartArea.width / 7;
+              
+              ratingCounts.forEach((count, index) => {
+                const barHeight = (count / maxCount) * (chartArea.height - 40);
+                const x = chartArea.x + (index + 1) * barWidth;
+                const y = chartArea.y + chartArea.height - barHeight - 40;
+                
+                // Bar
+                ctx.fillStyle = '#ffd700';
+                ctx.fillRect(x - barWidth/3, y, barWidth*0.6, barHeight);
+                ctx.strokeStyle = '#e2a610';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x - barWidth/3, y, barWidth*0.6, barHeight);
+                
+                // Value on top
+                ctx.fillStyle = '#2d3748';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${count}`, x, y - 5);
+                
+                // Label
+                ctx.fillText(`${index + 1}⭐`, x, chartArea.y + chartArea.height - 15);
+              });
+              
+            } else if (result.optionCounts) {
             // Bar chart for options
             const options = Object.entries(result.optionCounts);
             const maxCount = Math.max(...options.map(([_, count]) => count));
@@ -423,6 +486,9 @@ export const SurveyPDFReport: React.FC<SurveyPDFReportProps> = ({
           title: result.questionText.length > 30 ? result.questionText.substring(0, 30) + '...' : result.questionText,
           dataUrl
         });
+        } catch (error) {
+          console.warn('Error generating chart for question:', result.questionText, error);
+        }
       }
     }
     
