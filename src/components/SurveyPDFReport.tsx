@@ -59,7 +59,12 @@ export const SurveyPDFReport: React.FC<SurveyPDFReportProps> = ({
 }) => {
   const generatePDF = async () => {
     try {
-      console.log('Starting PDF generation with data:', { survey, results: results.length, aiAnalysis });
+      console.log('=== PDF Generation Started ===');
+      console.log('Survey:', survey);
+      console.log('Results count:', results.length);
+      console.log('Results data:', results);
+      console.log('AI Analysis:', aiAnalysis);
+      console.log('Tenant Info:', tenantInfo);
       
       await onGenerateReport();
       
@@ -158,18 +163,20 @@ export const SurveyPDFReport: React.FC<SurveyPDFReportProps> = ({
   };
 
   const generateReportHTML = async (): Promise<string> => {
+    console.log('=== Generate Report HTML Started ===');
     const totalResponses = results.reduce((sum, result) => sum + result.totalResponses, 0);
     const averageResponseRate = results.length > 0 ? (totalResponses / results.length) : 0;
     
-    console.log('Generating report with:', { 
-      totalResponses, 
-      resultsCount: results.length, 
-      hasAiAnalysis: !!aiAnalysis 
-    });
+    console.log('Report data check:');
+    console.log('- Results array length:', results.length);
+    console.log('- Results data:', results);
+    console.log('- Total responses:', totalResponses); 
+    console.log('- Has AI Analysis:', !!aiAnalysis);
+    console.log('- AI Analysis data:', aiAnalysis);
     
-    // Generate charts as base64 images
+     // Generate charts as base64 images
     const charts = await generateCharts();
-    console.log('Generated charts:', charts.length);
+    console.log('Generated charts count:', charts.length);
     
     return `
       <div style="width: 100%; font-family: 'Arial', sans-serif; direction: rtl; background: white; color: #333; line-height: 1.6;">

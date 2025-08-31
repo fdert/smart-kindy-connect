@@ -426,6 +426,10 @@ const SurveyDashboard = () => {
                     tenantInfo={tenant || { name: 'المؤسسة' }}
                     aiAnalysis={selectedSurvey.aiAnalysis}
                     onGenerateReport={async () => {
+                      console.log('=== Generating report for survey ===');
+                      console.log('Selected Survey:', selectedSurvey);
+                      console.log('Current survey results:', surveyResults);
+                      console.log('AI Analysis:', selectedSurvey.aiAnalysis);
                       await loadSurveyResults(selectedSurvey);
                     }}
                   />
