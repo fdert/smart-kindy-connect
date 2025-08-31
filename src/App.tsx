@@ -32,6 +32,11 @@ import SharedRewardCard from "./pages/SharedRewardCard";
 import PublicSurvey from "./pages/PublicSurvey";
 import PublicPermission from "./pages/PublicPermission";
 import StudentReport from "./pages/StudentReport";
+import StudentAssignments from "./pages/StudentAssignments";
+import StudentAttendance from "./pages/StudentAttendance";
+import StudentRewards from "./pages/StudentRewards";
+import StudentMedia from "./pages/StudentMedia";
+import StudentNotesDetail from "./pages/StudentNotesDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -90,6 +95,11 @@ const AppRoutes = () => (
         <Route path="/survey/:surveyId" element={<PublicSurvey />} />
         <Route path="/permission/:id" element={<PublicPermission />} />
         <Route path="/student-report/:studentId" element={<StudentReport />} />
+        <Route path="/student-assignments/:studentId" element={<StudentAssignments />} />
+        <Route path="/student-attendance/:studentId" element={<StudentAttendance />} />
+        <Route path="/student-rewards/:studentId" element={<StudentRewards />} />
+        <Route path="/student-media/:studentId" element={<StudentMedia />} />
+        <Route path="/student-notes/:studentId" element={<StudentNotesDetail />} />
     <Route path="/super-admin" element={
       <ProtectedRoute>
         <SuperAdmin />

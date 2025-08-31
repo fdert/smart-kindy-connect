@@ -404,10 +404,7 @@ export default function StudentReport() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card 
             className="bg-gradient-to-br from-blue-500 to-blue-600 text-white cursor-pointer hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-            onClick={() => {
-              const attendanceSection = document.getElementById('attendance-section');
-              attendanceSection?.scrollIntoView({ behavior: 'smooth' });
-            }}
+            onClick={() => navigate(`/student-attendance/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">معدل الحضور</CardTitle>
@@ -423,10 +420,7 @@ export default function StudentReport() {
 
           <Card 
             className="bg-gradient-to-br from-green-500 to-green-600 text-white cursor-pointer hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-            onClick={() => {
-              const assignmentsSection = document.getElementById('assignments-section');
-              assignmentsSection?.scrollIntoView({ behavior: 'smooth' });
-            }}
+            onClick={() => navigate(`/student-assignments/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">معدل الواجبات</CardTitle>
@@ -442,10 +436,7 @@ export default function StudentReport() {
 
           <Card 
             className="bg-gradient-to-br from-purple-500 to-purple-600 text-white cursor-pointer hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-            onClick={() => {
-              const rewardsSection = document.getElementById('rewards-section');
-              rewardsSection?.scrollIntoView({ behavior: 'smooth' });
-            }}
+            onClick={() => navigate(`/student-rewards/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">المكافآت</CardTitle>
@@ -461,10 +452,7 @@ export default function StudentReport() {
 
           <Card 
             className="bg-gradient-to-br from-pink-500 to-pink-600 text-white cursor-pointer hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-            onClick={() => {
-              const notesSection = document.getElementById('notes-section');
-              notesSection?.scrollIntoView({ behavior: 'smooth' });
-            }}
+            onClick={() => navigate(`/student-notes/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">الملاحظات</CardTitle>
@@ -726,12 +714,14 @@ export default function StudentReport() {
         {reportData.media.length > 0 && (
           <Card 
             id="media-section"
-            className="mt-8 bg-white/90 backdrop-blur-sm"
+            className="mt-8 bg-white/90 backdrop-blur-sm cursor-pointer hover:shadow-lg transform hover:scale-102 transition-all duration-200"
+            onClick={() => navigate(`/student-media/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
           >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Camera className="h-5 w-5 text-indigo-500" />
                 ألبوم الصور
+                <span className="text-sm text-muted-foreground mr-auto">اضغط للتفاصيل ←</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
