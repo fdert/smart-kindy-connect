@@ -256,26 +256,29 @@ export default function StudentReport() {
         .lte('check_date', format(dateRange.to, 'yyyy-MM-dd'))
         .order('check_date', { ascending: false });
 
-      // Load media
-      const { data: mediaData } = await supabase
+      // Load media with proper tenant and student filtering
+      const { data: mediaLinks } = await supabase
         .from('media_student_links')
         .select(`
-          media (
+          media!inner (
             id,
             file_name,
             file_path,
             caption,
-            album_date
+            album_date,
+            tenant_id
           )
         `)
         .eq('student_id', studentId)
         .eq('tenant_id', tenant.id);
 
-      // Filter media by date range and ensure student-specific data only
-      const mediaFiles = mediaData
+      // Filter media by date range and ensure tenant isolation
+      const mediaFiles = mediaLinks
         ?.map(m => m.media)
         .filter(Boolean)
         .filter(media => {
+          // Double-check tenant isolation
+          if (media.tenant_id !== tenant.id) return false;
           const albumDate = new Date(media.album_date);
           return albumDate >= dateRange.from && albumDate <= dateRange.to;
         }) || [];

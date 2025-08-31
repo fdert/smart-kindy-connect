@@ -52,7 +52,7 @@ export default function StudentRewards() {
 
     setLoading(true);
     try {
-      // Load student info
+      // Load student info with error handling
       const { data: studentData, error: studentError } = await supabase
         .from('students')
         .select('full_name, student_id, photo_url, classes(name)')
@@ -61,6 +61,9 @@ export default function StudentRewards() {
         .maybeSingle();
 
       if (studentError) throw studentError;
+      if (!studentData) {
+        throw new Error('لم يتم العثور على بيانات الطالب');
+      }
       setStudentInfo(studentData);
 
       // Load rewards

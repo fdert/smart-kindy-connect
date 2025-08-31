@@ -51,7 +51,7 @@ export default function StudentMedia() {
 
     setLoading(true);
     try {
-      // Load student info
+      // Load student info with error handling
       const { data: studentData, error: studentError } = await supabase
         .from('students')
         .select('full_name, student_id, photo_url, classes(name)')
@@ -60,20 +60,24 @@ export default function StudentMedia() {
         .maybeSingle();
 
       if (studentError) throw studentError;
+      if (!studentData) {
+        throw new Error('لم يتم العثور على بيانات الطالب');
+      }
       setStudentInfo(studentData);
 
-      // Load media through student links
+      // Load media through student links with proper filtering
       const { data: mediaLinks, error: mediaError } = await supabase
         .from('media_student_links')
         .select(`
-          media (
+          media!inner (
             id,
             file_name,
             file_path,
             caption,
             album_date,
             file_type,
-            mime_type
+            mime_type,
+            tenant_id
           )
         `)
         .eq('student_id', studentId)
@@ -81,11 +85,13 @@ export default function StudentMedia() {
 
       if (mediaError) throw mediaError;
 
-      // Filter media by date range and flatten the structure
+      // Filter media by date range and ensure proper tenant isolation
       const mediaFiles = mediaLinks
         ?.map(link => link.media)
         .filter(Boolean)
         .filter(mediaItem => {
+          // Ensure media belongs to same tenant
+          if (mediaItem.tenant_id !== tenant.id) return false;
           const albumDate = new Date(mediaItem.album_date);
           return albumDate >= dateRange.from && albumDate <= dateRange.to;
         })

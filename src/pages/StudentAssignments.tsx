@@ -17,6 +17,7 @@ interface AssignmentData {
   evaluation_score: number | null;
   teacher_feedback: string | null;
   completion_date: string | null;
+  evaluated_at: string;
   created_at: string;
   assignments: {
     title: string;
@@ -56,18 +57,21 @@ export default function StudentAssignments() {
 
     setLoading(true);
     try {
-      // Load student info
+      // Load student info with proper error handling
       const { data: studentData, error: studentError } = await supabase
         .from('students')
         .select('full_name, student_id, photo_url, classes(name)')
         .eq('id', studentId)
         .eq('tenant_id', tenant.id)
-        .single();
+        .maybeSingle();
 
       if (studentError) throw studentError;
+      if (!studentData) {
+        throw new Error('لم يتم العثور على بيانات الطالب');
+      }
       setStudentInfo(studentData);
 
-      // Load assignments with evaluations
+      // Load assignments with evaluations and proper date filtering
       const { data: assignmentsData, error: assignmentsError } = await supabase
         .from('assignment_evaluations')
         .select(`
@@ -76,14 +80,14 @@ export default function StudentAssignments() {
           evaluation_score,
           teacher_feedback,
           completion_date,
-          created_at,
+          evaluated_at,
           assignment_id
         `)
         .eq('student_id', studentId)
         .eq('tenant_id', tenant.id)
-        .gte('created_at', dateRange.from.toISOString())
-        .lte('created_at', dateRange.to.toISOString())
-        .order('created_at', { ascending: false });
+        .gte('evaluated_at', dateRange.from.toISOString())
+        .lte('evaluated_at', dateRange.to.toISOString())
+        .order('evaluated_at', { ascending: false });
 
       if (assignmentsError) throw assignmentsError;
 
@@ -281,12 +285,14 @@ export default function StudentAssignments() {
                       )}
                     </div>
                   </div>
-                  <div className="flex justify-between items-center text-xs text-gray-500 border-t pt-3">
-                    <span>تاريخ الإنشاء: {format(new Date(assignment.created_at), 'dd MMM yyyy', { locale: ar })}</span>
-                        {assignment.completion_date && (
-                          <span>تاريخ الإكمال: {format(new Date(assignment.completion_date), 'dd MMM yyyy', { locale: ar })}</span>
-                        )}
-                  </div>
+                     <div className="text-sm text-gray-500 border-t pt-3">
+                       <div className="flex justify-between">
+                         <span>تاريخ التقييم: {format(new Date(assignment.evaluated_at || assignment.created_at), 'dd MMM yyyy', { locale: ar })}</span>
+                         {assignment.completion_date && (
+                           <span>تاريخ الإكمال: {format(new Date(assignment.completion_date), 'dd MMM yyyy', { locale: ar })}</span>
+                         )}
+                       </div>
+                     </div>
                 </CardContent>
               </Card>
             ))
