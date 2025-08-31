@@ -47,12 +47,12 @@ Deno.serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    // Get user's tenant
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('tenant_id')
-      .eq('id', user.id)
-      .single();
+      // Get user's tenant
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('tenant_id, tenants(*)')
+        .eq('id', user.id)
+        .single();
 
     if (userError || !userData?.tenant_id) {
       throw new Error('User has no associated tenant');
@@ -98,14 +98,17 @@ Deno.serve(async (req) => {
         try {
           await supabase.functions.invoke('whatsapp-outbound', {
             body: {
+              tenantId: userData.tenant_id,
               to: contact.whatsapp_number,
-              template: 'survey_notification',
-              data: {
+              templateName: 'survey_notification',
+              templateData: {
                 guardianName: contact.full_name,
                 surveyTitle: survey.title,
                 surveyDescription: survey.description || '',
-                nurseryName: userData.tenant_id
-              }
+                nurseryName: userData.tenants?.name || ''
+              },
+              contextType: 'survey',
+              contextId: survey.id
             }
           });
           notificationsSent++;

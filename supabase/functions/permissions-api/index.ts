@@ -119,9 +119,10 @@ Deno.serve(async (req) => {
             // Send WhatsApp notification
             await supabase.functions.invoke('whatsapp-outbound', {
               body: {
+                tenantId: userData.tenant_id,
                 to: response.guardians.whatsapp_number,
-                template: 'permission_request',
-                data: {
+                templateName: 'permission_request',
+                templateData: {
                   guardianName: response.guardians.full_name,
                   studentName: response.students?.full_name || '',
                   permissionTitle: permission.title,
@@ -129,7 +130,10 @@ Deno.serve(async (req) => {
                   expiresAt: permission.expires_at,
                   nurseryName: userData.tenants?.name || '',
                   otpToken: otpToken
-                }
+                },
+                contextType: 'permission',
+                contextId: permission.id,
+                studentId: response.student_id
               }
             });
             notificationsSent++;

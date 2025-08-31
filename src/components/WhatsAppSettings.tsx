@@ -35,6 +35,8 @@ const WhatsAppSettings = () => {
       album_shared: 'ألبوم {{studentName}} لليوم {{date}} متاح الآن! 📸\n\n{{mediaLinks}}\n\nستنتهي صلاحية الروابط خلال 24 ساعة.',
       album_report: 'تقرير ألبوم {{studentName}} لليوم {{date}} 📸\n\nاسم الطالب: {{studentName}}\nالفصل: {{className}}\nالروضة: {{nurseryName}}\nعدد الصور: {{photoCount}}\nعدد الفيديوهات: {{videoCount}}\n\nالألبوم متاح للعرض.',
       reward_notification: '🎉 تهانينا! حصل {{studentName}} على {{rewardType}} جديدة!\n\nعزيز/ة {{guardianName}}\n\nيسعدنا إخباركم أن {{studentName}} حصل/ت على:\n🏆 {{rewardTitle}}\n📝 {{rewardDescription}}\n⭐ النقاط: {{points}}\n\nنفخر بإنجازات طفلكم ونتطلع لمزيد من التميز!\n\nمع أطيب التحيات\n{{nurseryName}}',
+      permission_request: '📋 طلب إذن من {{nurseryName}}\n\nعزيز/ة {{guardianName}}\n\nنطلب موافقتكم على:\n📝 {{permissionTitle}}\n🔍 {{permissionDescription}}\n👤 الطالب: {{studentName}}\n⏰ ينتهي في: {{expiresAt}}\n\nرمز التأكيد: {{otpToken}}\n\nيرجى الرد بـ "موافق" أو "غير موافق" مع رمز التأكيد.',
+      survey_notification: '📊 استطلاع رأي من {{nurseryName}}\n\nعزيز/ة {{guardianName}}\n\nندعوكم للمشاركة في:\n📋 {{surveyTitle}}\n📄 {{surveyDescription}}\n\nرأيكم يهمنا لتحسين خدماتنا!\n\nشكراً لتعاونكم.',
       general_notification: 'إشعار من {{nurseryName}}:\n\n{{message}}'
     }, null, 2)
   });
@@ -56,6 +58,8 @@ const WhatsAppSettings = () => {
           album_shared: 'ألبوم {{studentName}} لليوم {{date}} متاح الآن! 📸\n\n{{mediaLinks}}\n\nستنتهي صلاحية الروابط خلال 24 ساعة.',
           album_report: 'تقرير ألبوم {{studentName}} لليوم {{date}} 📸\n\nاسم الطالب: {{studentName}}\nالفصل: {{className}}\nالروضة: {{nurseryName}}\nعدد الصور: {{photoCount}}\nعدد الفيديوهات: {{videoCount}}\n\nالألبوم متاح للعرض.',
           reward_notification: '🎉 تهانينا! حصل {{studentName}} على {{rewardType}} جديدة!\n\nعزيز/ة {{guardianName}}\n\nيسعدنا إخباركم أن {{studentName}} حصل/ت على:\n🏆 {{rewardTitle}}\n📝 {{rewardDescription}}\n⭐ النقاط: {{points}}\n\nنفخر بإنجازات طفلكم ونتطلع لمزيد من التميز!\n\nمع أطيب التحيات\n{{nurseryName}}',
+          permission_request: '📋 طلب إذن من {{nurseryName}}\n\nعزيز/ة {{guardianName}}\n\nنطلب موافقتكم على:\n📝 {{permissionTitle}}\n🔍 {{permissionDescription}}\n👤 الطالب: {{studentName}}\n⏰ ينتهي في: {{expiresAt}}\n\nرمز التأكيد: {{otpToken}}\n\nيرجى الرد بـ "موافق" أو "غير موافق" مع رمز التأكيد.',
+          survey_notification: '📊 استطلاع رأي من {{nurseryName}}\n\nعزيز/ة {{guardianName}}\n\nندعوكم للمشاركة في:\n📋 {{surveyTitle}}\n📄 {{surveyDescription}}\n\nرأيكم يهمنا لتحسين خدماتنا!\n\nشكراً لتعاونكم.',
           general_notification: 'إشعار من {{nurseryName}}:\n\n{{message}}'
         }, null, 2)
     }));
