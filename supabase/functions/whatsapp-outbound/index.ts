@@ -132,15 +132,21 @@ serve(async (req) => {
 مع تحيات
 ${templateData.nurseryName || 'الحضانة'}`;
       } else if (templateName === 'survey_notification' && templateData) {
+        const surveyLink = `${Deno.env.get('SUPABASE_URL')?.replace('/supabase', '') || 'https://your-domain.com'}/surveys/public/${contextId}`;
+        
         messageText = `📊 استطلاع رأي جديد
 
 عزيز/ة ${templateData.guardianName || 'ولي الأمر'}
 
-دعوة للمشاركة في: ${templateData.surveyTitle || 'الاستطلاع'}
+ندعوكم للمشاركة في: ${templateData.surveyTitle || 'الاستطلاع'}
 
-الوصف: ${templateData.surveyDescription || 'لا يوجد وصف'}${templateData.surveyQuestions || ''}
+${templateData.surveyDescription ? `الوصف: ${templateData.surveyDescription}\n` : ''}
+📋 للمشاركة في الاستطلاع، يرجى النقر على الرابط التالي:
+🔗 ${surveyLink}
 
-نقدر مشاركتكم في تحسين خدماتنا
+${templateData.surveyQuestions || ''}
+
+نقدر مشاركتكم في تحسين خدماتنا ✨
 
 مع تحيات
 ${templateData.nurseryName || 'الحضانة'}`;
