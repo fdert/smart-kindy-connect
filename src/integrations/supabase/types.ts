@@ -14,6 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
+      assignment_submissions: {
+        Row: {
+          assignment_id: string
+          created_at: string
+          feedback: string | null
+          file_urls: Json | null
+          grade: number | null
+          id: string
+          status: string | null
+          student_id: string
+          submission_content: string | null
+          submitted_at: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          assignment_id: string
+          created_at?: string
+          feedback?: string | null
+          file_urls?: Json | null
+          grade?: number | null
+          id?: string
+          status?: string | null
+          student_id: string
+          submission_content?: string | null
+          submitted_at?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          assignment_id?: string
+          created_at?: string
+          feedback?: string | null
+          file_urls?: Json | null
+          grade?: number | null
+          id?: string
+          status?: string | null
+          student_id?: string
+          submission_content?: string | null
+          submitted_at?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      assignments: {
+        Row: {
+          assignment_type: string
+          class_id: string | null
+          created_at: string
+          description: string | null
+          due_date: string
+          id: string
+          is_group_assignment: boolean | null
+          priority: string | null
+          status: string
+          student_id: string | null
+          subject: string | null
+          teacher_id: string
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignment_type?: string
+          class_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date: string
+          id?: string
+          is_group_assignment?: boolean | null
+          priority?: string | null
+          status?: string
+          student_id?: string | null
+          subject?: string | null
+          teacher_id: string
+          tenant_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignment_type?: string
+          class_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string
+          id?: string
+          is_group_assignment?: boolean | null
+          priority?: string | null
+          status?: string
+          student_id?: string | null
+          subject?: string | null
+          teacher_id?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       attendance_events: {
         Row: {
           check_in_time: string | null
@@ -984,6 +1083,45 @@ export type Database = {
           },
         ]
       }
+      notification_reminders: {
+        Row: {
+          assignment_id: string | null
+          created_at: string
+          id: string
+          message_content: string | null
+          reminder_type: string
+          scheduled_date: string
+          sent_at: string | null
+          status: string | null
+          student_id: string
+          tenant_id: string
+        }
+        Insert: {
+          assignment_id?: string | null
+          created_at?: string
+          id?: string
+          message_content?: string | null
+          reminder_type: string
+          scheduled_date: string
+          sent_at?: string | null
+          status?: string | null
+          student_id: string
+          tenant_id: string
+        }
+        Update: {
+          assignment_id?: string | null
+          created_at?: string
+          id?: string
+          message_content?: string | null
+          reminder_type?: string
+          scheduled_date?: string
+          sent_at?: string | null
+          status?: string | null
+          student_id?: string
+          tenant_id?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -1461,6 +1599,66 @@ export type Database = {
           key?: string
           updated_at?: string
           value?: Json | null
+        }
+        Relationships: []
+      }
+      student_notes: {
+        Row: {
+          ai_analysis: string | null
+          ai_suggestions: string | null
+          content: string
+          created_at: string
+          follow_up_date: string | null
+          follow_up_required: boolean | null
+          guardian_notified: boolean | null
+          id: string
+          is_private: boolean | null
+          note_type: string
+          notified_at: string | null
+          severity: string | null
+          student_id: string
+          teacher_id: string
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          ai_analysis?: string | null
+          ai_suggestions?: string | null
+          content: string
+          created_at?: string
+          follow_up_date?: string | null
+          follow_up_required?: boolean | null
+          guardian_notified?: boolean | null
+          id?: string
+          is_private?: boolean | null
+          note_type: string
+          notified_at?: string | null
+          severity?: string | null
+          student_id: string
+          teacher_id: string
+          tenant_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          ai_analysis?: string | null
+          ai_suggestions?: string | null
+          content?: string
+          created_at?: string
+          follow_up_date?: string | null
+          follow_up_required?: boolean | null
+          guardian_notified?: boolean | null
+          id?: string
+          is_private?: boolean | null
+          note_type?: string
+          notified_at?: string | null
+          severity?: string | null
+          student_id?: string
+          teacher_id?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
