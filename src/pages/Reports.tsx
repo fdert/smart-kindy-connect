@@ -4,10 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/hooks/useTenant';
 import { useToast } from '@/hooks/use-toast';
 import { FileText, Download, Calendar, Users, TrendingUp, BarChart3, PieChart, User } from 'lucide-react';
+import AttendanceReportsManager from '@/components/AttendanceReportsManager';
 
 interface ReportData {
   attendance: {
@@ -288,16 +290,26 @@ ${reportData.rewards.topStudents.map((student, index) =>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-              <FileText className="h-8 w-8 text-primary" />
+              <BarChart3 className="h-8 w-8 text-primary" />
               التقارير والإحصائيات
             </h1>
-            <p className="text-gray-600 mt-1">تقارير شاملة عن أداء الحضانة</p>
+            <p className="text-gray-600 mt-1">تقارير شاملة عن أداء الروضة والطلاب</p>
           </div>
-          <Button onClick={exportReport} disabled={!reportData} className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            تصدير التقرير
-          </Button>
         </div>
+
+        <Tabs defaultValue="general" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="general">التقارير العامة</TabsTrigger>
+            <TabsTrigger value="attendance">تقارير الحضور</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="general" className="space-y-6 mt-6">
+            <div className="flex justify-end mb-4">
+              <Button onClick={exportReport} disabled={!reportData} className="flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                تصدير التقرير
+              </Button>
+            </div>
 
         {/* Filters */}
         <Card className="mb-6 bg-white/80 backdrop-blur-sm">
@@ -572,6 +584,12 @@ ${reportData.rewards.topStudents.map((student, index) =>
             </CardContent>
           </Card>
         )}
+          </TabsContent>
+
+          <TabsContent value="attendance" className="space-y-6 mt-6">
+            <AttendanceReportsManager />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

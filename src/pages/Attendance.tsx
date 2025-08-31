@@ -157,7 +157,7 @@ const Attendance = () => {
         late_minutes: status === 'late' ? 15 : 0, // Default to 15 minutes late
         notes: notes || null,
         class_id: students.find(s => s.id === studentId)?.class_id || null,
-        recorded_by: tenant.id // Should be actual user ID
+        recorded_by: null // Will be set by RLS automatically
       };
 
       if (existingAttendance) {
@@ -175,6 +175,22 @@ const Attendance = () => {
         if (error) throw error;
       }
 
+      // Send notifications via Edge Function
+      try {
+        await supabase.functions.invoke('attendance-notifications', {
+          body: {
+            tenantId: tenant.id,
+            studentId,
+            status,
+            date: selectedDate,
+            notificationType: 'attendance'
+          }
+        });
+      } catch (notificationError) {
+        console.error('Notification error:', notificationError);
+        // Don't fail the attendance marking if notification fails
+      }
+
       await loadAttendance();
       
       const student = students.find(s => s.id === studentId);
@@ -183,6 +199,7 @@ const Attendance = () => {
         description: `تم تسجيل ${getStatusText(status)} للطالب ${student?.full_name}`,
       });
     } catch (error: any) {
+      console.error('Attendance marking error:', error);
       toast({
         title: "خطأ في تسجيل الحضور",
         description: error.message,
