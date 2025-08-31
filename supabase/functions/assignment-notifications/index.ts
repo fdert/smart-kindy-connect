@@ -16,6 +16,64 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Check if this is an immediate processing request
+    let requestBody = null;
+    try {
+      requestBody = await req.json();
+    } catch {
+      // No body, proceed with scheduled processing
+    }
+
+    if (requestBody?.processImmediate && requestBody?.evaluationNotification) {
+      console.log('Processing immediate evaluation notification...');
+      
+      // Process immediate evaluation notification
+      const { assignmentId, studentId } = requestBody;
+      
+      if (!assignmentId || !studentId) {
+        throw new Error('Missing assignmentId or studentId for immediate processing');
+      }
+
+      // Get the latest evaluation notification for this assignment and student
+      const { data: notifications, error: notificationsError } = await supabase
+        .from('notification_reminders')
+        .select('*')
+        .eq('assignment_id', assignmentId)
+        .eq('student_id', studentId)
+        .eq('reminder_type', 'assignment_evaluation')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (notificationsError) {
+        throw new Error(`Error fetching evaluation notifications: ${notificationsError.message}`);
+      }
+
+      if (!notifications || notifications.length === 0) {
+        console.log('No pending evaluation notifications found');
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'No pending evaluation notifications found',
+          processed: 0
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Process the notification immediately
+      await processNotifications(supabase, notifications);
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Evaluation notification processed immediately',
+        processed: notifications.length
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     console.log('Processing scheduled assignment notifications...');
 
     // Get all pending notifications scheduled for today or earlier
@@ -26,7 +84,7 @@ serve(async (req) => {
       `)
       .eq('status', 'pending')
       .lte('scheduled_date', new Date().toISOString().split('T')[0])
-      .in('reminder_type', ['assignment_notification', 'assignment_reminder']);
+      .in('reminder_type', ['assignment_notification', 'assignment_reminder', 'assignment_evaluation']);
 
     if (notificationsError) {
       throw new Error(`Error fetching notifications: ${notificationsError.message}`);
@@ -34,119 +92,14 @@ serve(async (req) => {
 
     console.log(`Found ${notifications?.length || 0} pending notifications`);
 
-    let successCount = 0;
-    let errorCount = 0;
-
-    if (notifications && notifications.length > 0) {
-      for (const notification of notifications) {
-        try {
-          // Get student information
-          const { data: student, error: studentError } = await supabase
-            .from('students')
-            .select('full_name, student_id')
-            .eq('id', notification.student_id)
-            .single();
-
-          if (studentError) {
-            console.error('Error fetching student:', studentError);
-            continue;
-          }
-
-          // Get guardians for this student
-          const { data: guardianLinks, error: guardiansError } = await supabase
-            .from('guardian_student_links')
-            .select(`
-              guardians (
-                id,
-                full_name,
-                whatsapp_number
-              )
-            `)
-            .eq('student_id', notification.student_id);
-
-          if (guardiansError) {
-            console.error('Error fetching guardians:', guardiansError);
-            continue;
-          }
-
-          // Get tenant information
-          const { data: tenant, error: tenantError } = await supabase
-            .from('tenants')
-            .select('name')
-            .eq('id', notification.tenant_id)
-            .single();
-
-          if (tenantError) {
-            console.error('Error fetching tenant:', tenantError);
-            continue;
-          }
-
-          // Send WhatsApp notifications to each guardian
-          for (const link of guardianLinks || []) {
-            const guardian = link.guardians;
-            if (guardian && guardian.whatsapp_number) {
-              try {
-                // Prepare the full message with tenant signature
-                const fullMessage = `${notification.message_content}
-
-من: ${tenant.name}
-الطالب: ${student.full_name} (${student.student_id})`;
-
-                // Call WhatsApp outbound function
-                const { error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
-                  body: {
-                    tenantId: notification.tenant_id,
-                    to: guardian.whatsapp_number,
-                    message: fullMessage,
-                    context: {
-                      type: notification.reminder_type,
-                      studentId: notification.student_id,
-                      assignmentId: notification.assignment_id,
-                      guardianId: guardian.id
-                    }
-                  }
-                });
-
-                if (whatsappError) {
-                  console.error(`WhatsApp send error for guardian ${guardian.id}:`, whatsappError);
-                  errorCount++;
-                } else {
-                  console.log(`Notification sent successfully to ${guardian.full_name} (${guardian.whatsapp_number})`);
-                  successCount++;
-                }
-              } catch (error) {
-                console.error(`Error sending to guardian ${guardian.id}:`, error);
-                errorCount++;
-              }
-            }
-          }
-
-          // Mark notification as sent
-          const { error: updateError } = await supabase
-            .from('notification_reminders')
-            .update({ 
-              status: 'sent', 
-              sent_at: new Date().toISOString() 
-            })
-            .eq('id', notification.id);
-
-          if (updateError) {
-            console.error('Error updating notification status:', updateError);
-          }
-
-        } catch (error) {
-          console.error(`Error processing notification ${notification.id}:`, error);
-          errorCount++;
-        }
-      }
-    }
+    const result = await processNotifications(supabase, notifications || []);
 
     return new Response(JSON.stringify({
       success: true,
       message: 'Assignment notifications processed successfully',
       processed: notifications?.length || 0,
-      successCount,
-      errorCount
+      successCount: result.successCount,
+      errorCount: result.errorCount
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -163,3 +116,121 @@ serve(async (req) => {
     });
   }
 });
+
+// Helper function to process notifications
+async function processNotifications(supabase: any, notifications: any[]) {
+  let successCount = 0;
+  let errorCount = 0;
+
+  if (notifications && notifications.length > 0) {
+    for (const notification of notifications) {
+      try {
+        // Get student information
+        const { data: student, error: studentError } = await supabase
+          .from('students')
+          .select('full_name, student_id')
+          .eq('id', notification.student_id)
+          .single();
+
+        if (studentError) {
+          console.error('Error fetching student:', studentError);
+          continue;
+        }
+
+        // Get guardians for this student
+        const { data: guardianLinks, error: guardiansError } = await supabase
+          .from('guardian_student_links')
+          .select(`
+            guardians (
+              id,
+              full_name,
+              whatsapp_number
+            )
+          `)
+          .eq('student_id', notification.student_id);
+
+        if (guardiansError) {
+          console.error('Error fetching guardians:', guardiansError);
+          continue;
+        }
+
+        // Get tenant information
+        const { data: tenant, error: tenantError } = await supabase
+          .from('tenants')
+          .select('name')
+          .eq('id', notification.tenant_id)
+          .single();
+
+        if (tenantError) {
+          console.error('Error fetching tenant:', tenantError);
+          continue;
+        }
+
+        // Send WhatsApp notifications to each guardian
+        for (const link of guardianLinks || []) {
+          const guardian = link.guardians;
+          if (guardian && guardian.whatsapp_number) {
+            try {
+              // For evaluation notifications, use the message as is (it already has formatting)
+              let fullMessage;
+              if (notification.reminder_type === 'assignment_evaluation') {
+                fullMessage = notification.message_content;
+              } else {
+                // For other notifications, add tenant signature
+                fullMessage = `${notification.message_content}
+
+من: ${tenant.name}
+الطالب: ${student.full_name} (${student.student_id})`;
+              }
+
+              // Call WhatsApp outbound function
+              const { error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
+                body: {
+                  tenantId: notification.tenant_id,
+                  to: guardian.whatsapp_number,
+                  message: fullMessage,
+                  context: {
+                    type: notification.reminder_type,
+                    studentId: notification.student_id,
+                    assignmentId: notification.assignment_id,
+                    guardianId: guardian.id
+                  }
+                }
+              });
+
+              if (whatsappError) {
+                console.error(`WhatsApp send error for guardian ${guardian.id}:`, whatsappError);
+                errorCount++;
+              } else {
+                console.log(`Notification sent successfully to ${guardian.full_name} (${guardian.whatsapp_number})`);
+                successCount++;
+              }
+            } catch (error) {
+              console.error(`Error sending to guardian ${guardian.id}:`, error);
+              errorCount++;
+            }
+          }
+        }
+
+        // Mark notification as sent
+        const { error: updateError } = await supabase
+          .from('notification_reminders')
+          .update({ 
+            status: 'sent', 
+            sent_at: new Date().toISOString() 
+          })
+          .eq('id', notification.id);
+
+        if (updateError) {
+          console.error('Error updating notification status:', updateError);
+        }
+
+      } catch (error) {
+        console.error(`Error processing notification ${notification.id}:`, error);
+        errorCount++;
+      }
+    }
+  }
+
+  return { successCount, errorCount };
+}
