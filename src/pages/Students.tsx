@@ -11,7 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/hooks/useTenant';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Search, Users, Calendar, Edit, Trash2 } from 'lucide-react';
+import { ImageUpload } from '@/components/ImageUpload';
+import { Plus, Search, Users, Calendar, Edit, Trash2, Send, FileText } from 'lucide-react';
 
 interface Student {
   id: string;
@@ -53,6 +54,7 @@ const Students = () => {
     date_of_birth: '',
     gender: '',
     class_id: '',
+    photo_url: null as string | null,
     emergency_contact: {
       name: '',
       phone: '',
@@ -173,6 +175,7 @@ const Students = () => {
       date_of_birth: '',
       gender: '',
       class_id: '',
+      photo_url: null,
       emergency_contact: {
         name: '',
         phone: '',
@@ -195,6 +198,7 @@ const Students = () => {
       date_of_birth: student.date_of_birth,
       gender: student.gender || '',
       class_id: student.class_id || '',
+      photo_url: student.photo_url,
       emergency_contact: student.emergency_contact || {
         name: '',
         phone: '',
@@ -207,6 +211,44 @@ const Students = () => {
       }
     });
     setIsAddDialogOpen(true);
+  };
+
+  const sendRegistrationLink = async (studentId: string) => {
+    if (!tenant) return;
+
+    try {
+      // Get guardian phone from emergency contact
+      const student = students.find(s => s.id === studentId);
+      if (!student || !student.emergency_contact?.phone) {
+        toast({
+          title: "خطأ",
+          description: "لا يوجد رقم هاتف لولي الأمر",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase.functions.invoke('send-registration-link', {
+        body: {
+          studentId: studentId,
+          guardianPhone: student.emergency_contact.phone,
+          tenantId: tenant.id
+        }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "تم الإرسال بنجاح",
+        description: "تم إرسال رابط التسجيل إلى ولي الأمر عبر الواتس آب",
+      });
+    } catch (error: any) {
+      toast({
+        title: "خطأ في الإرسال",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDelete = async (student: Student) => {
@@ -297,6 +339,13 @@ const Students = () => {
               </DialogHeader>
               <form onSubmit={handleSubmit}>
                 <div className="grid gap-4 py-4">
+                  {/* Photo Upload */}
+                  <ImageUpload
+                    currentImage={formData.photo_url}
+                    onImageChange={(imageUrl) => setFormData(prev => ({ ...prev, photo_url: imageUrl }))}
+                    studentName={formData.full_name}
+                  />
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="student_id">رقم الطالب</Label>
@@ -430,6 +479,23 @@ const Students = () => {
                   <Button type="submit">
                     {selectedStudent ? 'حفظ التعديلات' : 'إضافة الطالب'}
                   </Button>
+                  {!selectedStudent && formData.emergency_contact.phone && (
+                    <Button 
+                      type="button" 
+                      variant="secondary"
+                      onClick={() => {
+                        // We need the student ID first, so this will be called after save
+                        toast({
+                          title: "احفظ الطالب أولاً",
+                          description: "يرجى حفظ بيانات الطالب أولاً ثم إرسال رابط التسجيل",
+                        });
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <Send className="h-4 w-4" />
+                      إرسال رابط التسجيل
+                    </Button>
+                  )}
                 </DialogFooter>
               </form>
             </DialogContent>
@@ -501,15 +567,37 @@ const Students = () => {
               <CardHeader>
                 <div className="flex items-center space-x-reverse space-x-4">
                   <Avatar className="h-12 w-12">
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      {getInitials(student.full_name)}
-                    </AvatarFallback>
+                    {student.photo_url ? (
+                      <img src={student.photo_url} alt={student.full_name} className="w-full h-full object-cover rounded-full" />
+                    ) : (
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        {getInitials(student.full_name)}
+                      </AvatarFallback>
+                    )}
                   </Avatar>
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg">{student.full_name}</h3>
                     <p className="text-sm text-muted-foreground">ID: {student.student_id}</p>
                   </div>
                   <div className="flex space-x-reverse space-x-1">
+                     <Button
+                       size="sm"
+                       variant="ghost"
+                       onClick={() => sendRegistrationLink(student.id)}
+                       className="text-green-500 hover:text-green-700"
+                       title="إرسال رابط التسجيل لولي الأمر"
+                     >
+                       <Send className="h-4 w-4" />
+                     </Button>
+                     <Button
+                       size="sm"
+                       variant="ghost"
+                       onClick={() => window.open(`/student-report/${student.id}`, '_blank')}
+                       className="text-blue-500 hover:text-blue-700"
+                       title="عرض التقرير الشامل"
+                     >
+                       <FileText className="h-4 w-4" />
+                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"

@@ -31,6 +31,7 @@ import CMSManagement from "./pages/CMSManagement";
 import SharedRewardCard from "./pages/SharedRewardCard";
 import PublicSurvey from "./pages/PublicSurvey";
 import PublicPermission from "./pages/PublicPermission";
+import StudentReport from "./pages/StudentReport";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -88,6 +89,7 @@ const AppRoutes = () => (
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/survey/:surveyId" element={<PublicSurvey />} />
         <Route path="/permission/:id" element={<PublicPermission />} />
+        <Route path="/student-report/:studentId" element={<StudentReport />} />
     <Route path="/super-admin" element={
       <ProtectedRoute>
         <SuperAdmin />
