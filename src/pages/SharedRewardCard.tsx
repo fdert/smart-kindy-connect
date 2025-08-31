@@ -32,17 +32,23 @@ const SharedRewardCard = () => {
   const tenantId = searchParams.get('tenant');
 
   useEffect(() => {
+    console.log('SharedRewardCard mounted with params:', { rewardId, tenantId });
+    console.log('Current URL:', window.location.href);
+    console.log('Search params:', window.location.search);
+    
     if (rewardId && tenantId) {
+      console.log('Valid params found, loading reward...');
       loadReward();
     } else {
-      setError('رابط غير صحيح');
+      console.log('Invalid params:', { rewardId, tenantId });
+      setError('رابط غير صحيح - معاملات مفقودة');
       setLoading(false);
     }
   }, [rewardId, tenantId]);
 
   const loadReward = async () => {
     try {
-      console.log('Loading reward with ID:', rewardId, 'for tenant:', tenantId);
+      console.log('Starting loadReward with:', { rewardId, tenantId });
       
       // First get the reward
       const { data: rewardData, error: rewardError } = await supabase
@@ -56,17 +62,20 @@ const SharedRewardCard = () => {
         .eq('is_public', true)
         .single();
 
+      console.log('Reward query result:', { rewardData, rewardError });
+
       if (rewardError) {
         console.error('Reward loading error:', rewardError);
-        throw rewardError;
+        throw new Error(`خطأ في تحميل بيانات الجائزة: ${rewardError.message}`);
       }
       
       if (!rewardData) {
+        console.log('No reward data found');
         setError('البطاقة غير موجودة أو غير متاحة للعرض');
         return;
       }
 
-      console.log('Reward data loaded:', rewardData);
+      console.log('Reward data loaded successfully:', rewardData);
 
       // Get tenant name with public access - use anon key
       const { data: tenantData, error: tenantError } = await supabase
@@ -76,6 +85,8 @@ const SharedRewardCard = () => {
         .eq('status', 'approved') // Only approved tenants
         .single();
 
+      console.log('Tenant query result:', { tenantData, tenantError });
+
       if (tenantError) {
         console.error('Tenant loading error:', tenantError);
         // If we can't get tenant name, use a fallback
@@ -83,6 +94,7 @@ const SharedRewardCard = () => {
           ...rewardData,
           tenants: { name: 'الروضة' }
         };
+        console.log('Using fallback tenant name');
         setReward(combinedData);
         return;
       }
@@ -93,11 +105,11 @@ const SharedRewardCard = () => {
         tenants: { name: tenantData.name }
       };
 
-      console.log('Combined data:', combinedData);
+      console.log('Combined data ready:', combinedData);
       setReward(combinedData);
     } catch (error: any) {
-      console.error('Error loading reward:', error);
-      setError('حدث خطأ في تحميل البطاقة: ' + error.message);
+      console.error('Error in loadReward:', error);
+      setError(`حدث خطأ في تحميل البطاقة: ${error.message}`);
     } finally {
       setLoading(false);
     }
