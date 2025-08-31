@@ -132,6 +132,8 @@ Deno.serve(async (req) => {
             });
           }
           
+          const surveyLink = `${Deno.env.get('SUPABASE_URL')?.replace('/supabase', '') || 'https://your-domain.com'}/surveys/public/${survey.id}`;
+          
           const { data: whatsappResult, error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
             body: {
               tenantId: userData.tenant_id,
@@ -142,6 +144,7 @@ Deno.serve(async (req) => {
                 surveyTitle: survey.title,
                 surveyDescription: survey.description || '',
                 surveyQuestions: questionsText,
+                surveyLink: surveyLink,
                 nurseryName: userData.tenants?.name || ''
               },
               contextType: 'survey',
@@ -357,6 +360,8 @@ Deno.serve(async (req) => {
           let autoNotificationsSent = 0;
           for (const contact of contacts) {
             try {
+              const surveyLink = `${Deno.env.get('SUPABASE_URL')?.replace('/supabase', '') || 'https://your-domain.com'}/surveys/public/${survey.id}`;
+              
               const { data: whatsappResult, error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
                 body: {
                   tenantId: userData.tenant_id,
@@ -367,6 +372,7 @@ Deno.serve(async (req) => {
                     surveyTitle: survey.title,
                     surveyDescription: survey.description || '',
                     surveyQuestions: questionsText,
+                    surveyLink: surveyLink,
                     nurseryName: userData.tenants?.name || ''
                   },
                   contextType: 'survey',

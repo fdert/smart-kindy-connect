@@ -132,24 +132,23 @@ serve(async (req) => {
 مع تحيات
 ${templateData.nurseryName || 'الحضانة'}`;
       } else if (templateName === 'survey_notification' && templateData) {
-        const surveyLink = `${Deno.env.get('SUPABASE_URL')?.replace('/supabase', '') || 'https://your-domain.com'}/surveys/public/${contextId}`;
+        const surveyLink = templateData.surveyLink || `${Deno.env.get('SUPABASE_URL')?.replace('/supabase', '') || 'https://your-domain.com'}/surveys/public/${contextId}`;
         
         messageText = `📊 استطلاع رأي جديد
 
-عزيز/ة ${templateData.guardianName || 'ولي الأمر'}
+السلام عليكم ${templateData.guardianName || 'ولي الأمر المحترم'} ✨
 
-ندعوكم للمشاركة في: ${templateData.surveyTitle || 'الاستطلاع'}
-
-${templateData.surveyDescription ? `الوصف: ${templateData.surveyDescription}\n` : ''}
-📋 للمشاركة في الاستطلاع، يرجى النقر على الرابط التالي:
-🔗 ${surveyLink}
+📋 ندعوكم للمشاركة في استطلاع: *${templateData.surveyTitle || 'الاستطلاع'}*
+${templateData.surveyDescription ? `\n📝 الوصف: ${templateData.surveyDescription}\n` : ''}
+🌟 للمشاركة في الاستطلاع، يرجى النقر على الرابط أدناه:
+👈 ${surveyLink}
 
 ${templateData.surveyQuestions || ''}
 
-نقدر مشاركتكم في تحسين خدماتنا ✨
+🙏 نقدر وقتكم ومشاركتكم في تحسين خدماتنا
 
-مع تحيات
-${templateData.nurseryName || 'الحضانة'}`;
+مع أطيب التحيات 💝
+${templateData.nurseryName || 'إدارة الحضانة'}`;
       } else {
         // Use fallback message if template is missing
         messageText = message || `رسالة من ${templateData?.nurseryName || 'الحضانة'}`;
