@@ -141,7 +141,23 @@ export default function StudentReport() {
   }, [tenant, studentId, dateRange, searchParams]);
 
   const loadReportData = async () => {
-    if (!studentId) return;
+    if (!studentId) {
+      console.error('No studentId provided');
+      return;
+    }
+
+    // تحقق من صحة UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(studentId)) {
+      console.error('Invalid studentId format:', studentId);
+      toast({
+        title: "خطأ في الرابط",
+        description: "معرف الطالب غير صحيح",
+        variant: "destructive"
+      });
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     try {
