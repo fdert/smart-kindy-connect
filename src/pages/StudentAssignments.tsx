@@ -84,9 +84,14 @@ export default function StudentAssignments() {
 
     setLoading(true);
     try {
+      console.log('Loading assignments for student:', studentId);
+      
       // Check if this is a guardian access (public access)
       const isGuardianAccess = searchParams.get('guardian') === 'true';
       let tenantId: string;
+
+      console.log('Guardian access mode:', isGuardianAccess);
+      console.log('Date range:', dateRange);
 
       if (isGuardianAccess) {
         // For guardian access, we don't need tenant verification
@@ -111,6 +116,7 @@ export default function StudentAssignments() {
           throw new Error('لم يتم العثور على بيانات الطالب');
         }
 
+        console.log('Student data loaded:', studentData);
         setStudentInfo(studentData);
         tenantId = studentData.tenant_id;
         
@@ -132,9 +138,12 @@ export default function StudentAssignments() {
         if (!studentData) {
           throw new Error('لم يتم العثور على بيانات الطالب');
         }
+        console.log('Student data loaded (authenticated):', studentData);
         setStudentInfo(studentData);
         tenantId = tenant.id;
       }
+
+      console.log('Using tenant ID:', tenantId);
 
       // Load assignments with evaluations and proper date filtering
       const { data: assignmentsData, error: assignmentsError } = await supabase
@@ -154,7 +163,12 @@ export default function StudentAssignments() {
         .lte('evaluated_at', dateRange.to.toISOString())
         .order('evaluated_at', { ascending: false });
 
-      if (assignmentsError) throw assignmentsError;
+      if (assignmentsError) {
+        console.error('Assignments error:', assignmentsError);
+        throw assignmentsError;
+      }
+
+      console.log('Assignment evaluations loaded:', assignmentsData?.length || 0, 'records');
 
       // Get assignment details for each evaluation
       const evaluationsWithAssignments = [];
@@ -175,6 +189,7 @@ export default function StudentAssignments() {
         }
       }
 
+      console.log('Final assignments with details:', evaluationsWithAssignments.length);
       setAssignments(evaluationsWithAssignments);
 
     } catch (error: any) {
