@@ -42,6 +42,8 @@ const SharedRewardCard = () => {
 
   const loadReward = async () => {
     try {
+      console.log('Loading reward with ID:', rewardId, 'for tenant:', tenantId);
+      
       // First get the reward
       const { data: rewardData, error: rewardError } = await supabase
         .from('rewards')
@@ -54,21 +56,36 @@ const SharedRewardCard = () => {
         .eq('is_public', true)
         .single();
 
-      if (rewardError) throw rewardError;
+      if (rewardError) {
+        console.error('Reward loading error:', rewardError);
+        throw rewardError;
+      }
       
       if (!rewardData) {
         setError('البطاقة غير موجودة أو غير متاحة للعرض');
         return;
       }
 
-      // Get tenant name separately
+      console.log('Reward data loaded:', rewardData);
+
+      // Get tenant name with public access - use anon key
       const { data: tenantData, error: tenantError } = await supabase
         .from('tenants')
         .select('name')
         .eq('id', tenantId)
+        .eq('status', 'approved') // Only approved tenants
         .single();
 
-      if (tenantError) throw tenantError;
+      if (tenantError) {
+        console.error('Tenant loading error:', tenantError);
+        // If we can't get tenant name, use a fallback
+        const combinedData = {
+          ...rewardData,
+          tenants: { name: 'الروضة' }
+        };
+        setReward(combinedData);
+        return;
+      }
 
       // Combine the data
       const combinedData = {
@@ -76,10 +93,11 @@ const SharedRewardCard = () => {
         tenants: { name: tenantData.name }
       };
 
+      console.log('Combined data:', combinedData);
       setReward(combinedData);
     } catch (error: any) {
       console.error('Error loading reward:', error);
-      setError('حدث خطأ في تحميل البطاقة');
+      setError('حدث خطأ في تحميل البطاقة: ' + error.message);
     } finally {
       setLoading(false);
     }
