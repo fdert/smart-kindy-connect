@@ -64,7 +64,7 @@ serve(async (req) => {
     }
 
     // Create registration link with student info
-    const baseUrl = 'https://ytjodudlnfamvnescumu.supabase.co';
+    const baseUrl = 'https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev';
     const registrationLink = `${baseUrl}/student-report/${studentId}?guardian=true`;
 
     // Prepare WhatsApp message
