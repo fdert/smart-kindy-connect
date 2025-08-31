@@ -430,7 +430,10 @@ const SurveyDashboard = () => {
                       console.log('Selected Survey:', selectedSurvey);
                       console.log('Current survey results:', surveyResults);
                       console.log('AI Analysis:', selectedSurvey.aiAnalysis);
-                      await loadSurveyResults(selectedSurvey);
+                      // Ensure we have fresh results
+                      if (surveyResults.length === 0) {
+                        await loadSurveyResults(selectedSurvey);
+                      }
                     }}
                   />
                   <Button 
