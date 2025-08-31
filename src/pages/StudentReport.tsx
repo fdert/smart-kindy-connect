@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -99,6 +99,7 @@ interface StudentReportData {
 export default function StudentReport() {
   const { studentId } = useParams();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [reportData, setReportData] = useState<StudentReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({
@@ -384,7 +385,10 @@ export default function StudentReport() {
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+          <Card 
+            className="bg-gradient-to-br from-blue-500 to-blue-600 text-white cursor-pointer hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+            onClick={() => navigate(`/attendance?student=${studentId}&from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">معدل الحضور</CardTitle>
               <UserCheck className="h-4 w-4" />
@@ -397,7 +401,10 @@ export default function StudentReport() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
+          <Card 
+            className="bg-gradient-to-br from-green-500 to-green-600 text-white cursor-pointer hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+            onClick={() => navigate(`/assignments?student=${studentId}&from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">معدل الواجبات</CardTitle>
               <BookOpen className="h-4 w-4" />
@@ -410,7 +417,10 @@ export default function StudentReport() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+          <Card 
+            className="bg-gradient-to-br from-purple-500 to-purple-600 text-white cursor-pointer hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+            onClick={() => navigate(`/rewards?student=${studentId}&from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">المكافآت</CardTitle>
               <Award className="h-4 w-4" />
@@ -423,7 +433,10 @@ export default function StudentReport() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-pink-500 to-pink-600 text-white">
+          <Card 
+            className="bg-gradient-to-br from-pink-500 to-pink-600 text-white cursor-pointer hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+            onClick={() => navigate(`/student-notes?student=${studentId}&from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">الملاحظات</CardTitle>
               <Activity className="h-4 w-4" />
@@ -440,11 +453,15 @@ export default function StudentReport() {
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Academic Performance */}
-          <Card className="bg-white/90 backdrop-blur-sm">
+          <Card 
+            className="bg-white/90 backdrop-blur-sm cursor-pointer hover:shadow-lg transform hover:scale-102 transition-all duration-200"
+            onClick={() => navigate(`/assignments?student=${studentId}&from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
+          >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5 text-blue-500" />
                 الأداء الأكاديمي
+                <span className="text-sm text-muted-foreground mr-auto">اضغط للتفاصيل ←</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -474,11 +491,15 @@ export default function StudentReport() {
           </Card>
 
           {/* Attendance Details */}
-          <Card className="bg-white/90 backdrop-blur-sm">
+          <Card 
+            className="bg-white/90 backdrop-blur-sm cursor-pointer hover:shadow-lg transform hover:scale-102 transition-all duration-200"
+            onClick={() => navigate(`/attendance?student=${studentId}&from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
+          >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5 text-green-500" />
                 تفاصيل الحضور
+                <span className="text-sm text-muted-foreground mr-auto">اضغط للتفاصيل ←</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -508,11 +529,15 @@ export default function StudentReport() {
 
         {/* Rewards Section */}
         {reportData.rewards.length > 0 && (
-          <Card className="mt-8 bg-white/90 backdrop-blur-sm">
+          <Card 
+            className="mt-8 bg-white/90 backdrop-blur-sm cursor-pointer hover:shadow-lg transform hover:scale-102 transition-all duration-200"
+            onClick={() => navigate(`/rewards?student=${studentId}&from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
+          >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Star className="h-5 w-5 text-yellow-500" />
                 المكافآت والإنجازات
+                <span className="text-sm text-muted-foreground mr-auto">اضغط للتفاصيل ←</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -539,11 +564,15 @@ export default function StudentReport() {
 
         {/* Notes Section */}
         {reportData.notes.length > 0 && (
-          <Card className="mt-8 bg-white/90 backdrop-blur-sm">
+          <Card 
+            className="mt-8 bg-white/90 backdrop-blur-sm cursor-pointer hover:shadow-lg transform hover:scale-102 transition-all duration-200"
+            onClick={() => navigate(`/student-notes?student=${studentId}&from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
+          >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Brain className="h-5 w-5 text-purple-500" />
                 الملاحظات والمتابعة
+                <span className="text-sm text-muted-foreground mr-auto">اضغط للتفاصيل ←</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -670,11 +699,15 @@ export default function StudentReport() {
 
         {/* Media Gallery */}
         {reportData.media.length > 0 && (
-          <Card className="mt-8 bg-white/90 backdrop-blur-sm">
+          <Card 
+            className="mt-8 bg-white/90 backdrop-blur-sm cursor-pointer hover:shadow-lg transform hover:scale-102 transition-all duration-200"
+            onClick={() => navigate(`/media?student=${studentId}&from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
+          >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Camera className="h-5 w-5 text-indigo-500" />
                 ألبوم الصور
+                <span className="text-sm text-muted-foreground mr-auto">اضغط للتفاصيل ←</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
