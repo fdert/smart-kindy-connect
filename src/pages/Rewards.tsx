@@ -215,7 +215,8 @@ const Rewards = () => {
         ...formData,
         tenant_id: tenant.id,
         awarded_by: user.id,
-        awarded_at: new Date().toISOString()
+        awarded_at: new Date().toISOString(),
+        is_public: true // Force to public for shareable rewards
       };
 
       const { data: insertedReward, error } = await supabase

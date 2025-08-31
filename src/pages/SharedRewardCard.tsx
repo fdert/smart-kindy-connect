@@ -42,26 +42,41 @@ const SharedRewardCard = () => {
 
   const loadReward = async () => {
     try {
-      const { data, error } = await supabase
+      // First get the reward
+      const { data: rewardData, error: rewardError } = await supabase
         .from('rewards')
         .select(`
           *,
-          students!inner (full_name),
-          tenants!inner (name)
+          students!inner (full_name)
         `)
         .eq('id', rewardId)
         .eq('tenant_id', tenantId)
         .eq('is_public', true)
         .single();
 
-      if (error) throw error;
+      if (rewardError) throw rewardError;
       
-      if (!data) {
+      if (!rewardData) {
         setError('البطاقة غير موجودة أو غير متاحة للعرض');
         return;
       }
 
-      setReward(data);
+      // Get tenant name separately
+      const { data: tenantData, error: tenantError } = await supabase
+        .from('tenants')
+        .select('name')
+        .eq('id', tenantId)
+        .single();
+
+      if (tenantError) throw tenantError;
+
+      // Combine the data
+      const combinedData = {
+        ...rewardData,
+        tenants: { name: tenantData.name }
+      };
+
+      setReward(combinedData);
     } catch (error: any) {
       console.error('Error loading reward:', error);
       setError('حدث خطأ في تحميل البطاقة');
