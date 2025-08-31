@@ -61,7 +61,7 @@ export default function StudentAttendance() {
       if (studentError) throw studentError;
       setStudentInfo(studentData);
 
-      // Load attendance
+      // Load attendance with exact same query as in StudentReport
       const { data: attendanceData, error: attendanceError } = await supabase
         .from('attendance_events')
         .select('*')

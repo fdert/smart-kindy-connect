@@ -66,7 +66,7 @@ export default function StudentRewards() {
       }
       setStudentInfo(studentData);
 
-      // Load rewards
+      // Load rewards with exact same query as in StudentReport
       const { data: rewardsData, error: rewardsError } = await supabase
         .from('rewards')
         .select('*')

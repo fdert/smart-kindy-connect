@@ -65,7 +65,7 @@ export default function StudentNotesDetail() {
       if (studentError) throw studentError;
       setStudentInfo(studentData);
 
-      // Load notes (only non-private ones)
+      // Load notes with exact same query as in StudentReport (only non-private ones)
       const { data: notesData, error: notesError } = await supabase
         .from('student_notes')
         .select('*')

@@ -65,7 +65,7 @@ export default function StudentMedia() {
       }
       setStudentInfo(studentData);
 
-      // Load media through student links with proper filtering
+      // Load media through student links with exact same query as in StudentReport
       const { data: mediaLinks, error: mediaError } = await supabase
         .from('media_student_links')
         .select(`
@@ -85,7 +85,7 @@ export default function StudentMedia() {
 
       if (mediaError) throw mediaError;
 
-      // Filter media by date range and ensure proper tenant isolation
+      // Filter media by date range and ensure proper tenant isolation (exactly as in StudentReport)
       const mediaFiles = mediaLinks
         ?.map(link => link.media)
         .filter(Boolean)
