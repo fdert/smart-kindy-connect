@@ -132,11 +132,11 @@ serve(async (req) => {
 مع تحيات
 ${templateData.nurseryName || 'الحضانة'}`;
       } else if (templateName === 'survey_notification' && templateData) {
-        // Build the survey link with the correct path
+        // Build the survey link with the correct production domain
         let surveyLink = templateData.surveyLink;
         if (!surveyLink && contextId) {
-          // Use the correct route: /survey/:id instead of /surveys/public/:id
-          surveyLink = `https://ytjodudlnfamvnescumu.lovableproject.com/survey/${contextId}`;
+          // Use the live production domain
+          surveyLink = `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/survey/${contextId}`;
         }
         
         console.log(`Survey notification - contextId: ${contextId}, surveyLink: ${surveyLink}`);
