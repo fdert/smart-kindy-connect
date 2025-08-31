@@ -356,15 +356,17 @@ const SurveyDashboard = () => {
             {surveys.map((survey) => (
               <Card 
                 key={survey.id} 
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => {
-                  setSelectedSurvey(survey);
-                  loadSurveyResults(survey);
-                }}
+                className="hover:shadow-md transition-shadow"
               >
                 <CardHeader>
                   <div className="flex justify-between items-start">
-                    <div>
+                    <div 
+                      className="flex-1 cursor-pointer"
+                      onClick={() => {
+                        setSelectedSurvey(survey);
+                        loadSurveyResults(survey);
+                      }}
+                    >
                       <CardTitle className="text-lg">{survey.title}</CardTitle>
                       <CardDescription className="flex items-center gap-4 mt-1">
                         <span>{getSurveyTypeLabel(survey.survey_type)}</span>
@@ -377,11 +379,21 @@ const SurveyDashboard = () => {
                         </span>
                       </CardDescription>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${getStatusColor(survey)}`}></div>
-                      <Badge variant={survey.is_active ? "default" : "secondary"}>
-                        {getStatusText(survey)}
-                      </Badge>
+                    <div className="flex items-center gap-3">
+                      <SurveyPDFReport 
+                        survey={survey}
+                        results={surveyResults}
+                        tenantInfo={tenant || { name: 'المؤسسة' }}
+                        onGenerateReport={async () => {
+                          await loadSurveyResults(survey);
+                        }}
+                      />
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${getStatusColor(survey)}`}></div>
+                        <Badge variant={survey.is_active ? "default" : "secondary"}>
+                          {getStatusText(survey)}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                 </CardHeader>
