@@ -77,24 +77,36 @@ export default function StudentNotes() {
     
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      // First, get all notes
+      const { data: notesData, error: notesError } = await supabase
         .from('student_notes')
-        .select(`
-          *,
-          students (
-            full_name,
-            student_id
-          )
-        `)
+        .select('*')
         .eq('tenant_id', tenant.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      
-      // Transform data to match interface  
-      const transformedData: StudentNote[] = (data || []).map((note: any) => ({
+      if (notesError) throw notesError;
+
+      // Then get all students to match with notes
+      const { data: studentsData, error: studentsError } = await supabase
+        .from('students')
+        .select('id, full_name, student_id')
+        .eq('tenant_id', tenant.id);
+
+      if (studentsError) throw studentsError;
+
+      // Create a map of students by ID for quick lookup
+      const studentsMap = new Map();
+      (studentsData || []).forEach(student => {
+        studentsMap.set(student.id, {
+          full_name: student.full_name,
+          student_id: student.student_id
+        });
+      });
+
+      // Transform notes data to include student info
+      const transformedData: StudentNote[] = (notesData || []).map((note: any) => ({
         ...note,
-        student: note.students
+        student: studentsMap.get(note.student_id) || null
       }));
       
       setNotes(transformedData);
