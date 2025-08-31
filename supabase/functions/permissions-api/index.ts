@@ -15,9 +15,19 @@ interface CreatePermissionRequest {
 }
 
 interface RespondToPermissionRequest {
-  response: 'approved' | 'declined';
-  notes?: string;
+  permissionId: string;
   guardianId: string;
+  studentId: string;
+  response: string;
+  notes?: string;
+  otpToken: string;
+}
+
+interface PublicResponseRequest {
+  action: 'publicResponse';
+  permissionId: string;
+  response: string;
+  notes?: string;
 }
 
 Deno.serve(async (req) => {
@@ -33,7 +43,15 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get the authenticated user
+    const body = await req.json();
+    console.log('Request body:', JSON.stringify(body, null, 2));
+
+    // Handle public permission response (no auth needed)
+    if (body.action === 'publicResponse') {
+      return handlePublicResponse(body as PublicResponseRequest, supabase);
+    }
+
+    // Get the authenticated user for other actions
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('No authorization header');
@@ -57,9 +75,6 @@ Deno.serve(async (req) => {
     if (userError || !userData?.tenant_id) {
       throw new Error('User has no associated tenant');
     }
-
-    const body = await req.json();
-    console.log('Request body:', body);
 
     // Handle different actions based on request body
     if (body.action === 'notify' && body.permissionId) {
@@ -118,6 +133,9 @@ Deno.serve(async (req) => {
               .eq('id', response.id);
 
             // Send WhatsApp notification
+            const permissionLink = `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/permission/${permissionId}`;
+            console.log(`Sending reminder WhatsApp with permission link: ${permissionLink}`);
+            
             const { data: whatsappResult, error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
               body: {
                 tenantId: userData.tenant_id,
@@ -130,7 +148,7 @@ Deno.serve(async (req) => {
                   permissionDescription: permission.description || '',
                   expiresAt: new Date(permission.expires_at).toLocaleDateString('ar-SA'),
                   nurseryName: userData.tenants?.name || '',
-                  permissionLink: `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/permission/${permissionId}`,
+                  permissionLink: permissionLink
                 },
                 contextType: 'permission',
                 contextId: permission.id,
@@ -336,6 +354,9 @@ Deno.serve(async (req) => {
                   .eq('student_id', link.student_id);
 
                 // Send WhatsApp notification
+                const permissionLink = `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/permission/${permission.id}`;
+                console.log(`Sending new permission WhatsApp with permission link: ${permissionLink}`);
+                
                 const { data: whatsappResult, error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
                   body: {
                     tenantId: userData.tenant_id,
@@ -348,7 +369,7 @@ Deno.serve(async (req) => {
                       permissionDescription: permission.description || '',
                       expiresAt: new Date(permission.expires_at).toLocaleDateString('ar-SA'),
                       nurseryName: userData.tenants?.name || '',
-                      permissionLink: `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/permission/${permission.id}`,
+                      permissionLink: permissionLink
                     },
                     contextType: 'permission',
                     contextId: permission.id,
@@ -393,7 +414,8 @@ Deno.serve(async (req) => {
         } 
       }
     );
-}
+  }
+});
 
 // Handle public permission response
 async function handlePublicResponse(requestData: PublicResponseRequest, supabase: any) {
@@ -435,7 +457,6 @@ async function handlePublicResponse(requestData: PublicResponseRequest, supabase
     }
 
     // For public responses, we'll create a temporary response entry
-    // In a real implementation, you might want to collect guardian info first
     const { data: responseData, error: responseError } = await supabase
       .from('permission_responses')
       .insert({
@@ -479,4 +500,4 @@ async function handlePublicResponse(requestData: PublicResponseRequest, supabase
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
-});
+}
