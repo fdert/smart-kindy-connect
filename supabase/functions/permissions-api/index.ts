@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
               .eq('id', response.id);
 
             // Send WhatsApp notification
-            await supabase.functions.invoke('whatsapp-outbound', {
+            const { data: whatsappResult, error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
               body: {
                 tenantId: userData.tenant_id,
                 to: response.guardians.whatsapp_number,
@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
                   studentName: response.students?.full_name || '',
                   permissionTitle: permission.title,
                   permissionDescription: permission.description || '',
-                  expiresAt: permission.expires_at,
+                  expiresAt: new Date(permission.expires_at).toLocaleDateString('ar-SA'),
                   nurseryName: userData.tenants?.name || '',
                   otpToken: otpToken
                 },
@@ -136,7 +136,14 @@ Deno.serve(async (req) => {
                 studentId: response.student_id
               }
             });
-            notificationsSent++;
+            
+            if (whatsappError) {
+              console.error('WhatsApp error:', whatsappError);
+              throw whatsappError;
+            } else {
+              console.log('WhatsApp notification sent successfully:', whatsappResult);
+              notificationsSent++;
+            }
           } catch (error) {
             console.error('Failed to send notification:', error);
           }
@@ -261,7 +268,7 @@ Deno.serve(async (req) => {
 
       // Create pending responses for each student's guardians
       if (permissionData.studentIds && permissionData.studentIds.length > 0) {
-        // Get guardians for selected students
+        // Get guardians for selected students with student information
         const { data: guardianLinks, error: linksError } = await supabase
           .from('guardian_student_links')
           .select(`
@@ -271,6 +278,9 @@ Deno.serve(async (req) => {
               id,
               full_name,
               whatsapp_number
+            ),
+            students (
+              full_name
             )
           `)
           .eq('tenant_id', userData.tenant_id)
@@ -301,6 +311,60 @@ Deno.serve(async (req) => {
           }
 
           console.log('Permission responses created successfully');
+
+          // Automatically send WhatsApp notifications after creating permission
+          try {
+            console.log('Sending automatic notifications for new permission:', permission.id);
+            
+            for (const link of guardianLinks) {
+              if (link.guardians?.whatsapp_number) {
+                // Generate OTP token for response
+                const otpToken = Math.random().toString(36).substring(2, 8).toUpperCase();
+                const otpExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+                // Update the created response with OTP
+                await supabase
+                  .from('permission_responses')
+                  .update({
+                    otp_token: otpToken,
+                    otp_expires_at: otpExpires.toISOString()
+                  })
+                  .eq('permission_id', permission.id)
+                  .eq('guardian_id', link.guardian_id)
+                  .eq('student_id', link.student_id);
+
+                // Send WhatsApp notification
+                const { data: whatsappResult, error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
+                  body: {
+                    tenantId: userData.tenant_id,
+                    to: link.guardians.whatsapp_number,
+                    templateName: 'permission_request',
+                    templateData: {
+                      guardianName: link.guardians.full_name,
+                      studentName: link.students?.full_name || '',
+                      permissionTitle: permission.title,
+                      permissionDescription: permission.description || '',
+                      expiresAt: new Date(permission.expires_at).toLocaleDateString('ar-SA'),
+                      nurseryName: userData.tenants?.name || '',
+                      otpToken: otpToken
+                    },
+                    contextType: 'permission',
+                    contextId: permission.id,
+                    studentId: link.student_id
+                  }
+                });
+                
+                if (whatsappError) {
+                  console.error('WhatsApp auto-notification error:', whatsappError);
+                } else {
+                  console.log('WhatsApp auto-notification sent successfully to:', link.guardians.whatsapp_number);
+                }
+              }
+            }
+          } catch (autoNotifyError) {
+            console.error('Error sending automatic notifications:', autoNotifyError);
+            // Don't throw here, as permission was created successfully
+          }
         }
       }
 
