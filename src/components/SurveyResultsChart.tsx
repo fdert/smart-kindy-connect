@@ -22,11 +22,16 @@ export const SurveyResultsChart = ({ result }: SurveyResultsChartProps) => {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
   const renderYesNoChart = () => {
-    if (!result.yesCount && !result.noCount) return null;
+    if (result.totalResponses === 0) return null;
+    
+    const yesCount = result.yesCount || 0;
+    const noCount = result.noCount || 0;
+    
+    console.log('Rendering Yes/No chart with data:', { yesCount, noCount, totalResponses: result.totalResponses });
     
     const data = [
-      { name: 'نعم', value: result.yesCount || 0, color: '#00C49F' },
-      { name: 'لا', value: result.noCount || 0, color: '#FF8042' }
+      { name: 'نعم', value: yesCount, color: '#00C49F' },
+      { name: 'لا', value: noCount, color: '#FF8042' }
     ];
 
     return (
@@ -119,14 +124,25 @@ export const SurveyResultsChart = ({ result }: SurveyResultsChartProps) => {
         </div>
       </CardHeader>
       <CardContent>
-        {result.questionType === 'yes_no' && renderYesNoChart()}
-        {(result.questionType === 'single_choice' || result.questionType === 'multiple_choice') && renderOptionsChart()}
-        {result.questionType === 'rating' && renderRatingChart()}
+        {(() => {
+          console.log('Rendering chart for question type:', result.questionType, 'Total responses:', result.totalResponses);
+          return null;
+        })()}
+        
+        {result.questionType === 'yes_no' && result.totalResponses > 0 && renderYesNoChart()}
+        {(result.questionType === 'single_choice' || result.questionType === 'multiple_choice') && result.totalResponses > 0 && renderOptionsChart()}
+        {result.questionType === 'rating' && result.totalResponses > 0 && renderRatingChart()}
         
         {result.questionType === 'text' && (
           <div className="text-center py-8 text-muted-foreground">
             <p>الردود النصية لا يمكن عرضها في شكل رسم بياني</p>
             <p>يمكنك تصدير النتائج لمراجعة الردود النصية</p>
+          </div>
+        )}
+
+        {result.totalResponses === 0 && (
+          <div className="text-center py-8 text-muted-foreground">
+            <p>لا توجد ردود على هذا السؤال بعد</p>
           </div>
         )}
       </CardContent>

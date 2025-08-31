@@ -56,18 +56,26 @@ export const SurveyAIAnalysis = ({ survey, results, onAnalysisComplete }: Survey
     setError(null);
 
     try {
+      console.log('Starting AI analysis for survey:', survey.title);
+      console.log('Analysis data:', { surveyType: survey.survey_type, targetAudience: survey.target_audience, resultsCount: results.length });
+
       // Prepare data for analysis
       const totalResponses = results.reduce((sum, result) => sum + result.totalResponses, 0);
       const averageResponsesPerQuestion = totalResponses / (results.length || 1);
+
+      console.log('Analysis metrics:', { totalResponses, averageResponsesPerQuestion });
 
       // Calculate sentiment based on ratings and yes/no responses
       let positiveResponses = 0;
       let totalSentimentResponses = 0;
 
       results.forEach(result => {
+        console.log('Processing result:', result.questionText, 'Type:', result.questionType);
+        
         if (result.questionType === 'yes_no') {
           positiveResponses += result.yesCount || 0;
           totalSentimentResponses += result.totalResponses;
+          console.log('Yes/No question - Yes:', result.yesCount, 'Total:', result.totalResponses);
         } else if (result.questionType === 'rating' && result.averageRating) {
           // Consider ratings 4+ as positive
           if (result.averageRating >= 4) {
@@ -76,10 +84,12 @@ export const SurveyAIAnalysis = ({ survey, results, onAnalysisComplete }: Survey
             positiveResponses += result.totalResponses * 0.5;
           }
           totalSentimentResponses += result.totalResponses;
+          console.log('Rating question - Average:', result.averageRating, 'Total:', result.totalResponses);
         }
       });
 
       const positivityRate = totalSentimentResponses > 0 ? (positiveResponses / totalSentimentResponses) : 0.5;
+      console.log('Calculated positivity rate:', positivityRate);
 
       // Generate insights based on data patterns
       const keyInsights: string[] = [];
@@ -188,6 +198,7 @@ export const SurveyAIAnalysis = ({ survey, results, onAnalysisComplete }: Survey
         improvements
       };
 
+      console.log('Analysis completed successfully:', analysisResult);
       setAnalysis(analysisResult);
       onAnalysisComplete?.(analysisResult);
 
