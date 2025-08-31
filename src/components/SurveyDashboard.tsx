@@ -17,10 +17,12 @@ import {
   Target
 } from 'lucide-react';
 import { SurveyResultsChart } from './SurveyResultsChart';
+import { SurveyPDFReport } from './SurveyPDFReport';
 
 interface Survey {
   id: string;
   title: string;
+  description?: string;
   survey_type: string;
   target_audience: string;
   expires_at: string;
@@ -393,12 +395,22 @@ const SurveyDashboard = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">{selectedSurvey.title} - تفاصيل الردود</h3>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setSelectedSurvey(null)}
-                >
-                  العودة للقائمة
-                </Button>
+                <div className="flex items-center gap-3">
+                  <SurveyPDFReport 
+                    survey={selectedSurvey}
+                    results={surveyResults}
+                    tenantInfo={tenant || { name: 'المؤسسة' }}
+                    onGenerateReport={async () => {
+                      await loadSurveyResults(selectedSurvey);
+                    }}
+                  />
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setSelectedSurvey(null)}
+                  >
+                    العودة للقائمة
+                  </Button>
+                </div>
               </div>
               
               {surveyResults.length > 0 ? (
