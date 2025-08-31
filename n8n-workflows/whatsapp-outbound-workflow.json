@@ -1,5 +1,5 @@
 {
-  "name": "WhatsApp Outbound - School System",
+  "name": "WhatsApp Custom Script - School System",
   "nodes": [
     {
       "parameters": {
@@ -54,23 +54,26 @@
     },
     {
       "parameters": {
-        "phoneNumberId": "YOUR_PHONE_NUMBER_ID",
-        "to": "={{ $json.to }}",
-        "messageType": "text",
-        "message": "={{ $json.message }}",
-        "additionalFields": {}
+        "url": "YOUR_WHATSAPP_SCRIPT_WEBHOOK_URL",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={{ {\n  \"phone\": $json.to,\n  \"message\": $json.message,\n  \"tenant_id\": $json.tenantId,\n  \"context_type\": $json.contextType,\n  \"context_id\": $json.contextId,\n  \"timestamp\": $json.timestamp\n} }}",
+        "options": {}
       },
-      "id": "send-whatsapp",
-      "name": "Send WhatsApp Message",
-      "type": "n8n-nodes-base.whatsApp",
-      "typeVersion": 1,
-      "position": [680, 220],
-      "credentials": {
-        "whatsAppApi": {
-          "id": "whatsapp-credentials-id",
-          "name": "WhatsApp Business API"
-        }
-      }
+      "id": "send-to-script",
+      "name": "Send to Your WhatsApp Script",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [680, 220]
     },
     {
       "parameters": {
@@ -128,7 +131,7 @@
       "main": [
         [
           {
-            "node": "Send WhatsApp Message",
+            "node": "Send to Your WhatsApp Script",
             "type": "main",
             "index": 0
           }
@@ -142,7 +145,7 @@
         ]
       ]
     },
-    "Send WhatsApp Message": {
+    "Send to Your WhatsApp Script": {
       "main": [
         [
           {

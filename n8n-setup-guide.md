@@ -1,12 +1,11 @@
-# دليل إعداد n8n لنظام الواتساب المدرسي
+# دليل إعداد n8n مع السكريبت المخصص للواتساب
 
 ## المتطلبات الأساسية
 
-### 1. حساب WhatsApp Business API
-- حساب Facebook Business
-- تطبيق WhatsApp Business API
-- Phone Number ID
-- Access Token
+### 1. السكريبت المخصص للواتساب
+- سكريبت يمكنه إرسال واستقبال رسائل WhatsApp
+- قدرة على استقبال وإرسال HTTP requests
+- webhook URL للسكريبت الخاص بك
 
 ### 2. n8n مُثبت ومُشغل
 - يمكن استخدام n8n Cloud أو Self-hosted
@@ -15,16 +14,7 @@
 
 ### الخطوة 1: إعداد بيانات الاعتماد في n8n
 
-#### 1.1 WhatsApp Business API Credentials
-```
-اذهب إلى: Settings → Credentials → Add Credential
-اختر: WhatsApp Business API
-املأ البيانات:
-- Access Token: [من Facebook Developers]
-- Phone Number ID: [من WhatsApp Business API]
-```
-
-#### 1.2 HTTP Header Auth (للـ Supabase)
+#### 1.1 HTTP Header Auth (للـ Supabase)
 ```
 اذهب إلى: Settings → Credentials → Add Credential
 اختر: HTTP Header Auth
@@ -35,14 +25,15 @@
 
 ### الخطوة 2: استيراد Workflows
 
-#### 2.1 استيراد WhatsApp Outbound Workflow
+#### 2.1 استيراد Custom WhatsApp Outbound Workflow
 1. اذهب إلى n8n Dashboard
 2. اضغط على "Import"
 3. انسخ محتوى ملف `whatsapp-outbound-workflow.json`
 4. الصق المحتوى واضغط "Import"
-5. احفظ الـ workflow
+5. **مهم**: غيّر `YOUR_WHATSAPP_SCRIPT_WEBHOOK_URL` إلى URL السكريبت الخاص بك
+6. احفظ الـ workflow
 
-#### 2.2 استيراد WhatsApp Inbound Workflow
+#### 2.2 استيراد Custom WhatsApp Inbound Workflow
 1. كرر نفس الخطوات مع ملف `whatsapp-inbound-workflow.json`
 
 ### الخطوة 3: تكوين الـ Webhooks
@@ -63,19 +54,27 @@ Headers:
   - Content-Type: application/json
 ```
 
-### الخطوة 4: إعداد WhatsApp Business API
+### الخطوة 4: إعداد السكريبت المخصص
 
-#### 4.1 تكوين Webhook في Facebook Developers
+#### 4.1 تكوين السكريبت الخاص بك
 ```
-اذهب إلى: Facebook Developers → Your App → WhatsApp → Configuration
-Webhook URL: https://your-n8n-instance.com/webhook/whatsapp-inbound
-Verify Token: [أي token تريده]
-Webhook Fields: messages, message_deliveries, message_reads
+في السكريبت الخاص بك، أضف إعداد لإرسال الرسائل الواردة إلى:
+URL: https://your-n8n-instance.com/webhook/whatsapp-inbound
+Method: POST
+Content-Type: application/json
 ```
 
-#### 4.2 التحقق من الـ Webhook
-- اضغط "Verify and Save"
-- تأكد من أن الـ webhook يعمل بشكل صحيح
+#### 4.2 تنسيق البيانات المطلوب
+السكريبت يجب أن يرسل البيانات بهذا التنسيق:
+```json
+{
+  "phone": "+966500000000",
+  "message": "نص الرسالة الواردة", 
+  "contact_name": "اسم المرسل",
+  "timestamp": "1234567890",
+  "message_id": "unique_message_id"
+}
+```
 
 ### الخطوة 5: تحديث إعدادات النظام
 
@@ -86,6 +85,9 @@ https://your-n8n-instance.com/webhook/whatsapp-outbound
 
 Webhook Secret: [اختياري للأمان]
 ```
+
+#### 5.2 في الـ Outbound Workflow
+غيّر `YOUR_WHATSAPP_SCRIPT_WEBHOOK_URL` إلى URL السكريبت الخاص بك الذي يستقبل طلبات الإرسال
 
 #### 5.2 تحديث Tenant ID في الـ workflows
 - في الـ inbound workflow، غيّر `X-Tenant-ID` header value إلى tenant ID الخاص بك
@@ -111,14 +113,14 @@ Webhook Secret: [اختياري للأمان]
 - تأكد من أن n8n يعمل ويمكن الوصول إليه
 
 #### 2. رسائل WhatsApp لا تُرسل
-- تحقق من WhatsApp Business API credentials
-- تأكد من أن Phone Number ID صحيح
-- تحقق من الـ Access Token
+- تأكد من أن URL السكريبت المخصص صحيح وقابل للوصول
+- تحقق من أن السكريبت يستقبل البيانات بالتنسيق الصحيح
+- تأكد من أن السكريبت يعيد response صحيح
 
 #### 3. الرسائل الواردة لا تُستقبل
-- تأكد من أن webhook URL في Facebook مطابق لـ n8n
-- تحقق من الـ Verify Token
-- تأكد من تفعيل webhook fields الصحيحة
+- تأكد من أن السكريبت الخاص بك يرسل البيانات إلى n8n webhook
+- تحقق من تنسيق البيانات المرسلة من السكريبت
+- تأكد من أن n8n يستقبل البيانات بشكل صحيح
 
 #### 4. مشاكل في الـ Authentication
 - تحقق من صحة Supabase anon key
@@ -126,7 +128,8 @@ Webhook Secret: [اختياري للأمان]
 
 ## البيانات المُتوقعة
 
-### Outbound Message Format (من Supabase إلى n8n)
+### Outbound Message Format (من Supabase إلى n8n إلى السكريبت)
+**من Supabase إلى n8n:**
 ```json
 {
   "to": "+966500000000",
@@ -138,38 +141,40 @@ Webhook Secret: [اختياري للأمان]
 }
 ```
 
-### Inbound Message Format (من WhatsApp إلى n8n)
+**من n8n إلى السكريبت المخصص:**
 ```json
 {
-  "entry": [
-    {
-      "changes": [
-        {
-          "value": {
-            "messages": [
-              {
-                "from": "+966500000000",
-                "id": "message_id",
-                "timestamp": "1234567890",
-                "text": {
-                  "body": "نص الرسالة الواردة"
-                },
-                "type": "text"
-              }
-            ],
-            "contacts": [
-              {
-                "profile": {
-                  "name": "اسم المرسل"
-                },
-                "wa_id": "+966500000000"
-              }
-            ]
-          }
-        }
-      ]
-    }
-  ]
+  "phone": "+966500000000",
+  "message": "النص المراد إرساله",
+  "tenant_id": "tenant-uuid",
+  "context_type": "survey|permission|dismissal",
+  "context_id": "context-uuid",
+  "timestamp": "2025-01-31T00:00:00.000Z"
+}
+```
+
+### Inbound Message Format (من السكريبت إلى n8n)
+**التنسيق المطلوب من السكريبت الخاص بك:**
+```json
+{
+  "phone": "+966500000000",
+  "message": "نص الرسالة الواردة",
+  "contact_name": "اسم المرسل",
+  "timestamp": "1234567890",
+  "message_id": "unique_message_id"
+}
+```
+
+**البيانات الاختيارية (يمكن إضافتها):**
+```json
+{
+  "phone": "+966500000000",
+  "message": "نص الرسالة الواردة",
+  "contact_name": "اسم المرسل",
+  "timestamp": "1234567890",
+  "message_id": "unique_message_id",
+  "media_url": "رابط ملف مرفق (اختياري)",
+  "media_type": "image|video|document (اختياري)"
 }
 ```
 

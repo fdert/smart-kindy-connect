@@ -1,5 +1,5 @@
 {
-  "name": "WhatsApp Inbound - School System",
+  "name": "WhatsApp Custom Script Inbound - School System",
   "nodes": [
     {
       "parameters": {
@@ -9,7 +9,7 @@
         "options": {}
       },
       "id": "webhook-inbound",
-      "name": "Webhook - Receive from WhatsApp",
+      "name": "Webhook - Receive from Your Script",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [240, 300],
@@ -25,7 +25,15 @@
           },
           "conditions": [
             {
-              "leftValue": "={{ $json.entry && $json.entry[0] && $json.entry[0].changes && $json.entry[0].changes[0] && $json.entry[0].changes[0].value && $json.entry[0].changes[0].value.messages }}",
+              "leftValue": "={{ $json.phone }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            },
+            {
+              "leftValue": "={{ $json.message }}",
               "rightValue": "",
               "operator": {
                 "type": "string",
@@ -37,18 +45,18 @@
         },
         "options": {}
       },
-      "id": "validate-whatsapp-format",
-      "name": "Validate WhatsApp Format",
+      "id": "validate-custom-format",
+      "name": "Validate Custom Script Format",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [460, 300]
     },
     {
       "parameters": {
-        "jsCode": "// Extract WhatsApp message data\nconst entry = $input.all()[0].json.entry[0];\nconst change = entry.changes[0];\nconst value = change.value;\n\n// Extract message details\nconst message = value.messages[0];\nconst contact = value.contacts[0];\n\n// Format the data for Supabase\nconst formattedData = {\n  from: message.from,\n  message_id: message.id,\n  timestamp: message.timestamp,\n  message_type: message.type,\n  message_body: message.text ? message.text.body : '',\n  contact_name: contact ? contact.profile.name : '',\n  wa_id: contact ? contact.wa_id : message.from,\n  // Add metadata\n  metadata: {\n    phone_number_id: value.metadata.phone_number_id,\n    display_phone_number: value.metadata.display_phone_number\n  }\n};\n\nreturn [{ json: formattedData }];"
+        "jsCode": "// Format data from your custom script to Supabase format\nconst inputData = $input.all()[0].json;\n\n// Format the data for Supabase inbound function\nconst formattedData = {\n  from: inputData.phone || inputData.from,\n  message_id: inputData.message_id || `msg_${Date.now()}`,\n  timestamp: inputData.timestamp || Math.floor(Date.now() / 1000).toString(),\n  message_type: 'text',\n  message_body: inputData.message || inputData.text,\n  contact_name: inputData.contact_name || inputData.name || '',\n  wa_id: inputData.phone || inputData.from,\n  // Add any additional metadata from your script\n  metadata: {\n    source: 'custom_script',\n    original_data: inputData\n  }\n};\n\nreturn [{ json: formattedData }];"
       },
-      "id": "format-message-data",
-      "name": "Format Message Data",
+      "id": "format-custom-data",
+      "name": "Format Custom Script Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [680, 220]
@@ -127,22 +135,22 @@
     }
   ],
   "connections": {
-    "Webhook - Receive from WhatsApp": {
+    "Webhook - Receive from Your Script": {
       "main": [
         [
           {
-            "node": "Validate WhatsApp Format",
+            "node": "Validate Custom Script Format",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Validate WhatsApp Format": {
+    "Validate Custom Script Format": {
       "main": [
         [
           {
-            "node": "Format Message Data",
+            "node": "Format Custom Script Data",
             "type": "main",
             "index": 0
           }
@@ -156,7 +164,7 @@
         ]
       ]
     },
-    "Format Message Data": {
+    "Format Custom Script Data": {
       "main": [
         [
           {
