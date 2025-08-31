@@ -11,3 +11,18 @@ verify_jwt = false
 
 [functions.whatsapp-outbound]
 verify_jwt = true
+
+[functions.permissions-api]
+verify_jwt = true
+
+[functions.surveys-api]
+verify_jwt = true
+
+[functions.virtual-classes-api]
+verify_jwt = true
+
+[functions.send-album-report]
+verify_jwt = true
+
+[functions.test-whatsapp]
+verify_jwt = true

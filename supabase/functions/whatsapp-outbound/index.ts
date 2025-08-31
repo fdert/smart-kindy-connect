@@ -46,9 +46,13 @@ serve(async (req) => {
     const { tenantId, to, message, templateName, templateData, mediaUrl, contextType, contextId, studentId } = requestData;
 
     if (!tenantId || !to) {
-      return new Response('tenantId and to are required', { 
+      console.error('Missing required parameters:', { tenantId, to });
+      return new Response(JSON.stringify({
+        error: 'tenantId and to are required',
+        details: { hastenantId: !!tenantId, hasTo: !!to }
+      }), { 
         status: 400, 
-        headers: corsHeaders 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -85,10 +89,13 @@ serve(async (req) => {
     const templates = settingsMap.wa_templates_json || {};
 
     if (!webhookUrl) {
-      console.error('WhatsApp webhook URL not configured for tenant');
-      return new Response('WhatsApp webhook not configured', { 
+      console.error('WhatsApp webhook URL not configured for tenant:', tenantId);
+      return new Response(JSON.stringify({
+        error: 'WhatsApp webhook not configured',
+        details: { tenantId, hasSettings: !!settings?.length }
+      }), { 
         status: 400, 
-        headers: corsHeaders 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -96,18 +103,28 @@ serve(async (req) => {
 
     // Use template if specified
     if (templateName && templates[templateName]) {
+      console.log(`Using template: ${templateName}`, templates[templateName]);
       messageText = processTemplate(templates[templateName], templateData || {});
+      console.log(`Processed message text: ${messageText}`);
       
       // Add card URL if it exists in templateData for reward notifications
       if (templateData?.cardUrl && templateName === 'reward_notification') {
         messageText += `\n\n🎉 شاهد بطاقة التحفيز:\n${templateData.cardUrl}`;
       }
+    } else if (templateName) {
+      console.log(`Template '${templateName}' not found in:`, Object.keys(templates));
+      // Use fallback message if template is missing
+      messageText = message || `رسالة من ${templateData?.nurseryName || 'الحضانة'}`;
     }
 
     if (!messageText && !mediaUrl) {
-      return new Response('Message text or media URL required', { 
+      console.error('No message text or media URL provided', { templateName, templateData, message });
+      return new Response(JSON.stringify({
+        error: 'Message text or media URL required',
+        details: { templateName, hasTemplate: !!templates[templateName], hasMessage: !!message }
+      }), { 
         status: 400, 
-        headers: corsHeaders 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 

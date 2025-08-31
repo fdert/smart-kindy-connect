@@ -288,7 +288,7 @@ const WhatsAppSettings = () => {
                 className="text-left font-mono text-sm"
               />
               <p className="text-xs text-gray-500 mt-1">
-                يمكنك استخدام المتغيرات التالية: {'{studentName}, {guardianName}, {permissionTitle}, {permissionDescription}, {otpToken}, {expiresAt}, {nurseryName}, {time}, {date}, {pin}, {message}, {className}, {photoCount}, {videoCount}'}
+                يمكنك استخدام المتغيرات التالية: {'{guardianName}, {studentName}, {permissionTitle}, {permissionDescription}, {otpToken}, {expiresAt}, {surveyTitle}, {surveyDescription}, {nurseryName}, {time}, {date}, {pin}, {message}, {className}, {photoCount}, {videoCount}'}
               </p>
               <div className="mt-2 p-3 bg-blue-50 rounded-md">
                 <p className="text-xs font-medium text-blue-800 mb-2">أمثلة على تمبلت الرسائل:</p>

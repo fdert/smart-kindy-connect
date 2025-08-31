@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/hooks/useTenant';
 import { useToast } from '@/hooks/use-toast';
 import WhatsAppSettings from '@/components/WhatsAppSettings';
+import WhatsAppTest from '@/components/WhatsAppTest';
 import { Settings as SettingsIcon, Building, Bell, MessageCircle, Shield, Palette, Clock } from 'lucide-react';
 
 interface TenantInfo {
@@ -423,20 +424,24 @@ const Settings = () => {
 
           {/* WhatsApp Settings */}
           <TabsContent value="whatsapp">
-            <Card className="bg-white/80 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5" />
-                  إعدادات واتساب
-                </CardTitle>
-                <CardDescription>
-                  تكوين اتصال واتساب وإعداد الرسائل التلقائية
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <WhatsAppSettings />
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              <Card className="bg-white/80 backdrop-blur-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MessageCircle className="h-5 w-5" />
+                    إعدادات واتساب
+                  </CardTitle>
+                  <CardDescription>
+                    تكوين اتصال واتساب وإعداد الرسائل التلقائية
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <WhatsAppSettings />
+                </CardContent>
+              </Card>
+              
+              <WhatsAppTest />
+            </div>
           </TabsContent>
 
           {/* Security Settings */}
