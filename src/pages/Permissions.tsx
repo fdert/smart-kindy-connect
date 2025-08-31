@@ -64,7 +64,9 @@ const Permissions = () => {
     description: '',
     permissionType: 'activity',
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default: 7 days from now
-    selectedStudents: [] as string[]
+    selectedStudents: [] as string[],
+    responseOptions: ['موافق', 'غير موافق'] as string[],
+    customOption: ''
   });
 
   const { tenant } = useTenant();
@@ -147,7 +149,8 @@ const Permissions = () => {
           description: formData.description,
           permissionType: formData.permissionType,
           expiresAt: formData.expiresAt.toISOString(),
-          studentIds: formData.selectedStudents
+          studentIds: formData.selectedStudents,
+          responseOptions: formData.responseOptions
         }
       });
 
@@ -164,7 +167,9 @@ const Permissions = () => {
         description: '',
         permissionType: 'activity',
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        selectedStudents: []
+        selectedStudents: [],
+        responseOptions: ['موافق', 'غير موافق'],
+        customOption: ''
       });
       loadPermissions();
     } catch (error: any) {
@@ -358,6 +363,61 @@ const Permissions = () => {
                         />
                       </PopoverContent>
                     </Popover>
+                  </div>
+                </div>
+                
+                <div>
+                  <Label>خيارات الرد المطلوبة</Label>
+                  <div className="space-y-2">
+                    {formData.responseOptions.map((option, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Input
+                          value={option}
+                          onChange={(e) => {
+                            const newOptions = [...formData.responseOptions];
+                            newOptions[index] = e.target.value;
+                            setFormData(prev => ({ ...prev, responseOptions: newOptions }));
+                          }}
+                          placeholder="خيار الرد"
+                        />
+                        {formData.responseOptions.length > 2 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const newOptions = formData.responseOptions.filter((_, i) => i !== index);
+                              setFormData(prev => ({ ...prev, responseOptions: newOptions }));
+                            }}
+                          >
+                            حذف
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                    <div className="flex gap-2">
+                      <Input
+                        value={formData.customOption}
+                        onChange={(e) => setFormData(prev => ({ ...prev, customOption: e.target.value }))}
+                        placeholder="إضافة خيار جديد"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          if (formData.customOption.trim()) {
+                            setFormData(prev => ({
+                              ...prev,
+                              responseOptions: [...prev.responseOptions, prev.customOption.trim()],
+                              customOption: ''
+                            }));
+                          }
+                        }}
+                        disabled={!formData.customOption.trim()}
+                      >
+                        إضافة
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 

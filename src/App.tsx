@@ -28,6 +28,7 @@ import PlansManagement from "./pages/PlansManagement";
 import CMSManagement from "./pages/CMSManagement";
 import SharedRewardCard from "./pages/SharedRewardCard";
 import PublicSurvey from "./pages/PublicSurvey";
+import PublicPermission from "./pages/PublicPermission";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -84,6 +85,7 @@ const AppRoutes = () => (
         <Route path="/register" element={<TenantRegistration />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/survey/:surveyId" element={<PublicSurvey />} />
+        <Route path="/permission/:id" element={<PublicPermission />} />
     <Route path="/super-admin" element={
       <ProtectedRoute>
         <SuperAdmin />
