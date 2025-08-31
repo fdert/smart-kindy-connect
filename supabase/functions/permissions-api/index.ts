@@ -456,18 +456,45 @@ async function handlePublicResponse(requestData: PublicResponseRequest, supabase
       });
     }
 
-    // For public responses, we'll create a temporary response entry
+    // For public responses, find an existing pending response to update instead of creating new one
+    const { data: existingResponse, error: findError } = await supabase
+      .from('permission_responses')
+      .select('id')
+      .eq('permission_id', permissionId)
+      .eq('response', 'pending')
+      .limit(1)
+      .maybeSingle();
+
+    if (findError) {
+      console.error('Error finding existing response:', findError);
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Failed to find permission response'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (!existingResponse) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'No pending response found for this permission'
+      }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Update the existing response
     const { data: responseData, error: responseError } = await supabase
       .from('permission_responses')
-      .insert({
-        permission_id: permissionId,
-        guardian_id: '00000000-0000-0000-0000-000000000000', // Placeholder
-        student_id: '00000000-0000-0000-0000-000000000000', // Placeholder
-        tenant_id: permission.tenant_id,
+      .update({
         response: response,
         notes: notes,
         responded_at: new Date().toISOString()
       })
+      .eq('id', existingResponse.id)
       .select('id')
       .single();
 
