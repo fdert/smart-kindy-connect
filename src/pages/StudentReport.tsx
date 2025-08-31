@@ -490,7 +490,11 @@ export default function StudentReport() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card 
             className="bg-gradient-to-br from-blue-500 to-blue-600 text-white cursor-pointer hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-            onClick={() => navigate(`/student-attendance/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
+            onClick={() => {
+              const isGuardianAccess = searchParams.get('guardian') === 'true';
+              const guardianParam = isGuardianAccess ? '&guardian=true' : '';
+              navigate(`/student-attendance/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}${guardianParam}`);
+            }}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">معدل الحضور</CardTitle>
@@ -506,7 +510,11 @@ export default function StudentReport() {
 
           <Card 
             className="bg-gradient-to-br from-green-500 to-green-600 text-white cursor-pointer hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-            onClick={() => navigate(`/student-assignments/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
+            onClick={() => {
+              const isGuardianAccess = searchParams.get('guardian') === 'true';
+              const guardianParam = isGuardianAccess ? '&guardian=true' : '';
+              navigate(`/student-assignments/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}${guardianParam}`);
+            }}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">معدل الواجبات</CardTitle>
@@ -522,7 +530,11 @@ export default function StudentReport() {
 
           <Card 
             className="bg-gradient-to-br from-purple-500 to-purple-600 text-white cursor-pointer hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-            onClick={() => navigate(`/student-rewards/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
+            onClick={() => {
+              const isGuardianAccess = searchParams.get('guardian') === 'true';
+              const guardianParam = isGuardianAccess ? '&guardian=true' : '';
+              navigate(`/student-rewards/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}${guardianParam}`);
+            }}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">المكافآت</CardTitle>
@@ -538,7 +550,11 @@ export default function StudentReport() {
 
           <Card 
             className="bg-gradient-to-br from-pink-500 to-pink-600 text-white cursor-pointer hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-            onClick={() => navigate(`/student-notes-detail/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
+            onClick={() => {
+              const isGuardianAccess = searchParams.get('guardian') === 'true';
+              const guardianParam = isGuardianAccess ? '&guardian=true' : '';
+              navigate(`/student-notes-detail/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}${guardianParam}`);
+            }}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">الملاحظات</CardTitle>
@@ -554,7 +570,11 @@ export default function StudentReport() {
 
           <Card 
             className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white cursor-pointer hover:shadow-lg transform hover:scale-105 transition-all duration-200"
-            onClick={() => navigate(`/student-media/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
+            onClick={() => {
+              const isGuardianAccess = searchParams.get('guardian') === 'true';
+              const guardianParam = isGuardianAccess ? '&guardian=true' : '';
+              navigate(`/student-media/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}${guardianParam}`);
+            }}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">ألبوم الصور</CardTitle>
@@ -662,7 +682,11 @@ export default function StudentReport() {
                   <div
                     key={reward.id}
                     className="p-4 rounded-lg border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-orange-50 cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => navigate(`/student-rewards/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
+                    onClick={() => {
+                      const isGuardianAccess = searchParams.get('guardian') === 'true';
+                      const guardianParam = isGuardianAccess ? '&guardian=true' : '';
+                      navigate(`/student-rewards/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}${guardianParam}`);
+                    }}
                   >
                     <div className="flex items-center gap-3 mb-2">
                       <div className={`w-3 h-3 rounded-full ${getRewardTypeColor(reward.type)}`}></div>
@@ -684,7 +708,11 @@ export default function StudentReport() {
           <Card 
             id="notes-section"
             className="mt-8 bg-white/90 backdrop-blur-sm cursor-pointer hover:shadow-lg transform hover:scale-102 transition-all duration-200"
-            onClick={() => navigate(`/student-notes-detail/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
+            onClick={() => {
+              const isGuardianAccess = searchParams.get('guardian') === 'true';
+              const guardianParam = isGuardianAccess ? '&guardian=true' : '';
+              navigate(`/student-notes-detail/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}${guardianParam}`);
+            }}
           >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -823,7 +851,11 @@ export default function StudentReport() {
           <Card 
             id="media-section"
             className="mt-8 bg-white/90 backdrop-blur-sm cursor-pointer hover:shadow-lg transform hover:scale-102 transition-all duration-200"
-            onClick={() => navigate(`/student-media/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}`)}
+            onClick={() => {
+              const isGuardianAccess = searchParams.get('guardian') === 'true';
+              const guardianParam = isGuardianAccess ? '&guardian=true' : '';
+              navigate(`/student-media/${studentId}?from=${dateRange.from.toISOString().split('T')[0]}&to=${dateRange.to.toISOString().split('T')[0]}${guardianParam}`);
+            }}
           >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
