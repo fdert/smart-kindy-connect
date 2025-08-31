@@ -301,11 +301,7 @@ function processTemplate(template: string, data: Record<string, any>): string {
     }
   });
   
-  // Additional specific placeholder replacements
-  if (data.permissionLink) {
-    console.log('Found permissionLink, replacing placeholder');
-    processedTemplate = processedTemplate.replace(/{{permissionLink}}/g, data.permissionLink);
-  }
+  console.log(`Template after replacements: ${processedTemplate}`);
   
   // Replace common placeholders with current data
   const now = new Date();

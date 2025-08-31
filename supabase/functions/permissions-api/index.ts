@@ -11,6 +11,7 @@ interface CreatePermissionRequest {
   permissionType: string;
   expiresAt: string;
   studentIds: string[];
+  responseOptions: string[];
 }
 
 interface RespondToPermissionRequest {
@@ -130,7 +131,6 @@ Deno.serve(async (req) => {
                   expiresAt: new Date(permission.expires_at).toLocaleDateString('ar-SA'),
                   nurseryName: userData.tenants?.name || '',
                   permissionLink: `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/permission/${permissionId}`,
-                  otpToken: otpToken
                 },
                 contextType: 'permission',
                 contextId: permission.id,
@@ -255,7 +255,8 @@ Deno.serve(async (req) => {
           expires_at: permissionData.expiresAt,
           tenant_id: userData.tenant_id,
           created_by: user.id,
-          is_active: true
+          is_active: true,
+          response_options: permissionData.responseOptions || ['موافق', 'غير موافق']
         })
         .select()
         .single();
@@ -348,7 +349,6 @@ Deno.serve(async (req) => {
                       expiresAt: new Date(permission.expires_at).toLocaleDateString('ar-SA'),
                       nurseryName: userData.tenants?.name || '',
                       permissionLink: `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/permission/${permission.id}`,
-                      otpToken: otpToken
                     },
                     contextType: 'permission',
                     contextId: permission.id,
