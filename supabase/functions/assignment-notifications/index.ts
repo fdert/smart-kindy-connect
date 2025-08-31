@@ -22,18 +22,7 @@ serve(async (req) => {
     const { data: notifications, error: notificationsError } = await supabase
       .from('notification_reminders')
       .select(`
-        *,
-        students (
-          full_name,
-          student_id
-        ),
-        assignments (
-          title,
-          description,
-          due_date,
-          assignment_type,
-          priority
-        )
+        *
       `)
       .eq('status', 'pending')
       .lte('scheduled_date', new Date().toISOString().split('T')[0])
@@ -51,6 +40,18 @@ serve(async (req) => {
     if (notifications && notifications.length > 0) {
       for (const notification of notifications) {
         try {
+          // Get student information
+          const { data: student, error: studentError } = await supabase
+            .from('students')
+            .select('full_name, student_id')
+            .eq('id', notification.student_id)
+            .single();
+
+          if (studentError) {
+            console.error('Error fetching student:', studentError);
+            continue;
+          }
+
           // Get guardians for this student
           const { data: guardianLinks, error: guardiansError } = await supabase
             .from('guardian_student_links')
@@ -89,7 +90,7 @@ serve(async (req) => {
                 const fullMessage = `${notification.message_content}
 
 من: ${tenant.name}
-الطالب: ${notification.students?.full_name} (${notification.students?.student_id})`;
+الطالب: ${student.full_name} (${student.student_id})`;
 
                 // Call WhatsApp outbound function
                 const { error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
