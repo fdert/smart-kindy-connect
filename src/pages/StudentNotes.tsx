@@ -81,13 +81,23 @@ export default function StudentNotes() {
         .from('student_notes')
         .select(`
           *,
-          student:students(full_name, student_id)
+          students (
+            full_name,
+            student_id
+          )
         `)
         .eq('tenant_id', tenant.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setNotes((data as any) || []);
+      
+      // Transform data to match interface  
+      const transformedData: StudentNote[] = (data || []).map((note: any) => ({
+        ...note,
+        student: note.students
+      }));
+      
+      setNotes(transformedData);
     } catch (error) {
       console.error('Error loading notes:', error);
       toast({
@@ -161,15 +171,32 @@ export default function StudentNotes() {
           format(selectedDate, 'yyyy-MM-dd') : null
       };
 
-      const { error } = await supabase
+      const { data: newNote, error } = await supabase
         .from('student_notes')
-        .insert([noteData]);
+        .insert([noteData])
+        .select()
+        .single();
 
       if (error) throw error;
 
+      // Send WhatsApp notifications immediately (the database trigger handles this automatically)
+      // But we can also manually trigger notifications for immediate sending
+      try {
+        await supabase.functions.invoke('assignment-notifications', {
+          body: {
+            processImmediate: true,
+            noteId: newNote.id,
+            type: 'student_note'
+          }
+        });
+      } catch (notificationError) {
+        console.error('Error sending notifications:', notificationError);
+        // Don't fail the note creation if notifications fail
+      }
+
       toast({
         title: "تم بنجاح",
-        description: "تم إنشاء الملاحظة بنجاح"
+        description: "تم إنشاء الملاحظة وإرسال الإشعارات لأولياء الأمور"
       });
 
       setIsCreateDialogOpen(false);
