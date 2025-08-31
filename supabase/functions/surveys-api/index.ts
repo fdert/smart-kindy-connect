@@ -96,6 +96,36 @@ Deno.serve(async (req) => {
       let notificationsSent = 0;
       for (const contact of contacts) {
         try {
+          // Get survey questions for this notification
+          const { data: surveyQuestions } = await supabase
+            .from('survey_questions')
+            .select('*')
+            .eq('survey_id', surveyId)
+            .order('sort_order');
+          
+          // Format questions for WhatsApp message
+          let questionsText = '';
+          if (surveyQuestions && surveyQuestions.length > 0) {
+            questionsText = '\n\nالأسئلة:\n';
+            surveyQuestions.forEach((question, index) => {
+              questionsText += `${index + 1}. ${question.question_text}\n`;
+              
+              // Add options for choice questions
+              if (question.question_type === 'single_choice' || question.question_type === 'multiple_choice') {
+                if (question.options && question.options.length > 0) {
+                  question.options.forEach((option: string, optIndex: number) => {
+                    questionsText += `   ${String.fromCharCode(97 + optIndex)}) ${option}\n`;
+                  });
+                }
+              } else if (question.question_type === 'yes_no') {
+                questionsText += '   أ) نعم\n   ب) لا\n';
+              } else if (question.question_type === 'rating') {
+                questionsText += '   (تقييم من 1 إلى 5)\n';
+              }
+              questionsText += '\n';
+            });
+          }
+          
           const { data: whatsappResult, error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
             body: {
               tenantId: userData.tenant_id,
@@ -105,6 +135,7 @@ Deno.serve(async (req) => {
                 guardianName: contact.full_name,
                 surveyTitle: survey.title,
                 surveyDescription: survey.description || '',
+                surveyQuestions: questionsText,
                 nurseryName: userData.tenants?.name || ''
               },
               contextType: 'survey',
@@ -266,6 +297,40 @@ Deno.serve(async (req) => {
         try {
           console.log('Sending automatic notifications for new survey:', survey.id);
           
+          // Get the created questions for the survey
+          const { data: surveyQuestions, error: questionsError } = await supabase
+            .from('survey_questions')
+            .select('*')
+            .eq('survey_id', survey.id)
+            .order('sort_order');
+          
+          if (questionsError) {
+            console.error('Error fetching survey questions:', questionsError);
+          }
+          
+          // Format questions for WhatsApp message
+          let questionsText = '';
+          if (surveyQuestions && surveyQuestions.length > 0) {
+            questionsText = '\n\nالأسئلة:\n';
+            surveyQuestions.forEach((question, index) => {
+              questionsText += `${index + 1}. ${question.question_text}\n`;
+              
+              // Add options for choice questions
+              if (question.question_type === 'single_choice' || question.question_type === 'multiple_choice') {
+                if (question.options && question.options.length > 0) {
+                  question.options.forEach((option: string, optIndex: number) => {
+                    questionsText += `   ${String.fromCharCode(97 + optIndex)}) ${option}\n`;
+                  });
+                }
+              } else if (question.question_type === 'yes_no') {
+                questionsText += '   أ) نعم\n   ب) لا\n';
+              } else if (question.question_type === 'rating') {
+                questionsText += '   (تقييم من 1 إلى 5)\n';
+              }
+              questionsText += '\n';
+            });
+          }
+          
           // Get target audience contacts based on survey settings
           let contacts = [];
           if (survey.target_audience === 'guardians' || survey.target_audience === 'both') {
@@ -291,6 +356,7 @@ Deno.serve(async (req) => {
                     guardianName: contact.full_name,
                     surveyTitle: survey.title,
                     surveyDescription: survey.description || '',
+                    surveyQuestions: questionsText,
                     nurseryName: userData.tenants?.name || ''
                   },
                   contextType: 'survey',

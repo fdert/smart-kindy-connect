@@ -44,7 +44,7 @@ serve(async (req) => {
       album_report: 'تقرير ألبوم {{studentName}} لليوم {{date}} 📸\n\nاسم الطالب: {{studentName}}\nالفصل: {{className}}\nالروضة: {{nurseryName}}\nعدد الصور: {{photoCount}}\nعدد الفيديوهات: {{videoCount}}\n\nالألبوم متاح للعرض.',
       reward_notification: '🎉 تهانينا! حصل {{studentName}} على {{rewardType}} جديدة!\n\nعزيز/ة {{guardianName}}\n\nيسعدنا إخباركم أن {{studentName}} حصل/ت على:\n🏆 {{rewardTitle}}\n📝 {{rewardDescription}}\n⭐ النقاط: {{points}}\n\nنفخر بإنجازات طفلكم ونتطلع لمزيد من التميز!\n\nمع أطيب التحيات\n{{nurseryName}}',
       permission_request: '🔔 طلب إذن جديد\n\nعزيز/ة {{guardianName}}\n\nيطلب منكم الموافقة على: {{permissionTitle}}\n\nالتفاصيل: {{permissionDescription}}\n\nللطالب/ة: {{studentName}}\n\nينتهي الطلب في: {{expiresAt}}\n\nمع تحيات\n{{nurseryName}}',
-      survey_notification: '📊 استطلاع رأي جديد\n\nعزيز/ة {{guardianName}}\n\nدعوة للمشاركة في: {{surveyTitle}}\n\nالوصف: {{surveyDescription}}\n\nنقدر مشاركتكم في تحسين خدماتنا\n\nمع تحيات\n{{nurseryName}}',
+      survey_notification: '📊 استطلاع رأي جديد\n\nعزيز/ة {{guardianName}}\n\nدعوة للمشاركة في: {{surveyTitle}}\n\nالوصف: {{surveyDescription}}{{surveyQuestions}}\n\nنقدر مشاركتكم في تحسين خدماتنا\n\nمع تحيات\n{{nurseryName}}',
       general_notification: 'إشعار من {{nurseryName}}:\n\n{{message}}'
     };
 

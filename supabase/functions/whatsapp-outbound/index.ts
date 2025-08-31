@@ -138,7 +138,7 @@ ${templateData.nurseryName || 'الحضانة'}`;
 
 دعوة للمشاركة في: ${templateData.surveyTitle || 'الاستطلاع'}
 
-الوصف: ${templateData.surveyDescription || 'لا يوجد وصف'}
+الوصف: ${templateData.surveyDescription || 'لا يوجد وصف'}${templateData.surveyQuestions || ''}
 
 نقدر مشاركتكم في تحسين خدماتنا
 

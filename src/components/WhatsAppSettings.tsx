@@ -299,7 +299,7 @@ const WhatsAppSettings = () => {
                   </div>
                   <div>
                     <p className="text-xs font-medium text-blue-700">رسالة الاستطلاعات:</p>
-                    <pre className="text-xs text-blue-600 whitespace-pre-wrap">{`"survey_notification": "📊 استطلاع رأي جديد\\n\\nعزيز/ة {{guardianName}}\\n\\nدعوة للمشاركة في: {{surveyTitle}}\\n\\nالوصف: {{surveyDescription}}\\n\\nنقدر مشاركتكم في تحسين خدماتنا\\n\\nمع تحيات\\n{{nurseryName}}"`}</pre>
+                    <pre className="text-xs text-blue-600 whitespace-pre-wrap">{`"survey_notification": "📊 استطلاع رأي جديد\\n\\nعزيز/ة {{guardianName}}\\n\\nدعوة للمشاركة في: {{surveyTitle}}\\n\\nالوصف: {{surveyDescription}}{{surveyQuestions}}\\n\\nنقدر مشاركتكم في تحسين خدماتنا\\n\\nمع تحيات\\n{{nurseryName}}"`}</pre>
                   </div>
                 </div>
               </div>
