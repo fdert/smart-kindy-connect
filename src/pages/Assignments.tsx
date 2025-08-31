@@ -93,7 +93,7 @@ export default function Assignments() {
     evaluation_score: '',
     teacher_feedback: '',
     completion_date: format(new Date(), 'yyyy-MM-dd'),
-    student_id: ''
+    student_ids: [] as string[]
   });
 
   useEffect(() => {
@@ -186,10 +186,10 @@ export default function Assignments() {
   };
 
   const handleCreateEvaluation = async () => {
-    if (!tenant?.id || !selectedAssignment || !evalForm.student_id) {
+    if (!tenant?.id || !selectedAssignment || evalForm.student_ids.length === 0) {
       toast({
         title: "خطأ",
-        description: "يرجى ملء جميع الحقول المطلوبة",
+        description: "يرجى اختيار طالب واحد على الأقل للتقييم",
         variant: "destructive"
       });
       return;
@@ -199,40 +199,43 @@ export default function Assignments() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
-      const evaluationData = {
+      // Create evaluations for all selected students
+      const evaluationsToCreate = evalForm.student_ids.map(studentId => ({
         tenant_id: tenant.id,
         assignment_id: selectedAssignment.id,
-        student_id: evalForm.student_id,
+        student_id: studentId,
         evaluation_status: evalForm.evaluation_status,
         evaluation_score: evalForm.evaluation_score ? parseFloat(evalForm.evaluation_score) : null,
         teacher_feedback: evalForm.teacher_feedback || null,
         completion_date: evalForm.completion_date || null,
         evaluated_by: user.id
-      };
+      }));
 
       const { error } = await supabase
         .from('assignment_evaluations')
-        .insert([evaluationData]);
+        .insert(evaluationsToCreate);
 
       if (error) throw error;
 
-      // Send WhatsApp notifications immediately
+      // Send WhatsApp notifications for each student
       try {
-        await supabase.functions.invoke('assignment-notifications', {
-          body: {
-            processImmediate: true,
-            evaluationNotification: true,
-            assignmentId: selectedAssignment.id,
-            studentId: evalForm.student_id
-          }
-        });
+        for (const studentId of evalForm.student_ids) {
+          await supabase.functions.invoke('assignment-notifications', {
+            body: {
+              processImmediate: true,
+              evaluationNotification: true,
+              assignmentId: selectedAssignment.id,
+              studentId: studentId
+            }
+          });
+        }
       } catch (notificationError) {
         console.error('Error sending evaluation notifications:', notificationError);
       }
 
       toast({
         title: "تم بنجاح",
-        description: "تم حفظ التقييم وإرسال الإشعار لولي الأمر"
+        description: `تم حفظ تقييم ${evalForm.student_ids.length} طالب وإرسال الإشعارات لأولياء الأمور`
       });
 
       setIsEvaluationDialogOpen(false);
@@ -254,7 +257,7 @@ export default function Assignments() {
       evaluation_score: '',
       teacher_feedback: '',
       completion_date: format(new Date(), 'yyyy-MM-dd'),
-      student_id: ''
+      student_ids: []
     });
   };
 
@@ -438,6 +441,25 @@ export default function Assignments() {
     const isAllSelected = formData.student_ids.length === students.length;
     
     setFormData(prev => ({
+      ...prev,
+      student_ids: isAllSelected ? [] : allStudentIds
+    }));
+  };
+
+  const handleEvalStudentSelection = (studentId: string, checked: boolean) => {
+    setEvalForm(prev => ({
+      ...prev,
+      student_ids: checked 
+        ? [...prev.student_ids, studentId]
+        : prev.student_ids.filter(id => id !== studentId)
+    }));
+  };
+
+  const handleSelectAllEvalStudents = () => {
+    const allStudentIds = students.map(student => student.id);
+    const isAllSelected = evalForm.student_ids.length === students.length;
+    
+    setEvalForm(prev => ({
       ...prev,
       student_ids: isAllSelected ? [] : allStudentIds
     }));
@@ -822,19 +844,47 @@ export default function Assignments() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="eval-student">الطالب</Label>
-              <Select onValueChange={(value) => setEvalForm(prev => ({ ...prev, student_id: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="اختر الطالب" />
-                </SelectTrigger>
-                <SelectContent>
-                  {students.map((student) => (
-                    <SelectItem key={student.id} value={student.id}>
-                      {student.full_name} ({student.student_id})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center justify-between mb-2">
+                <Label>الطلاب</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSelectAllEvalStudents}
+                >
+                  {evalForm.student_ids.length === students.length ? "إلغاء تحديد الكل" : "اختيار الكل"}
+                </Button>
+              </div>
+              <div className="border rounded-md p-3 max-h-40 overflow-y-auto">
+                {students.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">لا توجد طلاب متاحين</p>
+                ) : (
+                  <div className="space-y-2">
+                    {students.map((student) => (
+                      <div key={student.id} className="flex items-center space-x-2 space-x-reverse">
+                        <Checkbox
+                          id={`eval-student-${student.id}`}
+                          checked={evalForm.student_ids.includes(student.id)}
+                          onCheckedChange={(checked) => 
+                            handleEvalStudentSelection(student.id, checked as boolean)
+                          }
+                        />
+                        <Label 
+                          htmlFor={`eval-student-${student.id}`}
+                          className="text-sm cursor-pointer"
+                        >
+                          {student.full_name} ({student.student_id})
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {evalForm.student_ids.length > 0 && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  تم اختيار {evalForm.student_ids.length} من {students.length} طالب
+                </p>
+              )}
             </div>
 
             <div>
