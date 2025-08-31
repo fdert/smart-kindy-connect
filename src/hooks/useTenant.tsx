@@ -96,15 +96,35 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
     if (!tenant) return;
 
     try {
-      const { error } = await supabase
+      // Check if setting exists
+      const { data: existingSetting } = await supabase
         .from('tenant_settings')
-        .upsert({
-          tenant_id: tenant.id,
-          key,
-          value
-        });
+        .select('id')
+        .eq('tenant_id', tenant.id)
+        .eq('key', key)
+        .single();
 
-      if (error) throw error;
+      if (existingSetting) {
+        // Update existing setting
+        const { error } = await supabase
+          .from('tenant_settings')
+          .update({ value, updated_at: new Date().toISOString() })
+          .eq('tenant_id', tenant.id)
+          .eq('key', key);
+
+        if (error) throw error;
+      } else {
+        // Insert new setting
+        const { error } = await supabase
+          .from('tenant_settings')
+          .insert({
+            tenant_id: tenant.id,
+            key,
+            value
+          });
+
+        if (error) throw error;
+      }
 
       setSettings(prev => ({ ...prev, [key]: value }));
     } catch (error) {
