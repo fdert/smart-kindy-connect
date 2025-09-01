@@ -229,13 +229,15 @@ const Teachers = () => {
           } else {
             console.log('WhatsApp message queued for sending');
             
-            // Trigger WhatsApp sending function
-            try {
-              const { data: sendResult } = await supabase.functions.invoke('send-whatsapp-notifications');
-              console.log('WhatsApp sending triggered:', sendResult);
-            } catch (sendError) {
-              console.warn('WhatsApp sending trigger failed:', sendError);
-            }
+            // تشغيل Edge Function فوراً لإرسال الرسالة
+            setTimeout(async () => {
+              try {
+                const { data: sendResult } = await supabase.functions.invoke('send-whatsapp-notifications');
+                console.log('WhatsApp sending triggered:', sendResult);
+              } catch (sendError) {
+                console.warn('WhatsApp sending trigger failed:', sendError);
+              }
+            }, 1000);
           }
         } catch (whatsappError) {
           console.warn('WhatsApp sending failed:', whatsappError);
@@ -308,7 +310,7 @@ https://smartkindy.com/auth
 للدعم الفني: 920012345
 SmartKindy - نظام إدارة رياض الأطفال 🌟`;
 
-      await supabase
+      const { error } = await supabase
         .from('whatsapp_messages')
         .insert({
           tenant_id: tenant?.id,
@@ -319,8 +321,20 @@ SmartKindy - نظام إدارة رياض الأطفال 🌟`;
           status: 'pending'
         });
 
+      if (error) throw error;
+
+      // تشغيل Edge Function فوراً لإرسال الرسالة
+      setTimeout(async () => {
+        try {
+          const { data: sendResult } = await supabase.functions.invoke('send-whatsapp-notifications');
+          console.log('Manual WhatsApp sending triggered:', sendResult);
+        } catch (sendError) {
+          console.warn('Manual WhatsApp sending failed:', sendError);
+        }
+      }, 500);
+
       toast({
-        title: "تم الإرسال بنجاح",
+        title: "تم إرسال الرسالة",
         description: "تم إرسال بيانات الدخول إلى المعلمة عبر الواتساب",
       });
     } catch (error: any) {
