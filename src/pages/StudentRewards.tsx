@@ -37,49 +37,91 @@ export default function StudentRewards() {
   const fromParam = searchParams.get('from');
   const toParam = searchParams.get('to');
   const dateRange = {
-    from: fromParam ? new Date(fromParam) : new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    from: fromParam ? new Date(fromParam) : new Date(new Date().getFullYear() - 1, 0, 1), // بداية السنة الماضية
     to: toParam ? new Date(toParam) : new Date()
   };
 
   useEffect(() => {
-    if (tenant && studentId) {
-      loadData();
+    const isGuardianAccess = searchParams.get('guardian') === 'true';
+    
+    if (isGuardianAccess) {
+      if (studentId) {
+        loadData();
+      }
+    } else {
+      if (tenant && studentId) {
+        loadData();
+      }
     }
-  }, [tenant, studentId]);
+  }, [tenant, studentId, searchParams]);
 
   const loadData = async () => {
-    if (!tenant || !studentId) return;
+    if (!studentId) return;
 
     setLoading(true);
     try {
-      // Load student info with error handling
-      const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .select('full_name, student_id, photo_url, classes(name)')
-        .eq('id', studentId)
-        .eq('tenant_id', tenant.id)
-        .maybeSingle();
+      const isGuardianAccess = searchParams.get('guardian') === 'true';
+      
+      if (isGuardianAccess) {
+        // Load student basic info without tenant restriction for guardian access
+        const { data: studentData, error: studentError } = await supabase
+          .from('students')
+          .select('full_name, student_id, photo_url, tenant_id, classes(name)')
+          .eq('id', studentId)
+          .maybeSingle();
 
-      if (studentError) throw studentError;
-      if (!studentData) {
-        throw new Error('لم يتم العثور على بيانات الطالب');
+        if (studentError) throw studentError;
+        if (!studentData) {
+          throw new Error('لم يتم العثور على بيانات الطالب');
+        }
+        setStudentInfo(studentData);
+
+        // Load rewards using student's tenant_id
+        const { data: rewardsData, error: rewardsError } = await supabase
+          .from('rewards')
+          .select('*')
+          .eq('student_id', studentId)
+          .eq('tenant_id', studentData.tenant_id)
+          .gte('awarded_at', dateRange.from.toISOString())
+          .lte('awarded_at', dateRange.to.toISOString())
+          .order('awarded_at', { ascending: false });
+
+        if (rewardsError) throw rewardsError;
+        setRewards(rewardsData || []);
+
+      } else {
+        if (!tenant) return;
+        
+        // Load student info with error handling  
+        const { data: studentData, error: studentError } = await supabase
+          .from('students')
+          .select('full_name, student_id, photo_url, classes(name)')
+          .eq('id', studentId)
+          .eq('tenant_id', tenant.id)
+          .maybeSingle();
+
+        if (studentError) throw studentError;
+        if (!studentData) {
+          throw new Error('لم يتم العثور على بيانات الطالب');
+        }
+        setStudentInfo(studentData);
+
+        // Load rewards with exact same query as in StudentReport
+        const { data: rewardsData, error: rewardsError } = await supabase
+          .from('rewards')
+          .select('*')
+          .eq('student_id', studentId)
+          .eq('tenant_id', tenant.id)
+          .gte('awarded_at', dateRange.from.toISOString())
+          .lte('awarded_at', dateRange.to.toISOString())
+          .order('awarded_at', { ascending: false });
+
+        if (rewardsError) throw rewardsError;
+        setRewards(rewardsData || []);
       }
-      setStudentInfo(studentData);
-
-      // Load rewards with exact same query as in StudentReport
-      const { data: rewardsData, error: rewardsError } = await supabase
-        .from('rewards')
-        .select('*')
-        .eq('student_id', studentId)
-        .eq('tenant_id', tenant.id)
-        .gte('awarded_at', dateRange.from.toISOString())
-        .lte('awarded_at', dateRange.to.toISOString())
-        .order('awarded_at', { ascending: false });
-
-      if (rewardsError) throw rewardsError;
-      setRewards(rewardsData || []);
 
     } catch (error: any) {
+      console.error('Error loading rewards data:', error);
       toast({
         title: "خطأ في تحميل البيانات",
         description: error.message,

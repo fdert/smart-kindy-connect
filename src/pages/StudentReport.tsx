@@ -518,17 +518,17 @@ export default function StudentReport() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm" onClick={() => navigate(`/student-rewards/${studentId}`)}>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Award className="h-5 w-5 text-purple-600" />
-                الجوائز والإنجازات
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">عرض الجوائز والمكافآت</p>
-            </CardContent>
-          </Card>
+            <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm" onClick={() => navigate(`/student-rewards/${studentId}?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`)}>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Award className="h-5 w-5 text-purple-600" />
+                  الجوائز والإنجازات
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">عرض الجوائز والمكافآت</p>
+              </CardContent>
+            </Card>
 
           <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm" onClick={() => navigate(`/student-notes-detail/${studentId}`)}>
             <CardHeader className="pb-3">
@@ -642,7 +642,7 @@ export default function StudentReport() {
                   <Button 
                     variant="outline" 
                     className="w-full mt-3"
-                    onClick={() => navigate(`/student-rewards/${studentId}`)}
+                    onClick={() => navigate(`/student-rewards/${studentId}?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`)}
                   >
                     عرض جميع الجوائز ({reportData.rewards.length})
                   </Button>
