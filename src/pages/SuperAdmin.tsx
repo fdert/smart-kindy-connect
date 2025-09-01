@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import DemoAccountsManager from '@/components/DemoAccountsManager';
+import TenantWhatsAppManager from '@/components/TenantWhatsAppManager';
 import { 
   Building, 
   Users, 
@@ -632,6 +632,9 @@ const SuperAdmin = () => {
             <div className="space-y-6">
               {/* إدارة الحسابات التجريبية */}
               <DemoAccountsManager />
+              
+              {/* إدارة إعدادات الواتساب للحضانات */}
+              <TenantWhatsAppManager />
               
               <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm">
                 <CardHeader>
