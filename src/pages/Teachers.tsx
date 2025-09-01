@@ -126,63 +126,16 @@ const Teachers = () => {
           description: `تم تحديث بيانات ${formData.full_name}`,
         });
       } else {
-        // Create new user account in Supabase Auth first
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-          email: formData.email,
-          email_confirm: true
+        // Create teacher using edge function
+        const { data: createResult, error: createError } = await supabase.functions.invoke('create-teacher', {
+          body: {
+            teacher: teacherData,
+            tenantId: tenant.id
+          }
         });
 
-        if (authError) throw authError;
-
-        const userRecordData = {
-          id: authData.user.id,
-          ...teacherData
-        };
-
-        const { error } = await supabase
-          .from('users')
-          .insert(userRecordData);
-
-        if (error) throw error;
-
-        // Send WhatsApp message with login credentials
-        try {
-          const tempPassword = 'TK' + Date.now().toString().slice(-8);
-          
-          // Send WhatsApp message
-          const whatsappMessage = `🔐 بيانات تسجيل الدخول - SmartKindy
-
-حضانة: ${tenant.name}
-
-👤 اسم المستخدم: ${formData.full_name}
-📧 البريد الإلكتروني: ${formData.email}
-🔑 كلمة المرور المؤقتة: ${tempPassword}
-
-🌐 رابط تسجيل الدخول:
-https://smartkindy.com/auth
-
-⚠️ ملاحظة هامة:
-- كلمة المرور صالحة لمدة 24 ساعة
-- مطلوب تغيير كلمة المرور عند أول تسجيل دخول
-- احتفظ بهذه البيانات في مكان آمن
-
-للدعم الفني: 920012345
-مرحباً بك في فريق SmartKindy! 🌟`;
-
-          await supabase
-            .from('whatsapp_messages')
-            .insert({
-              tenant_id: tenant.id,
-              recipient_phone: teacherData.phone,
-              message_content: whatsappMessage,
-              message_type: 'teacher_credentials',
-              scheduled_at: new Date().toISOString(),
-              status: 'pending'
-            });
-
-        } catch (whatsappError) {
-          console.warn('WhatsApp sending failed:', whatsappError);
-        }
+        if (createError) throw createError;
+        if (!createResult.success) throw new Error(createResult.error);
 
         toast({
           title: "تم إضافة المعلمة بنجاح",

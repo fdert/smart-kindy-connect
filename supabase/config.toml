@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.create-demo-accounts]
 verify_jwt = false
 
+[functions.create-teacher]
+verify_jwt = true
+
 [functions.whatsapp-inbound]
 verify_jwt = false
 
