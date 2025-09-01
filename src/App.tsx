@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Tour from "./pages/Tour";
 import Demo from "./pages/Demo";
 import Auth from "./pages/Auth";
+import TeacherDashboard from "./pages/TeacherDashboard";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
 import Teachers from "./pages/Teachers";
@@ -72,8 +73,6 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading: authLoading } = useAuth();
   const { role, loading } = useUserRole();
   
-  console.log('PublicRoute: Auth loading:', authLoading, 'Role loading:', loading, 'User:', user?.id, 'Role:', role);
-  
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -86,20 +85,15 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   }
   
   if (user && role) {
-    console.log('PublicRoute: User found with role:', role);
     // توجيه المستخدمين حسب أدوارهم
     switch (role) {
       case 'super_admin':
-        console.log('PublicRoute: Redirecting super_admin to /super-admin');
         return <Navigate to="/super-admin" replace />;
       case 'teacher':
-        console.log('PublicRoute: Redirecting teacher to /students');
-        return <Navigate to="/students" replace />; // توجيه المعلمين إلى صفحة الطلاب
+        return <Navigate to="/teacher-dashboard" replace />; // توجيه المعلمين إلى لوحة التحكم المخصصة
       case 'admin':
-        console.log('PublicRoute: Redirecting admin to /dashboard');
         return <Navigate to="/dashboard" replace />;
       default:
-        console.log('PublicRoute: Redirecting default role to /dashboard');
         return <Navigate to="/dashboard" replace />;
     }
   }
@@ -131,6 +125,11 @@ const AppRoutes = () => (
       <PublicRoute>
         <Auth />
       </PublicRoute>
+    } />
+    <Route path="/teacher-dashboard" element={
+      <ProtectedRoute>
+        <TeacherDashboard />
+      </ProtectedRoute>
     } />
     <Route path="/dashboard" element={
       <ProtectedRoute>
