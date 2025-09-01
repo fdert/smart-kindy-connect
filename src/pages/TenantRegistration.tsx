@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Building, Mail, Phone, MapPin, User, Check, Crown, Star, Zap } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { formatSaudiPhoneNumber, displaySaudiPhoneNumber, validateSaudiPhoneNumber } from '@/lib/phoneUtils';
+import { formatSaudiPhoneNumber, displaySaudiPhoneNumber, isValidSaudiPhoneNumber } from '@/lib/phoneUtils';
 
 interface RegistrationForm {
   name: string;
@@ -68,10 +68,10 @@ const TenantRegistration = () => {
     if (!form.ownerPhone.trim()) return 'رقم هاتف المالك مطلوب';
     
     // التحقق من صحة رقم الجوال السعودي
-    if (!validateSaudiPhoneNumber(form.phone)) {
+    if (!isValidSaudiPhoneNumber(form.phone)) {
       return 'رقم الهاتف يجب أن يكون رقماً سعودياً صحيحاً (يبدأ بـ 05)';
     }
-    if (!validateSaudiPhoneNumber(form.ownerPhone)) {
+    if (!isValidSaudiPhoneNumber(form.ownerPhone)) {
       return 'رقم هاتف المالك يجب أن يكون رقماً سعودياً صحيحاً (يبدأ بـ 05)';
     }
 
