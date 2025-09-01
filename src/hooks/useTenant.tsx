@@ -67,16 +67,53 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
 
       if (userError) throw userError;
 
-      if (userData?.tenants) {
-        setTenant(userData.tenants as Tenant);
+      let tenantData = userData?.tenants;
+
+      // If no tenant found via tenant_id, try to find by email
+      if (!tenantData && user.email) {
+        console.log('No tenant found via tenant_id, searching by email:', user.email);
+        
+        const { data: tenantByEmail, error: tenantError } = await supabase
+          .from('tenants')
+          .select('*')
+          .eq('email', user.email)
+          .eq('status', 'approved')
+          .single();
+
+        if (tenantError) {
+          console.error('Error finding tenant by email:', tenantError);
+          throw new Error('لا يمكن العثور على بيانات الروضة الخاصة بك');
+        }
+
+        if (tenantByEmail) {
+          tenantData = tenantByEmail;
+          
+          // Update user record with correct tenant_id
+          const { error: updateError } = await supabase
+            .from('users')
+            .update({ tenant_id: tenantByEmail.id })
+            .eq('id', user.id);
+
+          if (updateError) {
+            console.error('Error updating user tenant_id:', updateError);
+          } else {
+            console.log('Successfully linked user to tenant:', tenantByEmail.id);
+          }
+        }
+      }
+
+      if (tenantData) {
+        setTenant(tenantData as Tenant);
 
         // Load tenant settings
         const { data: settingsData, error: settingsError } = await supabase
           .from('tenant_settings')
           .select('key, value')
-          .eq('tenant_id', userData.tenants.id);
+          .eq('tenant_id', tenantData.id);
 
-        if (settingsError) throw settingsError;
+        if (settingsError) {
+          console.error('Error loading tenant settings:', settingsError);
+        }
 
         const settingsMap = settingsData?.reduce((acc, setting) => {
           acc[setting.key] = setting.value;
@@ -84,9 +121,13 @@ export const TenantProvider = ({ children }: TenantProviderProps) => {
         }, {} as TenantSettings) || {};
 
         setSettings(settingsMap);
+      } else {
+        throw new Error('لم يتم العثور على بيانات الروضة');
       }
     } catch (error) {
       console.error('Error loading tenant:', error);
+      setTenant(null);
+      setSettings({});
     } finally {
       setLoading(false);
     }
