@@ -70,9 +70,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 // مكون إعادة توجيه للمستخدمين المسجلين
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading: authLoading } = useAuth();
-  const { role, loading: roleLoading } = useUserRole();
+  const { role, loading } = useUserRole();
   
-  if (authLoading || roleLoading) {
+  console.log('PublicRoute: Auth loading:', authLoading, 'Role loading:', loading, 'User:', user?.id, 'Role:', role);
+  
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
