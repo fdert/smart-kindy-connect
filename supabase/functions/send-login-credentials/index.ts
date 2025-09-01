@@ -96,21 +96,46 @@ SmartKindy - منصة إدارة رياض الأطفال الذكية 🌟`;
       throw new Error("فشل في تحديث كلمة المرور المؤقتة");
     }
 
-    // إدراج رسالة الواتساب
-    const { error: messageError } = await supabaseClient
-      .from('whatsapp_messages')
-      .insert({
-        tenant_id: tenantId,
-        recipient_phone: tenant.phone,
-        message_content: whatsappMessage,
-        message_type: 'login_credentials',
-        scheduled_at: new Date().toISOString(),
-        status: 'pending'
+    // إرسال رسالة الواتساب عبر whatsapp-outbound function
+    try {
+      const outboundResponse = await supabaseClient.functions.invoke('whatsapp-outbound', {
+        body: {
+          tenantId: tenantId,
+          to: tenant.phone,
+          templateName: 'login_credentials',
+          templateData: {
+            nurseryName: tenant.name,
+            email: tenant.email,
+            tempPassword: newTempPassword
+          },
+          contextType: 'login',
+          contextId: tenantId
+        }
       });
 
-    if (messageError) {
-      console.error('Error inserting WhatsApp message:', messageError);
-      // لا نرمي خطأ هنا لأن الرسالة قد تكون مُرسلة لاحقاً
+      if (outboundResponse.error) {
+        console.error('Error sending WhatsApp via outbound function:', outboundResponse.error);
+      } else {
+        console.log('WhatsApp message sent successfully via outbound function:', outboundResponse.data);
+      }
+    } catch (outboundError) {
+      console.error('Error calling whatsapp-outbound function:', outboundError);
+      // في حالة فشل الإرسال، نحفظ الرسالة في قاعدة البيانات للمعالجة اللاحقة
+      const fallbackMessage = whatsappMessage
+        .replace(/\{\{nurseryName\}\}/g, tenant.name)
+        .replace(/\{\{email\}\}/g, tenant.email)
+        .replace(/\{\{tempPassword\}\}/g, newTempPassword);
+        
+      await supabaseClient
+        .from('whatsapp_messages')
+        .insert({
+          tenant_id: tenantId,
+          recipient_phone: tenant.phone,
+          message_content: fallbackMessage,
+          message_type: 'login_credentials',
+          scheduled_at: new Date().toISOString(),
+          status: 'pending'
+        });
     }
 
     console.log(`Login credentials prepared for tenant: ${tenant.name}`);
