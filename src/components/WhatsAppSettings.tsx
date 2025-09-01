@@ -37,7 +37,8 @@ const WhatsAppSettings = () => {
       reward_notification: '🎉 تهانينا! حصل {{studentName}} على {{rewardType}} جديدة!\n\nعزيز/ة {{guardianName}}\n\nيسعدنا إخباركم أن {{studentName}} حصل/ت على:\n🏆 {{rewardTitle}}\n📝 {{rewardDescription}}\n⭐ النقاط: {{points}}\n\nنفخر بإنجازات طفلكم ونتطلع لمزيد من التميز!\n\nمع أطيب التحيات\n{{nurseryName}}',
           permission_request: '🔔 طلب إذن جديد\n\nعزيز/ة {{guardianName}}\n\nيطلب منكم الموافقة على: {{permissionTitle}}\n\nالتفاصيل: {{permissionDescription}}\n\nللطالب/ة: {{studentName}}\n\nينتهي الطلب في: {{expiresAt}}\n\nمع تحيات\n{{nurseryName}}',
       survey_notification: '📊 استطلاع رأي من {{nurseryName}}\n\nعزيز/ة {{guardianName}}\n\nندعوكم للمشاركة في:\n📋 {{surveyTitle}}\n📄 {{surveyDescription}}\n\nرأيكم يهمنا لتحسين خدماتنا!\n\nشكراً لتعاونكم.',
-      general_notification: 'إشعار من {{nurseryName}}:\n\n{{message}}'
+      general_notification: 'إشعار من {{nurseryName}}:\n\n{{message}}',
+      login_credentials: '🔐 بيانات تسجيل الدخول - SmartKindy\n\nحضانة: {{nurseryName}}\n\n📧 البريد الإلكتروني: {{email}}\n🔑 كلمة المرور: {{tempPassword}}\n\n🌐 رابط تسجيل الدخول:\nhttps://smartkindy.com/auth\n\n⚠️ ملاحظة هامة:\n- كلمة المرور صالحة لمدة 24 ساعة\n- مطلوب تغيير كلمة المرور عند أول تسجيل دخول\n- احتفظ بهذه البيانات في مكان آمن\n\nللدعم الفني: 920012345\nSmartKindy - منصة إدارة رياض الأطفال الذكية 🌟'
     }, null, 2)
   });
 
@@ -60,7 +61,8 @@ const WhatsAppSettings = () => {
           reward_notification: '🎉 تهانينا! حصل {{studentName}} على {{rewardType}} جديدة!\n\nعزيز/ة {{guardianName}}\n\nيسعدنا إخباركم أن {{studentName}} حصل/ت على:\n🏆 {{rewardTitle}}\n📝 {{rewardDescription}}\n⭐ النقاط: {{points}}\n\nنفخر بإنجازات طفلكم ونتطلع لمزيد من التميز!\n\nمع أطيب التحيات\n{{nurseryName}}',
           permission_request: '🔔 طلب إذن جديد\n\nعزيز/ة {{guardianName}}\n\nيطلب منكم الموافقة على: {{permissionTitle}}\n\nالتفاصيل: {{permissionDescription}}\n\nللطالب/ة: {{studentName}}\n\nينتهي الطلب في: {{expiresAt}}\n\nمع تحيات\n{{nurseryName}}',
           survey_notification: '📊 استطلاع رأي من {{nurseryName}}\n\nعزيز/ة {{guardianName}}\n\nندعوكم للمشاركة في:\n📋 {{surveyTitle}}\n📄 {{surveyDescription}}\n\nرأيكم يهمنا لتحسين خدماتنا!\n\nشكراً لتعاونكم.',
-          general_notification: 'إشعار من {{nurseryName}}:\n\n{{message}}'
+          general_notification: 'إشعار من {{nurseryName}}:\n\n{{message}}',
+          login_credentials: '🔐 بيانات تسجيل الدخول - SmartKindy\n\nحضانة: {{nurseryName}}\n\n📧 البريد الإلكتروني: {{email}}\n🔑 كلمة المرور: {{tempPassword}}\n\n🌐 رابط تسجيل الدخول:\nhttps://smartkindy.com/auth\n\n⚠️ ملاحظة هامة:\n- كلمة المرور صالحة لمدة 24 ساعة\n- مطلوب تغيير كلمة المرور عند أول تسجيل دخول\n- احتفظ بهذه البيانات في مكان آمن\n\nللدعم الفني: 920012345\nSmartKindy - منصة إدارة رياض الأطفال الذكية 🌟'
         }, null, 2)
     }));
   }, [settings]);

@@ -43,8 +43,8 @@ serve(async (req) => {
     // إنشاء كلمة مرور جديدة
     const newTempPassword = 'TK' + Date.now().toString().slice(-8);
 
-    // رسالة الواتساب مع بيانات الدخول
-    const whatsappMessage = `🔐 بيانات تسجيل الدخول - SmartKindy
+    // جلب قالب رسالة تسجيل الدخول من إعدادات الحضانة
+    let whatsappMessage = `🔐 بيانات تسجيل الدخول - SmartKindy
 
 حضانة: ${tenant.name}
 
@@ -61,6 +61,26 @@ https://smartkindy.com/auth
 
 للدعم الفني: 920012345
 SmartKindy - منصة إدارة رياض الأطفال الذكية 🌟`;
+
+    // محاولة استخدام القالب المخصص إذا كان متوفراً
+    try {
+      const { data: templateSettings } = await supabaseClient
+        .from('tenant_settings')
+        .select('value')
+        .eq('tenant_id', tenantId)
+        .eq('key', 'wa_templates_json')
+        .single();
+
+      if (templateSettings && templateSettings.value && templateSettings.value.login_credentials) {
+        const template = templateSettings.value.login_credentials;
+        whatsappMessage = template
+          .replace(/\{\{nurseryName\}\}/g, tenant.name)
+          .replace(/\{\{email\}\}/g, tenant.email)
+          .replace(/\{\{tempPassword\}\}/g, newTempPassword);
+      }
+    } catch (templateError) {
+      console.log('Using default template for login credentials');
+    }
 
     // تحديث كلمة المرور المؤقتة في قاعدة البيانات
     const { error: updateError } = await supabaseClient
