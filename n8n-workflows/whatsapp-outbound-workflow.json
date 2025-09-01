@@ -1,5 +1,5 @@
 {
-  "name": "WhatsApp Custom Script - School System",
+  "name": "WhatsApp Outbound - School System",
   "nodes": [
     {
       "parameters": {
@@ -54,7 +54,7 @@
     },
     {
       "parameters": {
-        "url": "YOUR_WHATSAPP_SCRIPT_WEBHOOK_URL",
+        "url": "https://ytjodudlnfamvnescumu.supabase.co/functions/v1/whatsapp-mock",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -66,11 +66,11 @@
         },
         "sendBody": true,
         "bodyContentType": "json",
-        "jsonBody": "={{ {\n  \"phone\": $json.to,\n  \"message\": $json.message,\n  \"tenant_id\": $json.tenantId,\n  \"context_type\": $json.contextType,\n  \"context_id\": $json.contextId,\n  \"timestamp\": $json.timestamp\n} }}",
+        "jsonBody": "={{ $json }}",
         "options": {}
       },
-      "id": "send-to-script",
-      "name": "Send to Your WhatsApp Script",
+      "id": "send-to-whatsapp",
+      "name": "Send to WhatsApp Business API",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4,
       "position": [680, 220]
@@ -78,7 +78,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { \"success\": true, \"messageId\": $json.id, \"status\": \"sent\" } }}"
+        "responseBody": "={{ { \"success\": true, \"messageId\": $json.messages ? $json.messages[0].id : 'sent', \"status\": \"sent\" } }}"
       },
       "id": "success-response",
       "name": "Success Response",
@@ -103,7 +103,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { \"success\": false, \"error\": $json.error || \"Failed to send message\" } }}",
+        "responseBody": "={{ { \"success\": false, \"error\": $json.error ? $json.error.message : \"Failed to send WhatsApp message\" } }}",
         "options": {
           "responseCode": 500
         }
@@ -131,7 +131,7 @@
       "main": [
         [
           {
-            "node": "Send to Your WhatsApp Script",
+            "node": "Send to WhatsApp Business API",
             "type": "main",
             "index": 0
           }
@@ -145,11 +145,20 @@
         ]
       ]
     },
-    "Send to Your WhatsApp Script": {
+    "Send to WhatsApp Business API": {
       "main": [
         [
           {
             "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "error": [
+        [
+          {
+            "node": "Error Response - WhatsApp Failed",
             "type": "main",
             "index": 0
           }
@@ -164,6 +173,6 @@
   "staticData": null,
   "tags": [],
   "triggerCount": 0,
-  "updatedAt": "2025-01-31T00:00:00.000Z",
-  "versionId": "1"
+  "updatedAt": "2025-09-01T00:00:00.000Z",
+  "versionId": "2"
 }
