@@ -289,58 +289,21 @@ const Teachers = () => {
 
   const sendLoginCredentials = async (teacher: Teacher) => {
     try {
-      const tempPassword = 'TK' + Date.now().toString().slice(-8);
-      
-      // Send WhatsApp message
-      const whatsappMessage = `🔐 بيانات تسجيل الدخول - SmartKindy
-
-حضانة: ${tenant?.name}
-
-👤 اسم المستخدم: ${teacher.full_name}
-📧 البريد الإلكتروني: ${teacher.email}
-🔑 كلمة المرور المؤقتة: ${tempPassword}
-
-🌐 رابط تسجيل الدخول:
-https://smartkindy.com/auth
-
-⚠️ ملاحظة هامة:
-- كلمة المرور صالحة لمدة 24 ساعة
-- مطلوب تغيير كلمة المرور عند أول تسجيل دخول
-
-للدعم الفني: 920012345
-SmartKindy - نظام إدارة رياض الأطفال 🌟`;
-
-      const { error } = await supabase
-        .from('whatsapp_messages')
-        .insert({
-          tenant_id: tenant?.id,
-          recipient_phone: teacher.phone,
-          message_content: whatsappMessage,
-          message_type: 'teacher_credentials',
-          scheduled_at: new Date().toISOString(),
-          status: 'pending'
-        });
+      const { data, error } = await supabase.functions.invoke('send-teacher-credentials', {
+        body: { teacherId: teacher.id }
+      });
 
       if (error) throw error;
 
-      // تشغيل Edge Function فوراً لإرسال الرسالة
-      setTimeout(async () => {
-        try {
-          const { data: sendResult } = await supabase.functions.invoke('send-whatsapp-notifications');
-          console.log('Manual WhatsApp sending triggered:', sendResult);
-        } catch (sendError) {
-          console.warn('Manual WhatsApp sending failed:', sendError);
-        }
-      }, 500);
-
       toast({
-        title: "تم إرسال الرسالة",
-        description: "تم إرسال بيانات الدخول إلى المعلمة عبر الواتساب",
+        title: "تم الإرسال بنجاح", 
+        description: `تم إرسال بيانات تسجيل الدخول للمعلمة "${teacher.full_name}" عبر الواتساب`,
       });
+
     } catch (error: any) {
       toast({
         title: "خطأ في الإرسال",
-        description: error.message,
+        description: error.message || "فشل في إرسال بيانات تسجيل الدخول",
         variant: "destructive",
       });
     }
