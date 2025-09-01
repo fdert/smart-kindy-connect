@@ -1,21 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTenant } from '@/hooks/useTenant';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { 
-  CalendarIcon, 
-  Star, 
+  AlertCircle,
   BookOpen, 
   Users, 
   Heart, 
@@ -24,14 +18,15 @@ import {
   TrendingUp,
   Award,
   Clock,
-  CheckCircle,
-  AlertCircle,
   Activity,
   Stethoscope,
   UserCheck,
   Download,
-  Share2
+  Share2,
+  Star
 } from 'lucide-react';
+import { StudentReportHeader } from '@/components/StudentReportHeader';
+import { StudentStatsCards } from '@/components/StudentStatsCards';
 
 interface StudentReportData {
   student: {
@@ -98,6 +93,8 @@ interface StudentReportData {
 }
 
 export default function StudentReport() {
+  console.log('StudentReport component is loading...');
+  
   const { studentId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -469,37 +466,10 @@ export default function StudentReport() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header with Student Info */}
-        <Card className="mb-8 bg-white/90 backdrop-blur-sm border-0 shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-primary to-primary/80 text-white rounded-t-lg">
-            <div className="flex items-center gap-6">
-              <Avatar className="h-24 w-24 border-4 border-white">
-                <AvatarImage src={reportData.student.photo_url || undefined} />
-                <AvatarFallback className="text-2xl bg-white text-primary">
-                  {reportData.student.full_name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <h1 className="text-3xl font-bold mb-2">{reportData.student.full_name}</h1>
-                <div className="flex flex-wrap gap-4 text-sm opacity-90">
-                  <span>رقم الطالب: {reportData.student.student_id}</span>
-                  <span>العمر: {calculateAge(reportData.student.date_of_birth)} سنوات</span>
-                  {reportData.student.class_name && <span>الفصل: {reportData.student.class_name}</span>}
-                  <span>الجنس: {reportData.student.gender === 'male' ? 'ذكر' : 'أنثى'}</span>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="secondary" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  تحميل PDF
-                </Button>
-                <Button variant="secondary" size="sm">
-                  <Share2 className="h-4 w-4 mr-2" />
-                  مشاركة
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
+        <StudentReportHeader 
+          student={reportData.student} 
+          calculateAge={calculateAge}
+        />
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
