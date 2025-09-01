@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { TenantProvider } from "@/hooks/useTenant";
+import { useUserRole } from "@/hooks/useUserRole";
 import Index from "./pages/Index";
 import Tour from "./pages/Tour";
 import Demo from "./pages/Demo";
@@ -68,9 +69,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 // مكون إعادة توجيه للمستخدمين المسجلين
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { role, loading: roleLoading } = useUserRole();
   
-  if (loading) {
+  if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -81,8 +83,18 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  if (user) {
-    return <Navigate to="/dashboard" replace />;
+  if (user && role) {
+    // توجيه المستخدمين حسب أدوارهم
+    switch (role) {
+      case 'super_admin':
+        return <Navigate to="/super-admin" replace />;
+      case 'teacher':
+        return <Navigate to="/students" replace />; // توجيه المعلمين إلى صفحة الطلاب
+      case 'admin':
+        return <Navigate to="/dashboard" replace />;
+      default:
+        return <Navigate to="/dashboard" replace />;
+    }
   }
   
   return <>{children}</>;
