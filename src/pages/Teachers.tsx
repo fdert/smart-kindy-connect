@@ -147,19 +147,39 @@ const Teachers = () => {
 
         // Send WhatsApp message with login credentials
         try {
-          const { error: whatsappError } = await supabase.functions.invoke('send-login-credentials', {
-            body: {
-              email: formData.email,
-              phone: teacherData.phone,
-              name: formData.full_name,
-              role: 'teacher',
-              tenantName: tenant.name
-            }
-          });
+          const tempPassword = 'TK' + Date.now().toString().slice(-8);
+          
+          // Send WhatsApp message
+          const whatsappMessage = `🔐 بيانات تسجيل الدخول - SmartKindy
 
-          if (whatsappError) {
-            console.warn('Failed to send WhatsApp credentials:', whatsappError);
-          }
+حضانة: ${tenant.name}
+
+👤 اسم المستخدم: ${formData.full_name}
+📧 البريد الإلكتروني: ${formData.email}
+🔑 كلمة المرور المؤقتة: ${tempPassword}
+
+🌐 رابط تسجيل الدخول:
+https://smartkindy.com/auth
+
+⚠️ ملاحظة هامة:
+- كلمة المرور صالحة لمدة 24 ساعة
+- مطلوب تغيير كلمة المرور عند أول تسجيل دخول
+- احتفظ بهذه البيانات في مكان آمن
+
+للدعم الفني: 920012345
+مرحباً بك في فريق SmartKindy! 🌟`;
+
+          await supabase
+            .from('whatsapp_messages')
+            .insert({
+              tenant_id: tenant.id,
+              recipient_phone: teacherData.phone,
+              message_content: whatsappMessage,
+              message_type: 'teacher_credentials',
+              scheduled_at: new Date().toISOString(),
+              status: 'pending'
+            });
+
         } catch (whatsappError) {
           console.warn('WhatsApp sending failed:', whatsappError);
         }
@@ -205,18 +225,37 @@ const Teachers = () => {
 
   const sendLoginCredentials = async (teacher: Teacher) => {
     try {
-      const { error } = await supabase.functions.invoke('send-login-credentials', {
-        body: {
-          userId: teacher.id,
-          email: teacher.email,
-          phone: teacher.phone,
-          name: teacher.full_name,
-          role: 'teacher',
-          tenantName: tenant?.name
-        }
-      });
+      const tempPassword = 'TK' + Date.now().toString().slice(-8);
+      
+      // Send WhatsApp message
+      const whatsappMessage = `🔐 بيانات تسجيل الدخول - SmartKindy
 
-      if (error) throw error;
+حضانة: ${tenant?.name}
+
+👤 اسم المستخدم: ${teacher.full_name}
+📧 البريد الإلكتروني: ${teacher.email}
+🔑 كلمة المرور المؤقتة: ${tempPassword}
+
+🌐 رابط تسجيل الدخول:
+https://smartkindy.com/auth
+
+⚠️ ملاحظة هامة:
+- كلمة المرور صالحة لمدة 24 ساعة
+- مطلوب تغيير كلمة المرور عند أول تسجيل دخول
+
+للدعم الفني: 920012345
+SmartKindy - نظام إدارة رياض الأطفال 🌟`;
+
+      await supabase
+        .from('whatsapp_messages')
+        .insert({
+          tenant_id: tenant?.id,
+          recipient_phone: teacher.phone,
+          message_content: whatsappMessage,
+          message_type: 'teacher_credentials',
+          scheduled_at: new Date().toISOString(),
+          status: 'pending'
+        });
 
       toast({
         title: "تم الإرسال بنجاح",
