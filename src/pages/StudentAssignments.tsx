@@ -18,7 +18,7 @@ interface AssignmentData {
   teacher_feedback: string | null;
   completion_date: string | null;
   evaluated_at: string;
-  assignments: {
+  assignment: {
     title: string;
     description: string;
     assignment_type: string;
@@ -49,23 +49,14 @@ export default function StudentAssignments() {
     // Check if this is guardian access or regular authenticated access
     const isGuardianAccess = searchParams.get('guardian') === 'true';
     
-    console.log('StudentAssignments useEffect:', { 
-      studentId, 
-      isGuardianAccess, 
-      tenantId: tenant?.id,
-      dateRange
-    });
-    
     if (isGuardianAccess) {
       // For guardian access, we only need studentId
       if (studentId) {
-        console.log('Loading data for guardian access');
         loadData();
       }
     } else {
       // For regular access, we need both tenant and studentId
       if (tenant && studentId) {
-        console.log('Loading data for authenticated access');
         loadData();
       }
     }
@@ -76,8 +67,6 @@ export default function StudentAssignments() {
       console.error('No studentId provided');
       return;
     }
-
-    console.log('loadData called with studentId:', studentId);
 
     // تحقق من صحة UUID
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -94,18 +83,12 @@ export default function StudentAssignments() {
 
     setLoading(true);
     try {
-      console.log('Loading assignments for student:', studentId);
-      
       // Check if this is a guardian access (public access)
       const isGuardianAccess = searchParams.get('guardian') === 'true';
       let tenantId: string;
 
-      console.log('Guardian access mode:', isGuardianAccess);
-      console.log('Date range:', dateRange);
-
       if (isGuardianAccess) {
         // For guardian access, we don't need tenant verification
-        console.log('Guardian access mode - loading assignments for student:', studentId);
         
         // Load student basic info without tenant restriction for guardian access
         const { data: studentData, error: studentError } = await supabase
@@ -126,7 +109,6 @@ export default function StudentAssignments() {
           throw new Error('لم يتم العثور على بيانات الطالب');
         }
 
-        console.log('Student data loaded:', studentData);
         setStudentInfo(studentData);
         tenantId = studentData.tenant_id;
         
@@ -148,12 +130,9 @@ export default function StudentAssignments() {
         if (!studentData) {
           throw new Error('لم يتم العثور على بيانات الطالب');
         }
-        console.log('Student data loaded (authenticated):', studentData);
         setStudentInfo(studentData);
         tenantId = tenant.id;
       }
-
-      console.log('Using tenant ID:', tenantId);
 
       // Load assignments with evaluations and proper date filtering (matching StudentReport query)
       const { data: assignmentsData, error: assignmentsError } = await supabase
@@ -174,11 +153,8 @@ export default function StudentAssignments() {
         .order('evaluated_at', { ascending: false });
 
       if (assignmentsError) {
-        console.error('Assignments error:', assignmentsError);
         throw assignmentsError;
       }
-
-      console.log('Assignment evaluations loaded:', assignmentsData?.length || 0, 'records');
 
       // Get assignment details for each evaluation (matching StudentReport approach)
       const evaluationsWithAssignments = [];
@@ -193,13 +169,12 @@ export default function StudentAssignments() {
           if (assignmentDetail) {
             evaluationsWithAssignments.push({
               ...evaluation,
-              assignments: assignmentDetail
+              assignment: assignmentDetail
             });
           }
         }
       }
 
-      console.log('Final assignments with details:', evaluationsWithAssignments.length);
       setAssignments(evaluationsWithAssignments);
 
     } catch (error: any) {
@@ -337,18 +312,18 @@ export default function StudentAssignments() {
               <Card key={assignment.id} className="bg-white/90 backdrop-blur-sm">
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-3">
-                      {getStatusIcon(assignment.evaluation_status)}
-                      {assignment.assignments.title}
-                    </CardTitle>
+                  <CardTitle className="flex items-center gap-3">
+                    {getStatusIcon(assignment.evaluation_status)}
+                    {assignment.assignment.title}
+                  </CardTitle>
                     <div className="flex gap-2">
                       <Badge className={getStatusColor(assignment.evaluation_status)}>
                         {assignment.evaluation_status === 'completed' ? 'مكتمل' : 'غير مكتمل'}
                       </Badge>
-                      <Badge className={getPriorityColor(assignment.assignments.priority)}>
-                        {assignment.assignments.priority === 'high' ? 'عالية' :
-                         assignment.assignments.priority === 'medium' ? 'متوسطة' : 'منخفضة'}
-                      </Badge>
+                    <Badge className={getPriorityColor(assignment.assignment.priority)}>
+                      {assignment.assignment.priority === 'high' ? 'عالية' :
+                       assignment.assignment.priority === 'medium' ? 'متوسطة' : 'منخفضة'}
+                    </Badge>
                     </div>
                   </div>
                 </CardHeader>
@@ -356,12 +331,12 @@ export default function StudentAssignments() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                       <h4 className="font-semibold text-gray-700 mb-2">تفاصيل الواجب</h4>
-                      <p className="text-gray-600 mb-2">{assignment.assignments.description}</p>
+                      <p className="text-gray-600 mb-2">{assignment.assignment.description}</p>
                       <div className="space-y-1 text-sm text-gray-500">
-                        <p>النوع: {assignment.assignments.assignment_type === 'homework' ? 'واجب منزلي' : 
-                                   assignment.assignments.assignment_type === 'task' ? 'مهمة' :
-                                   assignment.assignments.assignment_type === 'project' ? 'مشروع' : 'نشاط'}</p>
-                        <p>موعد التسليم: {format(new Date(assignment.assignments.due_date), 'dd MMM yyyy', { locale: ar })}</p>
+                        <p>النوع: {assignment.assignment.assignment_type === 'homework' ? 'واجب منزلي' : 
+                                   assignment.assignment.assignment_type === 'task' ? 'مهمة' :
+                                   assignment.assignment.assignment_type === 'project' ? 'مشروع' : 'نشاط'}</p>
+                        <p>موعد التسليم: {format(new Date(assignment.assignment.due_date), 'dd MMM yyyy', { locale: ar })}</p>
                       </div>
                     </div>
                     <div>
