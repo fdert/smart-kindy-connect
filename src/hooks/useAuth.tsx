@@ -49,12 +49,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 .eq('id', session.user.id)
                 .maybeSingle();
 
-                if (!existingUser) {
-                // تحقق من البريد الإلكتروني لمعرفة نوع الحساب
+                // تحديد دور المستخدم
                 const isAdmin = session.user.email === 'admin@smartkindy.com';
-                
-                // تحقق إذا كان هذا حساب مدير روضة
                 let userRole: 'super_admin' | 'admin' | 'guardian' = 'guardian';
+                
                 if (isAdmin) {
                   userRole = 'super_admin';
                 } else {
@@ -63,28 +61,41 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                     .from('tenants')
                     .select('id, email')
                     .eq('email', session.user.email!)
+                    .eq('status', 'approved')
                     .maybeSingle();
                   
                   if (tenantData) {
                     userRole = 'admin'; // مدير روضة
                   }
                 }
-                
-                const { error } = await supabase
-                  .from('users')
-                  .insert([
-                    {
-                      id: session.user.id,
-                      email: session.user.email!,
-                      full_name: session.user.user_metadata?.full_name || '',
-                      role: userRole
-                    }
-                  ]);
 
-                if (error) {
-                  console.error('Error creating user profile:', error);
+                if (!existingUser) {
+                  // إنشاء ملف تعريف جديد
+                  const { error } = await supabase
+                    .from('users')
+                    .insert([
+                      {
+                        id: session.user.id,
+                        email: session.user.email!,
+                        full_name: session.user.user_metadata?.full_name || '',
+                        role: userRole
+                      }
+                    ]);
+
+                  if (error) {
+                    console.error('Error creating user profile:', error);
+                  }
+                } else if (existingUser.role !== userRole) {
+                  // تحديث دور المستخدم إذا تغير
+                  const { error } = await supabase
+                    .from('users')
+                    .update({ role: userRole })
+                    .eq('id', session.user.id);
+
+                  if (error) {
+                    console.error('Error updating user role:', error);
+                  }
                 }
-              }
             } catch (error) {
               console.error('Error handling user profile:', error);
             }
