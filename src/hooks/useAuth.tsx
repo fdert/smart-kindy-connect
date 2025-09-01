@@ -89,17 +89,61 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    // أولاً، نتحقق إذا كان هذا تسجيل دخول بكلمة مرور مؤقتة لحضانة
+    let authError = null;
+    
+    try {
+      // محاولة تسجيل الدخول العادي أولاً
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      authError = error;
+      
+      // إذا فشل تسجيل الدخول العادي، نتحقق من كلمة المرور المؤقتة
+      if (error && error.message === 'Invalid login credentials') {
+        const { data: tenant } = await supabase
+          .from('tenants')
+          .select('id, name, temp_password, password_reset_required')
+          .eq('email', email)
+          .eq('temp_password', password)
+          .eq('status', 'approved')
+          .maybeSingle();
+          
+        if (tenant && tenant.temp_password === password) {
+          // محاولة تسجيل الدخول مباشرة (الحساب يجب أن يكون موجود بالفعل)
+          const { error: directSignInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          
+          if (!directSignInError) {
+            authError = null;
+          } else {
+            // إذا فشل التسجيل، نرسل طلب لتحديث بيانات الدخول
+            const { error: resendError } = await supabase.functions.invoke('send-login-credentials', {
+              body: { tenantId: tenant.id }
+            });
+            
+            if (!resendError) {
+              throw new Error("تم إعادة إرسال بيانات الدخول. يرجى المحاولة مرة أخرى بعد دقيقتين.");
+            } else {
+              throw new Error("خطأ في تحديث بيانات الدخول. يرجى المحاولة لاحقاً.");
+            }
+          }
+        }
+      }
+    } catch (error: any) {
+      authError = error;
+    }
 
-    if (error) {
+    if (authError) {
       toast({
         title: "خطأ في تسجيل الدخول",
-        description: error.message === 'Invalid login credentials' 
-          ? "بيانات الدخول غير صحيحة" 
-          : error.message,
+        description: authError.message === 'Invalid login credentials' 
+          ? "بيانات الدخول غير صحيحة. تأكد من البريد الإلكتروني وكلمة المرور المؤقتة" 
+          : authError.message,
         variant: "destructive",
       });
     } else {
@@ -109,7 +153,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       });
     }
 
-    return { error };
+    return { error: authError };
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {

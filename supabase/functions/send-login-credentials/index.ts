@@ -96,6 +96,39 @@ SmartKindy - منصة إدارة رياض الأطفال الذكية 🌟`;
       throw new Error("فشل في تحديث كلمة المرور المؤقتة");
     }
 
+    // إنشاء أو تحديث حساب في Supabase Auth
+    try {
+      const { data: authUser, error: createAuthError } = await supabaseClient.auth.admin.createUser({
+        email: tenant.email,
+        password: newTempPassword,
+        user_metadata: {
+          full_name: tenant.name,
+          tenant_id: tenantId,
+          is_tenant: true
+        },
+        email_confirm: true
+      });
+
+      if (createAuthError && createAuthError.message !== 'User already registered') {
+        console.log('Error creating auth user:', createAuthError);
+        
+        // إذا كان المستخدم موجود، نحدث كلمة المرور
+        const { error: updateAuthError } = await supabaseClient.auth.admin.updateUserById(
+          authUser?.user?.id || tenant.id,
+          { password: newTempPassword }
+        );
+        
+        if (updateAuthError) {
+          console.log('Error updating auth password:', updateAuthError);
+        }
+      } else {
+        console.log('Auth user created/updated successfully for tenant:', tenant.name);
+      }
+    } catch (authError) {
+      console.error('Auth operation failed:', authError);
+      // نستمر في العملية حتى لو فشل إنشاء حساب Auth
+    }
+
     // إرسال رسالة الواتساب عبر whatsapp-outbound function
     try {
       const outboundResponse = await supabaseClient.functions.invoke('whatsapp-outbound', {
