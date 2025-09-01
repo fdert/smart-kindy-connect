@@ -99,7 +99,7 @@ export default function StudentReport() {
   const [reportData, setReportData] = useState<StudentReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [dateRange] = useState({
-    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    from: new Date(new Date().getFullYear() - 1, 0, 1), // بداية السنة الماضية
     to: new Date()
   });
   const { tenant } = useTenant();
@@ -804,7 +804,7 @@ export default function StudentReport() {
                 {reportData.media.slice(0, 8).map((media) => (
                   <div key={media.id} className="relative group">
                     <img
-                      src={`https://ytjodudlnfamvnescumu.supabase.co/storage/v1/object/public/media/${media.file_path}`}
+                      src={media.file_path.startsWith('http') ? media.file_path : `https://ytjodudlnfamvnescumu.supabase.co/storage/v1/object/public/media/${media.file_path}`}
                       alt={media.file_name}
                       className="w-full h-32 object-cover rounded-lg"
                     />
