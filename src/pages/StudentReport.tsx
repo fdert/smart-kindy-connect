@@ -316,13 +316,12 @@ export default function StudentReport() {
         .lte('awarded_at', dateRange.to.toISOString())
         .order('awarded_at', { ascending: false });
 
-      // Load student notes
+      // Load student notes (include both private and public notes)
       const { data: notesData } = await supabase
         .from('student_notes')
         .select('*')
         .eq('student_id', studentId)
         .eq('tenant_id', tenantId)
-        .eq('is_private', false)
         .gte('created_at', dateRange.from.toISOString())
         .lte('created_at', dateRange.to.toISOString())
         .order('created_at', { ascending: false });
