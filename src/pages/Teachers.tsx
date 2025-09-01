@@ -56,6 +56,32 @@ const Teachers = () => {
     }
   }, [tenant]);
 
+  // Listen for realtime changes in users table
+  useEffect(() => {
+    if (!tenant?.id) return;
+
+    const channel = supabase
+      .channel('users-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'users',
+          filter: `tenant_id=eq.${tenant.id}`,
+        },
+        () => {
+          // Reload teachers when any user changes
+          loadTeachers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [tenant?.id]);
+
   const loadTeachers = async () => {
     if (!tenant?.id) return;
     
