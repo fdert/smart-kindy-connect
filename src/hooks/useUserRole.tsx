@@ -12,10 +12,13 @@ export const useUserRole = () => {
   useEffect(() => {
     const getUserRole = async () => {
       if (!user) {
+        console.log('useUserRole: No user found');
         setRole(null);
         setLoading(false);
         return;
       }
+
+      console.log('useUserRole: Fetching role for user ID:', user.id);
 
       try {
         const { data, error } = await supabase
@@ -28,6 +31,7 @@ export const useUserRole = () => {
           console.error('Error fetching user role:', error);
           setRole(null);
         } else {
+          console.log('useUserRole: User role fetched:', data?.role);
           setRole(data?.role || null);
         }
       } catch (error) {

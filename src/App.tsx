@@ -84,15 +84,20 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   }
   
   if (user && role) {
+    console.log('PublicRoute: User found with role:', role);
     // توجيه المستخدمين حسب أدوارهم
     switch (role) {
       case 'super_admin':
+        console.log('PublicRoute: Redirecting super_admin to /super-admin');
         return <Navigate to="/super-admin" replace />;
       case 'teacher':
+        console.log('PublicRoute: Redirecting teacher to /students');
         return <Navigate to="/students" replace />; // توجيه المعلمين إلى صفحة الطلاب
       case 'admin':
+        console.log('PublicRoute: Redirecting admin to /dashboard');
         return <Navigate to="/dashboard" replace />;
       default:
+        console.log('PublicRoute: Redirecting default role to /dashboard');
         return <Navigate to="/dashboard" replace />;
     }
   }
