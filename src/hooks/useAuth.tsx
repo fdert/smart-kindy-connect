@@ -220,18 +220,36 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({
-        title: "خطأ",
-        description: "حدث خطأ أثناء تسجيل الخروج",
-        variant: "destructive",
-      });
-    } else {
+    try {
+      // إنهاء الجلسة محلياً أولاً
+      setUser(null);
+      setSession(null);
+      setLoading(false);
+      
+      // محاولة تسجيل الخروج من سوپابيس
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      
+      // حتى لو كان هناك خطأ، نتأكد من إنهاء الجلسة المحلية
       toast({
         title: "تم تسجيل الخروج",
         description: "تم تسجيل خروجك بنجاح",
       });
+      
+      // إعادة توجيه إلى صفحة تسجيل الدخول
+      window.location.href = '/auth';
+      
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      // حتى مع الخطأ، ننهي الجلسة المحلية
+      setUser(null);
+      setSession(null);
+      
+      toast({
+        title: "تم تسجيل الخروج",
+        description: "تم تسجيل خروجك بنجاح",
+      });
+      
+      window.location.href = '/auth';
     }
   };
 
