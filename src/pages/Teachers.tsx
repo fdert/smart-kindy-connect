@@ -221,10 +221,14 @@ const Teachers = () => {
         });
       }
 
-      // Force reload teachers to ensure UI updates
-      await loadTeachers();
+      // Force reload teachers and reset form
       resetForm();
       setIsAddDialogOpen(false);
+      
+      // Delay reload to ensure database transaction is complete
+      setTimeout(() => {
+        loadTeachers();
+      }, 500);
     } catch (error: any) {
       toast({
         title: "خطأ في حفظ البيانات",
