@@ -83,13 +83,23 @@ serve(async (req) => {
 
     // Get all related data
     const [assignmentsData, attendanceData, rewardsData, notesData, healthData, mediaData, skillsData] = await Promise.all([
-      // Assignments
+      // Assignments - جلب الواجبات مع التقييمات
       supabase
-        .from('assignment_evaluations')
-        .select('*')
-        .eq('student_id', studentId)
+        .from('assignments')
+        .select(`
+          *,
+          assignment_evaluations!inner (
+            evaluation_status,
+            evaluation_score,
+            teacher_feedback,
+            evaluated_at,
+            completion_date
+          )
+        `)
         .eq('tenant_id', tenantId)
-        .gte('evaluated_at', oneYearAgo.toISOString()),
+        .or(`student_id.eq.${studentId},is_group_assignment.eq.true`)
+        .gte('created_at', oneYearAgo.toISOString())
+        .order('created_at', { ascending: false }),
 
       // Attendance  
       supabase
@@ -163,12 +173,22 @@ serve(async (req) => {
 
     // Process assignments data
     const assignments = assignmentsData.data || [];
+    const processedAssignments = assignments.map(assignment => ({
+      ...assignment,
+      evaluation_status: assignment.assignment_evaluations?.[0]?.evaluation_status || 'pending',
+      evaluation_score: assignment.assignment_evaluations?.[0]?.evaluation_score || 0,
+      teacher_feedback: assignment.assignment_evaluations?.[0]?.teacher_feedback || '',
+      evaluated_at: assignment.assignment_evaluations?.[0]?.evaluated_at || null,
+      completion_date: assignment.assignment_evaluations?.[0]?.completion_date || null
+    }));
+    
     const assignmentStats = {
-      total: assignments.length,
-      completed: assignments.filter(a => a.evaluation_status === 'completed').length,
-      pending: assignments.filter(a => a.evaluation_status === 'not_completed').length,
-      score_average: assignments.length ? 
-        assignments.reduce((sum, a) => sum + (a.evaluation_score || 0), 0) / assignments.length : 0
+      total: processedAssignments.length,
+      completed: processedAssignments.filter(a => a.evaluation_status === 'completed').length,
+      pending: processedAssignments.filter(a => a.evaluation_status === 'not_completed' || a.evaluation_status === 'pending').length,
+      score_average: processedAssignments.length ? 
+        processedAssignments.reduce((sum, a) => sum + (a.evaluation_score || 0), 0) / processedAssignments.length : 0,
+      assignments_list: processedAssignments.slice(0, 5) // أول 5 واجبات للعرض
     };
 
     // Process attendance data
@@ -200,7 +220,8 @@ serve(async (req) => {
       notes: notesData.data || [],
       health_checks: healthData.data || [],
       media: mediaFiles,
-      development_skills: skillsData.data || []
+      development_skills: skillsData.data || [],
+      raw_assignments: processedAssignments // إضافة الواجبات الكاملة للعرض التفصيلي
     };
 
     return new Response(JSON.stringify({

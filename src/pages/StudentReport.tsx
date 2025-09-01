@@ -45,6 +45,17 @@ interface StudentReportData {
     pending: number;
     score_average: number;
   };
+  raw_assignments?: Array<{
+    id: string;
+    title: string;
+    description?: string;
+    subject?: string;
+    due_date: string;
+    created_at: string;
+    evaluation_status?: string;
+    evaluation_score?: number;
+    teacher_feedback?: string;
+  }>;
   attendance: {
     total_days: number;
     present_days: number;
@@ -433,20 +444,74 @@ export default function StudentReport() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5 text-blue-600" />
-                الواجبات الأخيرة
+                الواجبات الأخيرة ({reportData.assignments.total})
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <h4 className="font-semibold">إجمالي الواجبات</h4>
-                    <p className="text-sm text-muted-foreground">المكتملة: {reportData.assignments.completed} من {reportData.assignments.total}</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <p className="text-2xl font-bold text-green-600">{reportData.assignments.completed}</p>
+                    <p className="text-sm text-muted-foreground">مكتملة</p>
                   </div>
-                  <Badge variant="secondary">
-                    متوسط الدرجات: {reportData.assignments.score_average.toFixed(1)}
-                  </Badge>
+                  <div className="text-center p-4 bg-orange-50 rounded-lg">
+                    <p className="text-2xl font-bold text-orange-600">{reportData.assignments.pending}</p>
+                    <p className="text-sm text-muted-foreground">قيد التنفيذ</p>
+                  </div>
+                  <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <p className="text-2xl font-bold text-blue-600">{reportData.assignments.score_average.toFixed(1)}</p>
+                    <p className="text-sm text-muted-foreground">متوسط الدرجات</p>
+                  </div>
                 </div>
+
+                {/* قائمة الواجبات التفصيلية */}
+                {reportData.raw_assignments && reportData.raw_assignments.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-lg">تفاصيل الواجبات:</h4>
+                    {reportData.raw_assignments.map((assignment) => (
+                      <div key={assignment.id} className="p-4 border rounded-lg bg-white">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <h5 className="font-semibold text-lg">{assignment.title}</h5>
+                            <p className="text-sm text-muted-foreground mb-2">{assignment.subject}</p>
+                            {assignment.description && (
+                              <p className="text-sm text-gray-600 mb-2 line-clamp-2">{assignment.description}</p>
+                            )}
+                          </div>
+                          <Badge 
+                            variant={assignment.evaluation_status === 'completed' ? 'default' : 'secondary'}
+                            className={assignment.evaluation_status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}
+                          >
+                            {assignment.evaluation_status === 'completed' ? 'مكتمل' : 'قيد التنفيذ'}
+                          </Badge>
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-4">
+                            <span className="text-muted-foreground">
+                              تاريخ الإنشاء: {format(new Date(assignment.created_at), 'dd/MM/yyyy', { locale: ar })}
+                            </span>
+                            <span className="text-muted-foreground">
+                              موعد التسليم: {format(new Date(assignment.due_date), 'dd/MM/yyyy', { locale: ar })}
+                            </span>
+                          </div>
+                          {assignment.evaluation_score && (
+                            <Badge variant="outline">
+                              <Star className="h-3 w-3 ml-1" />
+                              {assignment.evaluation_score}
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        {assignment.teacher_feedback && (
+                          <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                            <p className="text-sm"><strong>تعليق المعلمة:</strong> {assignment.teacher_feedback}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
