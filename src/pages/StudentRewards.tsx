@@ -42,34 +42,50 @@ export default function StudentRewards() {
   };
 
   useEffect(() => {
-    if (!studentId) return;
+    if (!studentId) {
+      console.log('StudentRewards: No studentId provided');
+      return;
+    }
     
     const isGuardianAccess = searchParams.get('guardian') === 'true';
     
     console.log('StudentRewards useEffect:', { 
       isGuardianAccess, 
       studentId, 
-      hasTenant: !!tenant?.id 
+      hasTenant: !!tenant?.id,
+      tenantLoading: !tenant && !isGuardianAccess
     });
     
     if (isGuardianAccess) {
       // For guardian access, load immediately
-      console.log('Loading data for guardian access');
+      console.log('Loading data for guardian access immediately');
       loadData();
     } else {
-      // For authenticated access, wait for tenant
+      // For authenticated access, wait for tenant or load if tenant is available
       if (tenant?.id) {
-        console.log('Loading data for authenticated access');
+        console.log('Loading data for authenticated access with tenant');
         loadData();
+      } else if (tenant === null) {
+        // Tenant loading failed, still try to load
+        console.log('Tenant is null, attempting guardian-style access as fallback');
+        loadData();
+      } else {
+        console.log('Waiting for tenant to load...');
       }
     }
-  }, [studentId, searchParams]);
+  }, [studentId, searchParams, tenant]);
 
   const loadData = async () => {
-    if (!studentId) return;
+    console.log('loadData called with studentId:', studentId);
+    
+    if (!studentId) {
+      console.log('No studentId, returning');
+      return;
+    }
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(studentId)) {
+      console.log('Invalid UUID format:', studentId);
       toast({
         title: "خطأ في الرابط",
         description: "معرف الطالب غير صحيح",
@@ -79,12 +95,19 @@ export default function StudentRewards() {
       return;
     }
 
+    console.log('Starting to load rewards data...');
     setLoading(true);
+    
     try {
       const isGuardianAccess = searchParams.get('guardian') === 'true';
+      console.log('Guardian access:', isGuardianAccess);
+      console.log('Date range:', dateRange);
+      
       let tenantId: string;
       
-      if (isGuardianAccess) {
+      if (isGuardianAccess || !tenant?.id) {
+        console.log('Loading data via guardian/public access');
+        
         // For guardian access, get student data without tenant restriction
         const { data: studentData, error: studentError } = await supabase
           .from('students')
@@ -98,15 +121,29 @@ export default function StudentRewards() {
           .eq('id', studentId)
           .maybeSingle();
 
-        if (studentError) throw studentError;
+        console.log('Student query result:', { studentData, studentError });
+        
+        if (studentError) {
+          console.error('Student query error:', studentError);
+          throw studentError;
+        }
         if (!studentData) {
+          console.log('No student data found');
           throw new Error('لم يتم العثور على بيانات الطالب');
         }
         
         setStudentInfo(studentData);
         tenantId = studentData.tenant_id;
+        console.log('Using tenant_id from student:', tenantId);
 
         // Load rewards using student's tenant_id
+        console.log('Loading rewards with params:', {
+          student_id: studentId,
+          tenant_id: tenantId,
+          from: dateRange.from.toISOString(),
+          to: dateRange.to.toISOString()
+        });
+        
         const { data: rewardsData, error: rewardsError } = await supabase
           .from('rewards')
           .select('*')
@@ -116,14 +153,17 @@ export default function StudentRewards() {
           .lte('awarded_at', dateRange.to.toISOString())
           .order('awarded_at', { ascending: false });
 
-        if (rewardsError) throw rewardsError;
+        console.log('Rewards query result:', { rewardsData, rewardsError });
+        
+        if (rewardsError) {
+          console.error('Rewards query error:', rewardsError);
+          throw rewardsError;
+        }
         setRewards(rewardsData || []);
+        console.log('Successfully loaded', (rewardsData || []).length, 'rewards');
 
       } else {
-        // Regular authenticated access - require tenant
-        if (!tenant?.id) {
-          throw new Error('معرف الروضة غير صحيح');
-        }
+        console.log('Loading data via authenticated access with tenant:', tenant.id);
         
         // Load student info with tenant verification  
         const { data: studentData, error: studentError } = await supabase
@@ -133,8 +173,14 @@ export default function StudentRewards() {
           .eq('tenant_id', tenant.id)
           .maybeSingle();
 
-        if (studentError) throw studentError;
+        console.log('Authenticated student query result:', { studentData, studentError });
+        
+        if (studentError) {
+          console.error('Authenticated student query error:', studentError);
+          throw studentError;
+        }
         if (!studentData) {
+          console.log('No student data found for authenticated access');
           throw new Error('لم يتم العثور على بيانات الطالب');
         }
         setStudentInfo(studentData);
@@ -149,18 +195,31 @@ export default function StudentRewards() {
           .lte('awarded_at', dateRange.to.toISOString())
           .order('awarded_at', { ascending: false });
 
-        if (rewardsError) throw rewardsError;
+        console.log('Authenticated rewards query result:', { rewardsData, rewardsError });
+        
+        if (rewardsError) {
+          console.error('Authenticated rewards query error:', rewardsError);
+          throw rewardsError;
+        }
         setRewards(rewardsData || []);
+        console.log('Successfully loaded', (rewardsData || []).length, 'rewards for authenticated user');
       }
 
     } catch (error: any) {
       console.error('Error loading rewards data:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
       toast({
         title: "خطأ في تحميل البيانات",
         description: error.message,
         variant: "destructive",
       });
     } finally {
+      console.log('Setting loading to false');
       setLoading(false);
     }
   };
