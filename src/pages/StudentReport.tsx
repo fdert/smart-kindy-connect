@@ -116,6 +116,14 @@ export default function StudentReport() {
   const { tenant } = useTenant();
   const { toast } = useToast();
 
+  // Debug logging
+  useEffect(() => {
+    console.log('StudentReport component mounted');
+    console.log('Student ID from params:', studentId);
+    console.log('Search params:', searchParams.toString());
+    console.log('Tenant:', tenant);
+  }, []);
+
   useEffect(() => {
     const isGuardianAccess = searchParams.get('guardian') === 'true';
     
@@ -131,10 +139,16 @@ export default function StudentReport() {
   }, [tenant, studentId, dateRange, searchParams]);
 
   const loadReportData = async () => {
-    if (!studentId) return;
+    console.log('loadReportData called with studentId:', studentId);
+    
+    if (!studentId) {
+      console.log('No studentId provided');
+      return;
+    }
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(studentId)) {
+      console.log('Invalid studentId format:', studentId);
       toast({
         title: "خطأ في الرابط",
         description: "معرف الطالب غير صحيح",
@@ -144,6 +158,7 @@ export default function StudentReport() {
       return;
     }
 
+    console.log('Starting to load report data for valid studentId:', studentId);
     setLoading(true);
     
     // Add timeout to prevent hanging
@@ -159,8 +174,8 @@ export default function StudentReport() {
     try {
       const isGuardianAccess = searchParams.get('guardian') === 'true';
       
-      // Use Supabase client to invoke the Edge Function
-      console.log('Loading report data for student:', studentId);
+      console.log('About to call supabase.functions.invoke');
+      console.log('Function call params:', { studentId, guardian: isGuardianAccess });
       
       const { data: reportResponse, error } = await supabase.functions.invoke('get-student-report', {
         body: { 
@@ -169,6 +184,7 @@ export default function StudentReport() {
         }
       });
 
+      console.log('Function response received:', { reportResponse, error });
       clearTimeout(timeoutId);
 
       if (error) {
@@ -181,7 +197,7 @@ export default function StudentReport() {
         throw new Error(reportResponse?.error || 'فشل في تحميل التقرير');
       }
 
-      console.log('Report data loaded successfully');
+      console.log('Report data loaded successfully:', reportResponse.data);
       setReportData(reportResponse.data);
 
     } catch (error: any) {
