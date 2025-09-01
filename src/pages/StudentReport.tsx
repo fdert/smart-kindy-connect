@@ -134,40 +134,55 @@ export default function StudentReport() {
     }
 
     setLoading(true);
+    
+    // Add timeout to prevent hanging
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+      toast({
+        title: "انتهت مهلة التحميل",
+        description: "يرجى إعادة تحميل الصفحة والمحاولة مرة أخرى",
+        variant: "destructive"
+      });
+    }, 10000); // 10 seconds timeout
+
     try {
       const isGuardianAccess = searchParams.get('guardian') === 'true';
       
-      // Use the Edge Function to get report data
-      const guardianParam = isGuardianAccess ? 'true' : 'false';
-      const reportUrl = `https://ytjodudlnfamvnescumu.supabase.co/functions/v1/get-student-report?studentId=${studentId}&guardian=${guardianParam}`;
+      // Use Supabase client to invoke the Edge Function
+      console.log('Loading report data for student:', studentId);
       
-      const response = await fetch(reportUrl, {
-        method: 'GET',
-        headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0am9kdWRsbmZhbXZuZXNjdW11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1MTYwMzgsImV4cCI6MjA3MjA5MjAzOH0.sXV4caS0mPZ_CjEIzgenbCpQYDhT21T5wuYMUPNisFY'
+      const { data: reportResponse, error } = await supabase.functions.invoke('get-student-report', {
+        body: { 
+          studentId, 
+          guardian: isGuardianAccess 
         }
       });
 
-      if (!response.ok) {
-        throw new Error(`فشل في تحميل بيانات التقرير: ${response.status}`);
-      }
+      clearTimeout(timeoutId);
 
-      const reportResponse = await response.json();
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'فشل في الاتصال بالخادم');
+      }
       
-      if (!reportResponse.success) {
-        throw new Error(reportResponse.error || 'فشل في تحميل التقرير');
+      if (!reportResponse?.success) {
+        console.error('Report response error:', reportResponse);
+        throw new Error(reportResponse?.error || 'فشل في تحميل التقرير');
       }
 
+      console.log('Report data loaded successfully');
       setReportData(reportResponse.data);
 
     } catch (error: any) {
+      clearTimeout(timeoutId);
       console.error('Error loading report data:', error);
       toast({
         title: "خطأ في التحميل",
-        description: error.message,
+        description: error.message || 'حدث خطأ أثناء تحميل التقرير',
         variant: "destructive"
       });
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };

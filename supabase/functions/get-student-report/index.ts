@@ -12,25 +12,35 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  if (req.method !== 'GET') {
-    return new Response('Method not allowed', { 
-      status: 405, 
-      headers: corsHeaders 
-    });
-  }
-
   try {
     console.log('Processing student report request');
     
-    // Get URL parameters
-    const url = new URL(req.url);
-    const studentId = url.searchParams.get('studentId');
-    const isGuardianAccess = url.searchParams.get('guardian') === 'true';
+    let studentId: string;
+    let isGuardianAccess: boolean;
+
+    // Support both GET (URL params) and POST (request body) methods
+    if (req.method === 'GET') {
+      const url = new URL(req.url);
+      studentId = url.searchParams.get('studentId') || '';
+      isGuardianAccess = url.searchParams.get('guardian') === 'true';
+    } else if (req.method === 'POST') {
+      const body = await req.json();
+      studentId = body.studentId || '';
+      isGuardianAccess = body.guardian === 'true' || body.guardian === true;
+    } else {
+      return new Response('Method not allowed', { 
+        status: 405, 
+        headers: corsHeaders 
+      });
+    }
 
     if (!studentId) {
-      return new Response('Student ID is required', { 
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Student ID is required'
+      }), { 
         status: 400, 
-        headers: corsHeaders 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -99,14 +109,22 @@ serve(async (req) => {
         .order('awarded_at', { ascending: false }),
 
       // Notes (only non-private for guardian access)
-      supabase
-        .from('student_notes')
-        .select('*')
-        .eq('student_id', studentId)
-        .eq('tenant_id', tenantId)
-        .eq('is_private', isGuardianAccess ? false : undefined)
-        .gte('created_at', oneYearAgo.toISOString())
-        .order('created_at', { ascending: false }),
+      isGuardianAccess 
+        ? supabase
+            .from('student_notes')
+            .select('*')
+            .eq('student_id', studentId)
+            .eq('tenant_id', tenantId)
+            .eq('is_private', false)
+            .gte('created_at', oneYearAgo.toISOString())
+            .order('created_at', { ascending: false })
+        : supabase
+            .from('student_notes')
+            .select('*')
+            .eq('student_id', studentId)
+            .eq('tenant_id', tenantId)
+            .gte('created_at', oneYearAgo.toISOString())
+            .order('created_at', { ascending: false }),
 
       // Health checks
       supabase
