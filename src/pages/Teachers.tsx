@@ -60,6 +60,7 @@ const Teachers = () => {
     if (!tenant?.id) return;
     
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('users')
         .select(`
