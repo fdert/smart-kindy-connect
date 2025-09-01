@@ -58,15 +58,33 @@ export default function StudentRewards() {
   const loadData = async () => {
     if (!studentId) return;
 
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(studentId)) {
+      toast({
+        title: "خطأ في الرابط",
+        description: "معرف الطالب غير صحيح",
+        variant: "destructive"
+      });
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const isGuardianAccess = searchParams.get('guardian') === 'true';
+      let tenantId: string;
       
       if (isGuardianAccess) {
-        // Load student basic info without tenant restriction for guardian access
+        // For guardian access, get student data without tenant restriction
         const { data: studentData, error: studentError } = await supabase
           .from('students')
-          .select('full_name, student_id, photo_url, tenant_id, classes(name)')
+          .select(`
+            full_name,
+            student_id,
+            photo_url,
+            tenant_id,
+            classes (name)
+          `)
           .eq('id', studentId)
           .maybeSingle();
 
@@ -74,14 +92,16 @@ export default function StudentRewards() {
         if (!studentData) {
           throw new Error('لم يتم العثور على بيانات الطالب');
         }
+        
         setStudentInfo(studentData);
+        tenantId = studentData.tenant_id;
 
         // Load rewards using student's tenant_id
         const { data: rewardsData, error: rewardsError } = await supabase
           .from('rewards')
           .select('*')
           .eq('student_id', studentId)
-          .eq('tenant_id', studentData.tenant_id)
+          .eq('tenant_id', tenantId)
           .gte('awarded_at', dateRange.from.toISOString())
           .lte('awarded_at', dateRange.to.toISOString())
           .order('awarded_at', { ascending: false });
@@ -90,9 +110,12 @@ export default function StudentRewards() {
         setRewards(rewardsData || []);
 
       } else {
-        if (!tenant) return;
+        // Regular authenticated access - require tenant
+        if (!tenant?.id) {
+          throw new Error('معرف الروضة غير صحيح');
+        }
         
-        // Load student info with error handling  
+        // Load student info with tenant verification  
         const { data: studentData, error: studentError } = await supabase
           .from('students')
           .select('full_name, student_id, photo_url, classes(name)')
@@ -106,7 +129,7 @@ export default function StudentRewards() {
         }
         setStudentInfo(studentData);
 
-        // Load rewards with exact same query as in StudentReport
+        // Load rewards
         const { data: rewardsData, error: rewardsError } = await supabase
           .from('rewards')
           .select('*')
