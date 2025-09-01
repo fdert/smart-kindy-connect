@@ -195,7 +195,7 @@ serve(async (req) => {
           evaluation = assignment.assignment_evaluations[0];
         } else {
           // للواجبات الجماعية، نبحث عن تقييم الطالب المحدد
-          evaluation = assignment.assignment_evaluations.find(eval => eval.student_id === studentId) || null;
+          evaluation = assignment.assignment_evaluations.find(evalItem => evalItem.student_id === studentId) || null;
         }
       }
       
