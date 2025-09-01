@@ -117,7 +117,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    // أولاً، نتحقق إذا كان هذا تسجيل دخول بكلمة مرور مؤقتة لحضانة
     let authError = null;
     
     try {
@@ -131,6 +130,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       
       // إذا فشل تسجيل الدخول العادي، نتحقق من كلمة المرور المؤقتة
       if (error && error.message === 'Invalid login credentials') {
+        
+        // أولاً: التحقق من كلمة المرور المؤقتة للحضانة (مديري الحضانات)
         const { data: tenant } = await supabase
           .from('tenants')
           .select('id, name, temp_password, password_reset_required')
@@ -139,41 +140,55 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           .eq('status', 'approved')
           .maybeSingle();
           
-          if (tenant && tenant.temp_password === password) {
-            // محاولة تسجيل الدخول مباشرة (الحساب يجب أن يكون موجود بالفعل)
-            const { error: directSignInError } = await supabase.auth.signInWithPassword({
-              email,
-              password,
-            });
-            
-            if (!directSignInError) {
-              // تأكد من أن المستخدم لديه الصلاحية الصحيحة (admin)
-              const { data: { user: currentUser } } = await supabase.auth.getUser();
-              if (currentUser) {
-                await supabase
-                  .from('users')
-                  .upsert([
-                    {
-                      id: currentUser.id,
-                      email: currentUser.email!,
-                      full_name: currentUser.user_metadata?.full_name || '',
-                      role: 'admin' as const
-                    }
-                  ]);
-              }
-              authError = null;
-            } else {
-            // إذا فشل التسجيل، نرسل طلب لتحديث بيانات الدخول
-            const { error: resendError } = await supabase.functions.invoke('send-login-credentials', {
-              body: { tenantId: tenant.id }
-            });
-            
-            if (!resendError) {
-              throw new Error("تم إعادة إرسال بيانات الدخول. يرجى المحاولة مرة أخرى بعد دقيقتين.");
-            } else {
-              throw new Error("خطأ في تحديث بيانات الدخول. يرجى المحاولة لاحقاً.");
-            }
+        if (tenant && tenant.temp_password === password) {
+          // محاولة إعادة إرسال بيانات الدخول للحضانة
+          const { error: resendError } = await supabase.functions.invoke('send-login-credentials', {
+            body: { tenantId: tenant.id }
+          });
+          
+          if (!resendError) {
+            throw new Error("تم إعادة إرسال بيانات الدخول. يرجى المحاولة مرة أخرى بعد دقيقتين.");
           }
+        }
+        
+        // ثانياً: التحقق من كلمة المرور المؤقتة للمعلمين
+        const { data: teacherData } = await supabase
+          .from('users')
+          .select(`
+            id, 
+            full_name, 
+            tenant_id,
+            tenants!inner (
+              id,
+              name,
+              temp_password,
+              password_reset_required
+            )
+          `)
+          .eq('email', email)
+          .eq('role', 'teacher')
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (teacherData && teacherData.tenants.temp_password === password) {
+          // إذا كانت كلمة المرور المؤقتة صحيحة للمعلم، نرسل بيانات دخول جديدة
+          const { error: teacherResendError } = await supabase.functions.invoke('send-teacher-credentials', {
+            body: { 
+              teacherId: teacherData.id,
+              tenantId: teacherData.tenant_id 
+            }
+          });
+          
+          if (!teacherResendError) {
+            throw new Error("تم إرسال بيانات دخول جديدة للمعلمة عبر الواتساب. يرجى المحاولة مرة أخرى بعد دقيقتين.");
+          } else {
+            throw new Error("خطأ في إرسال بيانات الدخول للمعلمة. يرجى المحاولة لاحقاً.");
+          }
+        }
+        
+        // إذا لم نجد أي تطابق، نعرض رسالة خطأ واضحة
+        if (!tenant && !teacherData) {
+          throw new Error("بيانات الدخول غير صحيحة. تأكد من البريد الإلكتروني وكلمة المرور.");
         }
       }
     } catch (error: any) {

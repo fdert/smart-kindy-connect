@@ -246,6 +246,13 @@ const Auth = () => {
                       required
                     />
                   </div>
+                  
+                  {/* رسالة توضيحية للمعلمين */}
+                  <div className="bg-blue-50 p-3 rounded-lg text-sm text-blue-800">
+                    <p className="font-medium mb-1">📝 للمعلمات:</p>
+                    <p>إذا لم تتلقي بيانات الدخول، أدخلي بريدك الإلكتروني وكلمة المرور المؤقتة <strong>TK94303549</strong> وسيتم إرسال بيانات دخول جديدة عبر الواتساب.</p>
+                  </div>
+                  
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? (
                       <>

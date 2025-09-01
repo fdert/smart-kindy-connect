@@ -2800,6 +2800,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_teacher_by_email: {
+        Args: { teacher_email: string }
+        Returns: string
+      }
+      check_teacher_auth_status: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          auth_account_exists: boolean
+          status: string
+          teacher_email: string
+          user_active: boolean
+        }[]
+      }
       generate_invoice_number: {
         Args: Record<PropertyKey, never>
         Returns: string
