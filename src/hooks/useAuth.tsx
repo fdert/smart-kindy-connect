@@ -49,9 +49,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 .eq('id', session.user.id)
                 .maybeSingle();
 
-              if (!existingUser) {
+                if (!existingUser) {
                 // تحقق من البريد الإلكتروني لمعرفة نوع الحساب
                 const isAdmin = session.user.email === 'admin@smartkindy.com';
+                
+                // تحقق إذا كان هذا حساب مدير روضة
+                let userRole: 'super_admin' | 'admin' | 'guardian' = 'guardian';
+                if (isAdmin) {
+                  userRole = 'super_admin';
+                } else {
+                  // تحقق إذا كان البريد مرتبط بروضة
+                  const { data: tenantData } = await supabase
+                    .from('tenants')
+                    .select('id, email')
+                    .eq('email', session.user.email!)
+                    .maybeSingle();
+                  
+                  if (tenantData) {
+                    userRole = 'admin'; // مدير روضة
+                  }
+                }
                 
                 const { error } = await supabase
                   .from('users')
@@ -60,7 +77,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                       id: session.user.id,
                       email: session.user.email!,
                       full_name: session.user.user_metadata?.full_name || '',
-                      role: isAdmin ? 'super_admin' : 'guardian'
+                      role: userRole
                     }
                   ]);
 
@@ -111,16 +128,30 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           .eq('status', 'approved')
           .maybeSingle();
           
-        if (tenant && tenant.temp_password === password) {
-          // محاولة تسجيل الدخول مباشرة (الحساب يجب أن يكون موجود بالفعل)
-          const { error: directSignInError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-          
-          if (!directSignInError) {
-            authError = null;
-          } else {
+          if (tenant && tenant.temp_password === password) {
+            // محاولة تسجيل الدخول مباشرة (الحساب يجب أن يكون موجود بالفعل)
+            const { error: directSignInError } = await supabase.auth.signInWithPassword({
+              email,
+              password,
+            });
+            
+            if (!directSignInError) {
+              // تأكد من أن المستخدم لديه الصلاحية الصحيحة (admin)
+              const { data: { user: currentUser } } = await supabase.auth.getUser();
+              if (currentUser) {
+                await supabase
+                  .from('users')
+                  .upsert([
+                    {
+                      id: currentUser.id,
+                      email: currentUser.email!,
+                      full_name: currentUser.user_metadata?.full_name || '',
+                      role: 'admin' as const
+                    }
+                  ]);
+              }
+              authError = null;
+            } else {
             // إذا فشل التسجيل، نرسل طلب لتحديث بيانات الدخول
             const { error: resendError } = await supabase.functions.invoke('send-login-credentials', {
               body: { tenantId: tenant.id }
