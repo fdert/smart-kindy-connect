@@ -13,6 +13,7 @@ import { useTenant } from '@/hooks/useTenant';
 import { useToast } from '@/hooks/use-toast';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Plus, Search, Users, Calendar, Edit, Trash2, Send, FileText, Share, ExternalLink } from 'lucide-react';
+import ExcelImport from '@/components/ExcelImport';
 
 interface Student {
   id: string;
@@ -322,6 +323,7 @@ const Students = () => {
             <p className="text-gray-600 mt-1">إدارة معلومات الطلاب والفصول</p>
           </div>
           <div className="flex gap-2">
+            <ExcelImport onImportComplete={loadStudents} />
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button onClick={resetForm} className="flex items-center gap-2">

@@ -22,6 +22,7 @@ import Guardians from "./pages/Guardians";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import FinancialSystem from "./pages/FinancialSystem";
+import FinancialReports from "./pages/FinancialReports";
 import TenantRegistration from "./pages/TenantRegistration";
 import SuperAdmin from "./pages/SuperAdmin";
 import Pricing from "./pages/Pricing";
@@ -175,6 +176,11 @@ const AppRoutes = () => (
     <Route path="/financial-system" element={
       <ProtectedRoute>
         <FinancialSystem />
+      </ProtectedRoute>
+    } />
+    <Route path="/financial-reports" element={
+      <ProtectedRoute>
+        <FinancialReports />
       </ProtectedRoute>
     } />
     <Route path="/permissions" element={

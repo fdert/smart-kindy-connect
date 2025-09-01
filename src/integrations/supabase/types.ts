@@ -700,6 +700,48 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_transactions: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          description: string
+          id: string
+          reference_number: string | null
+          status: string
+          tenant_id: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          date?: string
+          description: string
+          id?: string
+          reference_number?: string | null
+          status?: string
+          tenant_id: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          reference_number?: string | null
+          status?: string
+          tenant_id?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       guardian_student_links: {
         Row: {
           can_pickup: boolean
@@ -1644,6 +1686,51 @@ export type Database = {
           key?: string
           updated_at?: string
           value?: Json | null
+        }
+        Relationships: []
+      }
+      student_fees: {
+        Row: {
+          amount: number
+          created_at: string
+          discount: number | null
+          due_date: string
+          fee_type: string
+          id: string
+          notes: string | null
+          payment_date: string | null
+          status: string
+          student_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          discount?: number | null
+          due_date: string
+          fee_type?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          status?: string
+          student_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          discount?: number | null
+          due_date?: string
+          fee_type?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          status?: string
+          student_id?: string
+          tenant_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2692,6 +2779,10 @@ export type Database = {
         Returns: undefined
       }
       send_expiry_warnings: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      update_overdue_fees: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }

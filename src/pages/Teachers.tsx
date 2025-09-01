@@ -16,23 +16,13 @@ import { formatSaudiPhoneNumber, displaySaudiPhoneNumber } from '@/lib/phoneUtil
 
 interface Teacher {
   id: string;
-  user_id: string | null;
   full_name: string;
   email: string;
   phone: string;
-  whatsapp_number: string | null;
-  national_id: string | null;
-  hire_date: string;
-  position: string;
-  qualification: string;
-  experience_years: number | null;
-  salary: number | null;
+  role: string;
   is_active: boolean;
-  photo_url: string | null;
-  emergency_contact: any;
-  classes?: {
-    name: string;
-  }[];
+  avatar_url?: string;
+  tenant_id: string;
 }
 
 interface Class {
@@ -56,17 +46,7 @@ const Teachers = () => {
     full_name: '',
     email: '',
     phone: '',
-    whatsapp_number: '',
-    national_id: '',
-    position: 'teacher',
-    qualification: '',
-    experience_years: 0,
-    salary: 0,
-    emergency_contact: {
-      name: '',
-      phone: '',
-      relationship: ''
-    }
+    role: 'teacher' as 'teacher' | 'admin'
   });
 
   useEffect(() => {
@@ -130,10 +110,7 @@ const Teachers = () => {
         ...formData,
         tenant_id: tenant.id,
         phone: formatSaudiPhoneNumber(formData.phone),
-        whatsapp_number: formData.whatsapp_number ? formatSaudiPhoneNumber(formData.whatsapp_number) : null,
-        hire_date: new Date().toISOString().split('T')[0],
-        is_active: true,
-        role: formData.position
+        is_active: true
       };
 
       if (selectedTeacher) {
@@ -149,9 +126,22 @@ const Teachers = () => {
           description: `تم تحديث بيانات ${formData.full_name}`,
         });
       } else {
+        // Create new user account in Supabase Auth first
+        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+          email: formData.email,
+          email_confirm: true
+        });
+
+        if (authError) throw authError;
+
+        const userRecordData = {
+          id: authData.user.id,
+          ...teacherData
+        };
+
         const { error } = await supabase
           .from('users')
-          .insert(teacherData);
+          .insert(userRecordData);
 
         if (error) throw error;
 
@@ -197,17 +187,7 @@ const Teachers = () => {
       full_name: '',
       email: '',
       phone: '',
-      whatsapp_number: '',
-      national_id: '',
-      position: 'teacher',
-      qualification: '',
-      experience_years: 0,
-      salary: 0,
-      emergency_contact: {
-        name: '',
-        phone: '',
-        relationship: ''
-      }
+      role: 'teacher' as 'teacher' | 'admin'
     });
     setSelectedTeacher(null);
   };
@@ -218,17 +198,7 @@ const Teachers = () => {
       full_name: teacher.full_name || '',
       email: teacher.email || '',
       phone: teacher.phone || '',
-      whatsapp_number: teacher.whatsapp_number || '',
-      national_id: teacher.national_id || '',
-      position: teacher.position || 'teacher',
-      qualification: teacher.qualification || '',
-      experience_years: teacher.experience_years || 0,
-      salary: teacher.salary || 0,
-      emergency_contact: teacher.emergency_contact || {
-        name: '',
-        phone: '',
-        relationship: ''
-      }
+      role: (teacher.role as 'teacher' | 'admin') || 'teacher'
     });
     setIsAddDialogOpen(true);
   };
@@ -296,12 +266,12 @@ const Teachers = () => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
-  const getRoleBadge = (position: string) => {
-    switch (position) {
+  const getRoleBadge = (role: string) => {
+    switch (role) {
       case 'admin': return <Badge variant="default">مديرة</Badge>;
       case 'teacher': return <Badge variant="secondary">معلمة</Badge>;
       case 'assistant': return <Badge variant="outline">مساعدة</Badge>;
-      default: return <Badge variant="outline">{position}</Badge>;
+      default: return <Badge variant="outline">{role}</Badge>;
     }
   };
 
@@ -370,118 +340,30 @@ const Teachers = () => {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="phone">رقم الهاتف</Label>
-                      <Input
-                        id="phone"
-                        value={formData.phone}
-                        onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                        placeholder="05xxxxxxxx"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="whatsapp_number">رقم الواتساب</Label>
-                      <Input
-                        id="whatsapp_number"
-                        value={formData.whatsapp_number}
-                        onChange={(e) => setFormData(prev => ({ ...prev, whatsapp_number: e.target.value }))}
-                        placeholder="05xxxxxxxx"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="national_id">رقم الهوية</Label>
-                      <Input
-                        id="national_id"
-                        value={formData.national_id}
-                        onChange={(e) => setFormData(prev => ({ ...prev, national_id: e.target.value }))}
-                        placeholder="رقم الهوية الوطنية"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="position">المنصب</Label>
-                      <Select value={formData.position} onValueChange={(value) => setFormData(prev => ({ ...prev, position: value }))}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="اختر المنصب" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="admin">مديرة</SelectItem>
-                          <SelectItem value="teacher">معلمة</SelectItem>
-                          <SelectItem value="assistant">مساعدة</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="qualification">المؤهل</Label>
-                      <Input
-                        id="qualification"
-                        value={formData.qualification}
-                        onChange={(e) => setFormData(prev => ({ ...prev, qualification: e.target.value }))}
-                        placeholder="المؤهل العلمي"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="experience_years">سنوات الخبرة</Label>
-                      <Input
-                        id="experience_years"
-                        type="number"
-                        min="0"
-                        value={formData.experience_years}
-                        onChange={(e) => setFormData(prev => ({ ...prev, experience_years: parseInt(e.target.value) || 0 }))}
-                        placeholder="عدد سنوات الخبرة"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="salary">الراتب (ريال)</Label>
-                    <Input
-                      id="salary"
-                      type="number"
-                      min="0"
-                      value={formData.salary}
-                      onChange={(e) => setFormData(prev => ({ ...prev, salary: parseFloat(e.target.value) || 0 }))}
-                      placeholder="الراتب الشهري"
-                    />
-                  </div>
-
-                  {/* Emergency Contact */}
-                  <div className="border-t pt-4">
-                    <h4 className="font-semibold mb-3">جهة الاتصال في الطوارئ</h4>
-                    <div className="grid gap-3">
-                      <Input
-                        placeholder="اسم جهة الاتصال"
-                        value={formData.emergency_contact.name}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          emergency_contact: { ...prev.emergency_contact, name: e.target.value }
-                        }))}
-                      />
-                      <Input
-                        placeholder="رقم الهاتف"
-                        value={formData.emergency_contact.phone}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          emergency_contact: { ...prev.emergency_contact, phone: e.target.value }
-                        }))}
-                      />
-                      <Input
-                        placeholder="صلة القرابة"
-                        value={formData.emergency_contact.relationship}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          emergency_contact: { ...prev.emergency_contact, relationship: e.target.value }
-                        }))}
-                      />
-                    </div>
-                  </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label htmlFor="phone">رقم الهاتف</Label>
+                              <Input
+                                id="phone"
+                                value={formData.phone}
+                                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                                placeholder="05xxxxxxxx"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="role">المنصب</Label>
+                              <Select value={formData.role} onValueChange={(value) => setFormData(prev => ({ ...prev, role: value as 'teacher' | 'admin' }))}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="اختر المنصب" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="admin">مديرة</SelectItem>
+                                  <SelectItem value="teacher">معلمة</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
                 </div>
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
@@ -530,7 +412,7 @@ const Teachers = () => {
                       <CardDescription>{teacher.email}</CardDescription>
                     </div>
                   </div>
-                  {getRoleBadge(teacher.position)}
+                  {getRoleBadge(teacher.role)}
                 </div>
               </CardHeader>
               <CardContent>
@@ -543,12 +425,9 @@ const Teachers = () => {
                     <Mail className="h-4 w-4" />
                     {teacher.email}
                   </div>
-                  {teacher.qualification && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <GraduationCap className="h-4 w-4" />
-                      {teacher.qualification}
-                    </div>
-                  )}
+                        <p className="text-sm text-gray-600">
+                          {teacher.role === 'admin' ? 'مديرة' : 'معلمة'}
+                        </p>
                   <div className="flex gap-2 pt-2">
                     <Button
                       size="sm"

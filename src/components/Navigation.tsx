@@ -84,6 +84,7 @@ const Navigation = () => {
     { name: 'الاستطلاعات', href: '/surveys', icon: BarChart3 },
     { name: 'الفصول الافتراضية', href: '/virtual-classes', icon: Video },
     { name: 'النظام المالي', href: '/financial-system', icon: DollarSign },
+    { name: 'التقارير المالية', href: '/financial-reports', icon: FileText },
     { name: 'التقارير', href: '/reports', icon: FileText },
     { name: 'الإعدادات', href: '/settings', icon: Settings },
   ];

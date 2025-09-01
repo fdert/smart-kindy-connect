@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/hooks/useTenant';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, DollarSign, CreditCard, Users, Calendar, TrendingUp, TrendingDown, Receipt, Send, AlertCircle } from 'lucide-react';
+import { Plus, DollarSign, CreditCard, Users, Calendar, TrendingUp, TrendingDown, Receipt, Send, AlertCircle, Clock } from 'lucide-react';
 
 interface StudentFee {
   id: string;
@@ -18,7 +18,7 @@ interface StudentFee {
   amount: number;
   fee_type: string;
   due_date: string;
-  status: 'pending' | 'paid' | 'overdue';
+  status: string;
   payment_date?: string;
   discount?: number;
   notes?: string;
@@ -30,13 +30,13 @@ interface StudentFee {
 
 interface FinancialTransaction {
   id: string;
-  type: 'income' | 'expense';
+  type: string;
   category: string;
   amount: number;
   description: string;
   date: string;
   reference_number?: string;
-  status: 'pending' | 'completed' | 'cancelled';
+  status: string;
 }
 
 interface FinancialStats {
