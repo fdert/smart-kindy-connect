@@ -130,13 +130,12 @@ export default function StudentNotesDetail() {
         tenantId = tenant.id;
       }
 
-      // Load notes with exact same query as in StudentReport (only non-private ones)
+      // Load notes with exact same query as in StudentReport (include all notes)
       const { data: notesData, error: notesError } = await supabase
         .from('student_notes')
         .select('*')
         .eq('student_id', studentId)
         .eq('tenant_id', tenantId)
-        .eq('is_private', false)
         .gte('created_at', dateRange.from.toISOString())
         .lte('created_at', dateRange.to.toISOString())
         .order('created_at', { ascending: false });

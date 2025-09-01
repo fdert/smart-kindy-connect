@@ -317,8 +317,7 @@ export default function StudentReport() {
         .order('awarded_at', { ascending: false });
 
       // Load student notes (include both private and public notes)
-      console.log('Loading notes for student:', studentId, 'Date range:', dateRange.from.toISOString(), 'to', dateRange.to.toISOString());
-      const { data: notesData, error: notesError } = await supabase
+      const { data: notesData } = await supabase
         .from('student_notes')
         .select('*')
         .eq('student_id', studentId)
@@ -326,8 +325,6 @@ export default function StudentReport() {
         .gte('created_at', dateRange.from.toISOString())
         .lte('created_at', dateRange.to.toISOString())
         .order('created_at', { ascending: false });
-      
-      console.log('Notes query result:', notesData, 'Error:', notesError);
 
       // Load health checks
       const { data: healthData } = await supabase
