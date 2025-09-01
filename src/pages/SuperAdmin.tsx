@@ -20,7 +20,10 @@ import {
   Clock,
   DollarSign,
   TrendingUp,
-  AlertTriangle
+  AlertTriangle,
+  Crown,
+  Star,
+  Zap
 } from 'lucide-react';
 
 interface Tenant {
@@ -40,25 +43,25 @@ interface Tenant {
   }>;
 }
 
-interface Subscription {
+interface TenantSubscription {
   id: string;
+  tenant_id: string;
+  plan_type: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+  price: number;
+  features: any;
   tenant: {
     name: string;
   };
-  plan: {
-    name: string;
-    name_ar: string;
-  };
-  status: 'active' | 'past_due' | 'cancelled' | 'suspended';
-  amount: number;
-  current_period_end: string;
 }
 
 const SuperAdmin = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [subscriptions, setSubscriptions] = useState<TenantSubscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalTenants: 0,
@@ -90,13 +93,12 @@ const SuperAdmin = () => {
       if (tenantsError) throw tenantsError;
       setTenants(tenantsData || []);
 
-      // Load subscriptions
+      // Load tenant subscriptions
       const { data: subscriptionsData, error: subscriptionsError } = await supabase
-        .from('subscriptions')
+        .from('tenant_subscriptions')
         .select(`
           *,
-          tenant:tenants(name),
-          plan:plans(name, name_ar)
+          tenant:tenants(name)
         `)
         .order('created_at', { ascending: false });
 
@@ -108,7 +110,7 @@ const SuperAdmin = () => {
       const pendingTenants = tenantsData?.filter(t => t.status === 'pending').length || 0;
       const activeSubscriptions = subscriptionsData?.filter(s => s.status === 'active').length || 0;
       const monthlyRevenue = subscriptionsData?.reduce((sum, s) => 
-        s.status === 'active' ? sum + Number(s.amount) : sum, 0) || 0;
+        s.status === 'active' ? sum + Number(s.price) : sum, 0) || 0;
 
       setStats({
         totalTenants,
@@ -408,13 +410,15 @@ const SuperAdmin = () => {
               <CardContent>
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>اسم الحضانة</TableHead>
-                      <TableHead>الخطة</TableHead>
-                      <TableHead>المبلغ</TableHead>
-                      <TableHead>الحالة</TableHead>
-                      <TableHead>تاريخ الانتهاء</TableHead>
-                    </TableRow>
+                      <TableRow>
+                        <TableHead>اسم الحضانة</TableHead>
+                        <TableHead>نوع الباقة</TableHead>
+                        <TableHead>المبلغ</TableHead>
+                        <TableHead>الحالة</TableHead>
+                        <TableHead>تاريخ البداية</TableHead>
+                        <TableHead>تاريخ الانتهاء</TableHead>
+                        <TableHead>الإجراءات</TableHead>
+                      </TableRow>
                   </TableHeader>
                   <TableBody>
                     {subscriptions.map((subscription) => (
@@ -423,12 +427,45 @@ const SuperAdmin = () => {
                           {subscription.tenant?.name}
                         </TableCell>
                         <TableCell>
-                          {subscription.plan?.name_ar || subscription.plan?.name}
+                          <div className="flex items-center space-x-reverse space-x-2">
+                            {subscription.plan_type === 'premium' ? (
+                              <Crown className="h-4 w-4 text-purple-500" />
+                            ) : subscription.plan_type === 'enterprise' ? (
+                              <Zap className="h-4 w-4 text-yellow-500" />
+                            ) : (
+                              <Star className="h-4 w-4 text-blue-500" />
+                            )}
+                            <span>
+                              {subscription.plan_type === 'premium' ? 'الباقة المميزة' 
+                               : subscription.plan_type === 'enterprise' ? 'باقة المؤسسات'
+                               : 'الباقة الأساسية'}
+                            </span>
+                          </div>
                         </TableCell>
-                        <TableCell>{subscription.amount} ر.س</TableCell>
+                        <TableCell>{subscription.price} ر.س</TableCell>
                         <TableCell>{getStatusBadge(subscription.status)}</TableCell>
                         <TableCell>
-                          {new Date(subscription.current_period_end).toLocaleDateString('ar-SA')}
+                          {new Date(subscription.start_date).toLocaleDateString('ar-SA')}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(subscription.end_date).toLocaleDateString('ar-SA')}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-reverse space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                console.log('تجديد الاشتراك:', subscription.id);
+                                toast({
+                                  title: "تجديد الاشتراك",
+                                  description: "سيتم إضافة هذه الميزة قريباً",
+                                });
+                              }}
+                            >
+                              تجديد
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

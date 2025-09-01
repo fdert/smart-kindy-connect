@@ -7,7 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Building, Mail, Phone, MapPin, User, Check } from 'lucide-react';
+import { Building, Mail, Phone, MapPin, User, Check, Crown, Star, Zap } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatSaudiPhoneNumber, displaySaudiPhoneNumber } from '@/lib/phoneUtils';
 
 interface RegistrationForm {
@@ -19,6 +20,7 @@ interface RegistrationForm {
   ownerName: string;
   ownerEmail: string;
   ownerPhone: string;
+  planType: string;
 }
 
 const TenantRegistration = () => {
@@ -34,7 +36,8 @@ const TenantRegistration = () => {
     address: '',
     ownerName: '',
     ownerEmail: '',
-    ownerPhone: ''
+    ownerPhone: '',
+    planType: 'basic'
   });
 
   const handleInputChange = (field: keyof RegistrationForm, value: string) => {
@@ -118,6 +121,10 @@ const TenantRegistration = () => {
             email: form.email.trim(),
             phone: form.phone.trim(),
             address: form.address.trim(),
+            owner_name: form.ownerName.trim(),
+            owner_email: form.ownerEmail.trim(),
+            owner_phone: form.ownerPhone.trim(),
+            plan_type: form.planType,
             status: 'pending'
           }
         ])
@@ -283,6 +290,44 @@ const TenantRegistration = () => {
                     placeholder="الحي، الشارع، رقم المبنى، المدينة"
                     required
                   />
+                </div>
+
+                <div>
+                  <Label htmlFor="planType">نوع باقة الاشتراك *</Label>
+                  <Select value={form.planType} onValueChange={(value) => handleInputChange('planType', value)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="اختر نوع الباقة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="basic">
+                        <div className="flex items-center space-x-reverse space-x-2">
+                          <Star className="h-4 w-4 text-blue-500" />
+                          <div>
+                            <div className="font-medium">الباقة الأساسية</div>
+                            <div className="text-sm text-gray-500">99 ر.س شهرياً - حتى 50 طالب</div>
+                          </div>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="premium">
+                        <div className="flex items-center space-x-reverse space-x-2">
+                          <Crown className="h-4 w-4 text-purple-500" />
+                          <div>
+                            <div className="font-medium">الباقة المميزة</div>
+                            <div className="text-sm text-gray-500">299 ر.س شهرياً - حتى 100 طالب + واتساب</div>
+                          </div>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="enterprise">
+                        <div className="flex items-center space-x-reverse space-x-2">
+                          <Zap className="h-4 w-4 text-yellow-500" />
+                          <div>
+                            <div className="font-medium">باقة المؤسسات</div>
+                            <div className="text-sm text-gray-500">599 ر.س شهرياً - حتى 500 طالب + ميزات شاملة</div>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 

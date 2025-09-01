@@ -2128,6 +2128,56 @@ export type Database = {
           },
         ]
       }
+      tenant_subscriptions: {
+        Row: {
+          created_at: string
+          currency: string | null
+          end_date: string
+          features: Json | null
+          id: string
+          plan_type: string
+          price: number | null
+          start_date: string
+          status: string | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string | null
+          end_date: string
+          features?: Json | null
+          id?: string
+          plan_type: string
+          price?: number | null
+          start_date: string
+          status?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string | null
+          end_date?: string
+          features?: Json | null
+          id?: string
+          plan_type?: string
+          price?: number | null
+          start_date?: string
+          status?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_subscriptions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           address: string | null
@@ -2139,10 +2189,16 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          owner_email: string | null
           owner_id: string | null
+          owner_name: string | null
+          owner_phone: string | null
+          password_reset_required: boolean | null
           phone: string | null
+          plan_type: string | null
           slug: string
           status: Database["public"]["Enums"]["tenant_status"]
+          temp_password: string | null
           updated_at: string
         }
         Insert: {
@@ -2155,10 +2211,16 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          owner_email?: string | null
           owner_id?: string | null
+          owner_name?: string | null
+          owner_phone?: string | null
+          password_reset_required?: boolean | null
           phone?: string | null
+          plan_type?: string | null
           slug: string
           status?: Database["public"]["Enums"]["tenant_status"]
+          temp_password?: string | null
           updated_at?: string
         }
         Update: {
@@ -2171,10 +2233,16 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          owner_email?: string | null
           owner_id?: string | null
+          owner_name?: string | null
+          owner_phone?: string | null
+          password_reset_required?: boolean | null
           phone?: string | null
+          plan_type?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["tenant_status"]
+          temp_password?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -2555,6 +2623,53 @@ export type Database = {
           },
         ]
       }
+      whatsapp_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message_content: string
+          message_type: string
+          recipient_phone: string
+          scheduled_at: string | null
+          sent_at: string | null
+          status: string | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_content: string
+          message_type: string
+          recipient_phone: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_content?: string
+          message_type?: string
+          recipient_phone?: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -2573,6 +2688,10 @@ export type Database = {
         Returns: boolean
       }
       process_scheduled_notifications: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      send_expiry_warnings: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,8 @@ import { Loader2, Heart, Star, Users, UserCheck, Settings, BookOpen, Eye, Copy }
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { CreateSuperAdmin } from '@/components/CreateSuperAdmin';
+import PasswordResetForm from '@/components/PasswordResetForm';
+import { supabase } from '@/integrations/supabase/client';
 
 const smartKindyLogo = "/lovable-uploads/46a447fc-00fa-49c5-b6ae-3f7b46fc4691.png";
 
@@ -17,7 +19,9 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [signInForm, setSignInForm] = useState({ email: '', password: '' });
   const [signUpForm, setSignUpForm] = useState({ email: '', password: '', fullName: '', confirmPassword: '' });
-  const { signIn, signUp } = useAuth();
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -91,6 +95,27 @@ const Auth = () => {
     setLoading(false);
   };
 
+  // التحقق من الحاجة لإعادة تعيين كلمة المرور
+  useEffect(() => {
+    const checkPasswordResetRequired = async () => {
+      if (user?.email) {
+        const { data: tenant } = await supabase
+          .from('tenants')
+          .select('password_reset_required, temp_password')
+          .eq('owner_email', user.email)
+          .eq('password_reset_required', true)
+          .single();
+
+        if (tenant) {
+          setTempPassword(tenant.temp_password);
+          setShowPasswordReset(true);
+        }
+      }
+    };
+
+    checkPasswordResetRequired();
+  }, [user]);
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -98,7 +123,20 @@ const Auth = () => {
     const { error } = await signIn(signInForm.email, signInForm.password);
     
     if (!error) {
-      navigate('/dashboard');
+      // التحقق من الحاجة لإعادة تعيين كلمة المرور
+      const { data: tenant } = await supabase
+        .from('tenants')
+        .select('password_reset_required, temp_password')
+        .eq('owner_email', signInForm.email)
+        .eq('password_reset_required', true)
+        .single();
+
+      if (tenant) {
+        setTempPassword(tenant.temp_password);
+        setShowPasswordReset(true);
+      } else {
+        navigate('/dashboard');
+      }
     }
     
     setLoading(false);
@@ -122,6 +160,22 @@ const Auth = () => {
     
     setLoading(false);
   };
+
+  // عرض نموذج إعادة تعيين كلمة المرور إذا كان مطلوباً
+  if (showPasswordReset) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-4">
+        <PasswordResetForm 
+          tempPassword={tempPassword || undefined}
+          onSuccess={() => {
+            setShowPasswordReset(false);
+            setTempPassword(null);
+            navigate('/dashboard');
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-4">
@@ -157,9 +211,10 @@ const Auth = () => {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsList className="grid w-full grid-cols-4 mb-6">
                 <TabsTrigger value="signin">تسجيل الدخول</TabsTrigger>
                 <TabsTrigger value="signup">حساب جديد</TabsTrigger>
+                <TabsTrigger value="password">كلمة المرور</TabsTrigger>
                 <TabsTrigger value="admin">إنشاء مدير</TabsTrigger>
               </TabsList>
 
@@ -273,6 +328,26 @@ const Auth = () => {
                     )}
                   </Button>
                 </form>
+              </TabsContent>
+
+              {/* تغيير كلمة المرور */}
+              <TabsContent value="password">
+                <div className="space-y-4 text-center">
+                  <p className="text-sm text-gray-600">
+                    لتغيير كلمة المرور، يرجى تسجيل الدخول أولاً
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      toast({
+                        title: "تغيير كلمة المرور",
+                        description: "يرجى تسجيل الدخول أولاً لتتمكن من تغيير كلمة المرور",
+                      });
+                    }}
+                  >
+                    تسجيل الدخول لتغيير كلمة المرور
+                  </Button>
+                </div>
               </TabsContent>
 
               {/* إنشاء مدير عام */}
