@@ -23,7 +23,11 @@ import {
   AlertTriangle,
   Crown,
   Star,
-  Zap
+  Zap,
+  Trash2,
+  Ban,
+  MessageCircle,
+  Key
 } from 'lucide-react';
 
 interface Tenant {
@@ -179,6 +183,82 @@ const SuperAdmin = () => {
       toast({
         title: "خطأ",
         description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteTenant = async (tenantId: string, tenantName: string) => {
+    if (!confirm(`هل أنت متأكد من حذف حضانة "${tenantName}"؟ هذا الإجراء لا يمكن التراجع عنه.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('tenants')
+        .delete()
+        .eq('id', tenantId);
+
+      if (error) throw error;
+
+      toast({
+        title: "تم الحذف",
+        description: `تم حذف حضانة "${tenantName}" بنجاح`,
+      });
+
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: "خطأ في الحذف",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSuspendTenant = async (tenantId: string, suspend: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('tenants')
+        .update({
+          status: suspend ? 'suspended' : 'approved'
+        })
+        .eq('id', tenantId);
+
+      if (error) throw error;
+
+      toast({
+        title: suspend ? "تم الإيقاف" : "تم إلغاء الإيقاف",
+        description: suspend ? "تم إيقاف الحضانة بنجاح" : "تم إلغاء إيقاف الحضانة",
+      });
+
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: "خطأ",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSendLoginCredentials = async (tenantId: string, tenantName: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('send-login-credentials', {
+        body: { tenantId }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "تم الإرسال بنجاح",
+        description: `تم إرسال بيانات تسجيل الدخول لحضانة "${tenantName}" عبر الواتساب`,
+      });
+
+    } catch (error: any) {
+      toast({
+        title: "خطأ في الإرسال",
+        description: error.message || "فشل في إرسال بيانات تسجيل الدخول",
         variant: "destructive",
       });
     }
@@ -342,7 +422,7 @@ const SuperAdmin = () => {
                             <div className="flex flex-col space-y-2">
                               {/* إجراءات الحضانة */}
                               {tenant.status === 'pending' && (
-                                <div className="flex space-x-reverse space-x-2">
+                                <div className="flex flex-wrap gap-2">
                                   <Button
                                     size="sm"
                                     onClick={() => handleTenantApproval(tenant.id, true)}
@@ -362,9 +442,63 @@ const SuperAdmin = () => {
                                 </div>
                               )}
                               
+                              {/* إجراءات الحضانات المعتمدة */}
+                              {tenant.status === 'approved' && (
+                                <div className="flex flex-wrap gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleSendLoginCredentials(tenant.id, tenant.name)}
+                                    className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+                                  >
+                                    <Key className="h-4 w-4 ml-1" />
+                                    إرسال بيانات الدخول
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleSuspendTenant(tenant.id, true)}
+                                    className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                                  >
+                                    <Ban className="h-4 w-4 ml-1" />
+                                    إيقاف مؤقت
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleDeleteTenant(tenant.id, tenant.name)}
+                                  >
+                                    <Trash2 className="h-4 w-4 ml-1" />
+                                    حذف
+                                  </Button>
+                                </div>
+                              )}
+
+                              {/* إجراءات الحضانات المعلقة */}
+                              {tenant.status === 'suspended' && (
+                                <div className="flex flex-wrap gap-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleSuspendTenant(tenant.id, false)}
+                                    className="bg-green-500 hover:bg-green-600"
+                                  >
+                                    <CheckCircle className="h-4 w-4 ml-1" />
+                                    إلغاء الإيقاف
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleDeleteTenant(tenant.id, tenant.name)}
+                                  >
+                                    <Trash2 className="h-4 w-4 ml-1" />
+                                    حذف
+                                  </Button>
+                                </div>
+                              )}
+                              
                               {/* إجراءات المدير */}
                               {tenant.owner?.[0] && tenant.status === 'approved' && (
-                                <div className="flex space-x-reverse space-x-2">
+                                <div className="flex flex-wrap gap-2 pt-2 border-t">
                                   {tenant.owner[0].is_active ? (
                                     <Button
                                       size="sm"

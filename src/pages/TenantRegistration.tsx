@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Building, Mail, Phone, MapPin, User, Check, Crown, Star, Zap } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { formatSaudiPhoneNumber, displaySaudiPhoneNumber } from '@/lib/phoneUtils';
+import { formatSaudiPhoneNumber, displaySaudiPhoneNumber, validateSaudiPhoneNumber } from '@/lib/phoneUtils';
 
 interface RegistrationForm {
   name: string;
@@ -66,6 +66,14 @@ const TenantRegistration = () => {
     if (!form.ownerName.trim()) return 'اسم المالك مطلوب';
     if (!form.ownerEmail.trim() || !/\S+@\S+\.\S+/.test(form.ownerEmail)) return 'بريد المالك الإلكتروني مطلوب';
     if (!form.ownerPhone.trim()) return 'رقم هاتف المالك مطلوب';
+    
+    // التحقق من صحة رقم الجوال السعودي
+    if (!validateSaudiPhoneNumber(form.phone)) {
+      return 'رقم الهاتف يجب أن يكون رقماً سعودياً صحيحاً (يبدأ بـ 05)';
+    }
+    if (!validateSaudiPhoneNumber(form.ownerPhone)) {
+      return 'رقم هاتف المالك يجب أن يكون رقماً سعودياً صحيحاً (يبدأ بـ 05)';
+    }
 
     if (form.slug.length < 3 || form.slug.length > 50) {
       return 'معرف الحضانة يجب أن يكون بين 3 و 50 حرف';
