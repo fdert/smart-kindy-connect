@@ -44,16 +44,26 @@ export default function StudentRewards() {
   useEffect(() => {
     const isGuardianAccess = searchParams.get('guardian') === 'true';
     
+    console.log('StudentRewards useEffect:', { 
+      isGuardianAccess, 
+      studentId, 
+      hasTenant: !!tenant?.id 
+    });
+    
     if (isGuardianAccess) {
+      // For guardian access, don't wait for tenant
       if (studentId) {
+        console.log('Loading data for guardian access');
         loadData();
       }
     } else {
-      if (tenant && studentId) {
+      // For authenticated access, wait for both tenant and studentId
+      if (tenant?.id && studentId) {
+        console.log('Loading data for authenticated access');
         loadData();
       }
     }
-  }, [tenant, studentId, searchParams]);
+  }, [studentId, searchParams, tenant?.id]);
 
   const loadData = async () => {
     if (!studentId) return;
