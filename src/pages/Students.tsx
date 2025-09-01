@@ -225,21 +225,51 @@ const Students = () => {
     if (!tenant) return;
 
     try {
-      // Get guardian phone from emergency contact
-      const student = students.find(s => s.id === studentId);
-      if (!student || !student.emergency_contact?.phone) {
+      // Get guardian information from the guardians table
+      const { data: guardianLinks, error: guardianError } = await supabase
+        .from('guardian_student_links')
+        .select(`
+          guardians (
+            id,
+            full_name,
+            whatsapp_number,
+            phone
+          )
+        `)
+        .eq('student_id', studentId)
+        .eq('tenant_id', tenant.id);
+
+      if (guardianError) throw guardianError;
+
+      if (!guardianLinks || guardianLinks.length === 0) {
         toast({
           title: "خطأ",
-          description: "لا يوجد رقم هاتف لولي الأمر",
+          description: "لا يوجد أولياء أمور مسجلين لهذا الطالب",
           variant: "destructive",
         });
         return;
       }
 
+      // Get the primary guardian or first guardian with WhatsApp number
+      const guardian = guardianLinks.find(link => 
+        link.guardians?.whatsapp_number || link.guardians?.phone
+      );
+
+      if (!guardian || (!guardian.guardians?.whatsapp_number && !guardian.guardians?.phone)) {
+        toast({
+          title: "خطأ",
+          description: "لا يوجد رقم واتس آب أو هاتف لولي الأمر",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const guardianPhone = guardian.guardians.whatsapp_number || guardian.guardians.phone;
+
       const { error } = await supabase.functions.invoke('send-registration-link', {
         body: {
           studentId: studentId,
-          guardianPhone: student.emergency_contact.phone,
+          guardianPhone: guardianPhone,
           tenantId: tenant.id
         }
       });
@@ -251,9 +281,10 @@ const Students = () => {
         description: "تم إرسال رابط التسجيل إلى ولي الأمر عبر الواتس آب",
       });
     } catch (error: any) {
+      console.error('Send registration link error:', error);
       toast({
         title: "خطأ في الإرسال",
-        description: error.message,
+        description: error.message || "حدث خطأ في إرسال الرابط",
         variant: "destructive",
       });
     }
