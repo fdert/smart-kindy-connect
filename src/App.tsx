@@ -11,6 +11,7 @@ import Demo from "./pages/Demo";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
+import Teachers from "./pages/Teachers";
 import Attendance from "./pages/Attendance";
 import Assignments from "./pages/Assignments";
 import StudentNotes from "./pages/StudentNotes";
@@ -20,6 +21,7 @@ import Media from "./pages/Media";
 import Guardians from "./pages/Guardians";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import FinancialSystem from "./pages/FinancialSystem";
 import TenantRegistration from "./pages/TenantRegistration";
 import SuperAdmin from "./pages/SuperAdmin";
 import Pricing from "./pages/Pricing";
@@ -120,6 +122,11 @@ const AppRoutes = () => (
         <Students />
       </ProtectedRoute>
     } />
+    <Route path="/teachers" element={
+      <ProtectedRoute>
+        <Teachers />
+      </ProtectedRoute>
+    } />
     <Route path="/attendance" element={
       <ProtectedRoute>
         <Attendance />
@@ -163,6 +170,11 @@ const AppRoutes = () => (
     <Route path="/settings" element={
       <ProtectedRoute>
         <Settings />
+      </ProtectedRoute>
+    } />
+    <Route path="/financial-system" element={
+      <ProtectedRoute>
+        <FinancialSystem />
       </ProtectedRoute>
     } />
     <Route path="/permissions" element={
