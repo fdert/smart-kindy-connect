@@ -83,21 +83,32 @@ serve(async (req) => {
 
     // Get all related data
     const [assignmentsData, attendanceData, rewardsData, notesData, healthData, mediaData, skillsData] = await Promise.all([
-      // Assignments - جلب الواجبات مع التقييمات
+      // Assignments - جلب الواجبات المخصصة للطالب أو الواجبات الجماعية لفصله
       supabase
         .from('assignments')
         .select(`
-          *,
-          assignment_evaluations!inner (
+          id,
+          title,
+          description,
+          subject,
+          due_date,
+          created_at,
+          assignment_type,
+          priority,
+          student_id,
+          is_group_assignment,
+          class_id,
+          assignment_evaluations!left (
             evaluation_status,
             evaluation_score,
             teacher_feedback,
             evaluated_at,
-            completion_date
+            completion_date,
+            student_id
           )
         `)
         .eq('tenant_id', tenantId)
-        .or(`student_id.eq.${studentId},is_group_assignment.eq.true`)
+        .or(`student_id.eq.${studentId},and(is_group_assignment.eq.true,class_id.eq.${studentData.class_id})`)
         .gte('created_at', oneYearAgo.toISOString())
         .order('created_at', { ascending: false }),
 
@@ -173,21 +184,43 @@ serve(async (req) => {
 
     // Process assignments data
     const assignments = assignmentsData.data || [];
-    const processedAssignments = assignments.map(assignment => ({
-      ...assignment,
-      evaluation_status: assignment.assignment_evaluations?.[0]?.evaluation_status || 'pending',
-      evaluation_score: assignment.assignment_evaluations?.[0]?.evaluation_score || 0,
-      teacher_feedback: assignment.assignment_evaluations?.[0]?.teacher_feedback || '',
-      evaluated_at: assignment.assignment_evaluations?.[0]?.evaluated_at || null,
-      completion_date: assignment.assignment_evaluations?.[0]?.completion_date || null
-    }));
+    console.log('Raw assignments data:', assignments);
+    
+    const processedAssignments = assignments.map(assignment => {
+      // البحث عن التقييم المناسب للطالب الحالي
+      let evaluation = null;
+      if (assignment.assignment_evaluations && assignment.assignment_evaluations.length > 0) {
+        // للواجبات الفردية، نأخذ التقييم الوحيد
+        if (!assignment.is_group_assignment) {
+          evaluation = assignment.assignment_evaluations[0];
+        } else {
+          // للواجبات الجماعية، نبحث عن تقييم الطالب المحدد
+          evaluation = assignment.assignment_evaluations.find(eval => eval.student_id === studentId) || null;
+        }
+      }
+      
+      return {
+        ...assignment,
+        evaluation_status: evaluation?.evaluation_status || 'pending',
+        evaluation_score: evaluation?.evaluation_score || null,
+        teacher_feedback: evaluation?.teacher_feedback || '',
+        evaluated_at: evaluation?.evaluated_at || null,
+        completion_date: evaluation?.completion_date || null
+      };
+    });
+    
+    console.log('Processed assignments:', processedAssignments);
     
     const assignmentStats = {
       total: processedAssignments.length,
       completed: processedAssignments.filter(a => a.evaluation_status === 'completed').length,
       pending: processedAssignments.filter(a => a.evaluation_status === 'not_completed' || a.evaluation_status === 'pending').length,
       score_average: processedAssignments.length ? 
-        processedAssignments.reduce((sum, a) => sum + (a.evaluation_score || 0), 0) / processedAssignments.length : 0,
+        processedAssignments
+          .filter(a => a.evaluation_score !== null && a.evaluation_score !== undefined)
+          .reduce((sum, a, _, filteredArray) => {
+            return filteredArray.length > 0 ? sum + (a.evaluation_score || 0) : 0;
+          }, 0) / Math.max(processedAssignments.filter(a => a.evaluation_score !== null && a.evaluation_score !== undefined).length, 1) : 0,
       assignments_list: processedAssignments.slice(0, 5) // أول 5 واجبات للعرض
     };
 
