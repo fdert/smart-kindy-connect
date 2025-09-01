@@ -99,7 +99,7 @@ export default function StudentReport() {
   const [reportData, setReportData] = useState<StudentReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [dateRange] = useState({
-    from: new Date(new Date().getFullYear() - 1, 0, 1), // بداية السنة الماضية
+    from: new Date(new Date().getFullYear() - 1, 0, 1),
     to: new Date()
   });
   const { tenant } = useTenant();
@@ -137,59 +137,28 @@ export default function StudentReport() {
     try {
       const isGuardianAccess = searchParams.get('guardian') === 'true';
       
-      if (isGuardianAccess) {
-        // Load student basic info without tenant restriction for guardian access
-        const { data: studentData, error: studentError } = await supabase
-          .from('students')
-          .select(`
-            id,
-            full_name,
-            student_id,
-            photo_url,
-            date_of_birth,
-            gender,
-            tenant_id,
-            classes (name),
-            tenants (name)
-          `)
-          .eq('id', studentId)
-          .single();
-
-        if (studentError) {
-          throw new Error('لم يتم العثور على بيانات الطالب');
+      // Use the Edge Function to get report data
+      const guardianParam = isGuardianAccess ? 'true' : 'false';
+      const reportUrl = `https://ytjodudlnfamvnescumu.supabase.co/functions/v1/get-student-report?studentId=${studentId}&guardian=${guardianParam}`;
+      
+      const response = await fetch(reportUrl, {
+        method: 'GET',
+        headers: {
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0am9kdWRsbmZhbXZuZXNjdW11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1MTYwMzgsImV4cCI6MjA3MjA5MjAzOH0.sXV4caS0mPZ_CjEIzgenbCpQYDhT21T5wuYMUPNisFY'
         }
+      });
 
-        const studentTenantId = studentData.tenant_id;
-        await loadStudentReportData(studentId, studentTenantId, studentData);
-        
-      } else {
-        if (!tenant?.id) {
-          throw new Error('معرف الروضة غير صحيح');
-        }
-
-        const { data: studentData, error: studentError } = await supabase
-          .from('students')
-          .select(`
-            id,
-            full_name,
-            student_id,
-            photo_url,
-            date_of_birth,
-            gender,
-            classes (name)
-          `)
-          .eq('id', studentId)
-          .eq('tenant_id', tenant.id)
-          .single();
-
-        if (studentError) throw studentError;
-        
-        if (!studentData || studentData.id !== studentId) {
-          throw new Error('لا يمكن العثور على بيانات الطالب أو ليس لديك صلاحية للوصول');
-        }
-
-        await loadStudentReportData(studentId, tenant.id, studentData);
+      if (!response.ok) {
+        throw new Error(`فشل في تحميل بيانات التقرير: ${response.status}`);
       }
+
+      const reportResponse = await response.json();
+      
+      if (!reportResponse.success) {
+        throw new Error(reportResponse.error || 'فشل في تحميل التقرير');
+      }
+
+      setReportData(reportResponse.data);
 
     } catch (error: any) {
       console.error('Error loading report data:', error);
@@ -200,128 +169,6 @@ export default function StudentReport() {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadStudentReportData = async (studentId: string, tenantId: string, studentData: any) => {
-    try {
-      // Load assignments data
-      const { data: assignmentsData } = await supabase
-        .from('assignment_evaluations')
-        .select('*')
-        .eq('student_id', studentId)
-        .eq('tenant_id', tenantId)
-        .gte('evaluated_at', dateRange.from.toISOString())
-        .lte('evaluated_at', dateRange.to.toISOString());
-
-      const assignmentStats = {
-        total: assignmentsData?.length || 0,
-        completed: assignmentsData?.filter(a => a.evaluation_status === 'completed').length || 0,
-        pending: assignmentsData?.filter(a => a.evaluation_status === 'not_completed').length || 0,
-        score_average: assignmentsData?.length ? 
-          assignmentsData.reduce((sum, a) => sum + (a.evaluation_score || 0), 0) / assignmentsData.length : 0
-      };
-
-      // Load attendance data
-      const { data: attendanceData } = await supabase
-        .from('attendance_events')
-        .select('status, date')
-        .eq('student_id', studentId)
-        .eq('tenant_id', tenantId)
-        .gte('date', format(dateRange.from, 'yyyy-MM-dd'))
-        .lte('date', format(dateRange.to, 'yyyy-MM-dd'));
-
-      const attendanceStats = {
-        total_days: attendanceData?.length || 0,
-        present_days: attendanceData?.filter(a => a.status === 'present').length || 0,
-        absent_days: attendanceData?.filter(a => a.status === 'absent').length || 0,
-        late_days: attendanceData?.filter(a => a.status === 'late').length || 0,
-        attendance_rate: attendanceData?.length ? 
-          (attendanceData.filter(a => a.status === 'present').length / attendanceData.length) * 100 : 0
-      };
-
-      // Load rewards
-      const { data: rewardsData } = await supabase
-        .from('rewards')
-        .select('*')
-        .eq('student_id', studentId)
-        .eq('tenant_id', tenantId)
-        .gte('awarded_at', dateRange.from.toISOString())
-        .lte('awarded_at', dateRange.to.toISOString())
-        .order('awarded_at', { ascending: false });
-
-      // Load student notes
-      const { data: notesData } = await supabase
-        .from('student_notes')
-        .select('*')
-        .eq('student_id', studentId)
-        .eq('tenant_id', tenantId)
-        .gte('created_at', dateRange.from.toISOString())
-        .lte('created_at', dateRange.to.toISOString())
-        .order('created_at', { ascending: false });
-
-      // Load health checks
-      const { data: healthData } = await supabase
-        .from('health_checks')
-        .select('*')
-        .eq('student_id', studentId)
-        .eq('tenant_id', tenantId)
-        .gte('check_date', format(dateRange.from, 'yyyy-MM-dd'))
-        .lte('check_date', format(dateRange.to, 'yyyy-MM-dd'))
-        .order('check_date', { ascending: false });
-
-      // Load media
-      const { data: mediaLinks } = await supabase
-        .from('media_student_links')
-        .select(`
-          media!inner (
-            id,
-            file_name,
-            file_path,
-            caption,
-            album_date,
-            tenant_id
-          )
-        `)
-        .eq('student_id', studentId)
-        .eq('tenant_id', tenantId);
-
-      const mediaFiles = mediaLinks
-        ?.map(m => m.media)
-        .filter(Boolean)
-        .filter(media => {
-          if (media.tenant_id !== tenantId) return false;
-          const albumDate = new Date(media.album_date);
-          return albumDate >= dateRange.from && albumDate <= dateRange.to;
-        }) || [];
-
-      // Load development skills
-      const { data: skillsData } = await supabase
-        .from('development_skills')
-        .select('*')
-        .eq('student_id', studentId)
-        .eq('tenant_id', tenantId)
-        .gte('assessment_date', format(dateRange.from, 'yyyy-MM-dd'))
-        .lte('assessment_date', format(dateRange.to, 'yyyy-MM-dd'))
-        .order('assessment_date', { ascending: false });
-
-      setReportData({
-        student: {
-          ...studentData,
-          class_name: studentData.classes?.name,
-          tenant_name: studentData.tenants?.name
-        },
-        assignments: assignmentStats,
-        attendance: attendanceStats,
-        rewards: rewardsData || [],
-        notes: notesData || [],
-        health_checks: healthData || [],
-        media: mediaFiles,
-        development_skills: skillsData || []
-      });
-    } catch (error: any) {
-      console.error('Error loading student report data:', error);
-      throw error;
     }
   };
 
@@ -413,16 +260,6 @@ export default function StudentReport() {
                   <span>الجنس: {reportData.student.gender === 'male' ? 'ذكر' : 'أنثى'}</span>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button variant="secondary" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  تحميل PDF
-                </Button>
-                <Button variant="secondary" size="sm">
-                  <Share2 className="h-4 w-4 mr-2" />
-                  مشاركة
-                </Button>
-              </div>
             </div>
           </CardHeader>
         </Card>
@@ -494,7 +331,11 @@ export default function StudentReport() {
 
         {/* Navigation Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-          <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm" onClick={() => navigate(`/student-attendance/${studentId}`)}>
+          <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm" 
+                onClick={() => {
+                  const guardianParam = searchParams.get('guardian') === 'true' ? '?guardian=true' : '';
+                  navigate(`/student-attendance/${studentId}${guardianParam}`);
+                }}>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <UserCheck className="h-5 w-5 text-green-600" />
@@ -506,7 +347,11 @@ export default function StudentReport() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm" onClick={() => navigate(`/student-assignments/${studentId}`)}>
+          <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm" 
+                onClick={() => {
+                  const guardianParam = searchParams.get('guardian') === 'true' ? '?guardian=true' : '';
+                  navigate(`/student-assignments/${studentId}${guardianParam}`);
+                }}>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <BookOpen className="h-5 w-5 text-blue-600" />
@@ -518,19 +363,27 @@ export default function StudentReport() {
             </CardContent>
           </Card>
 
-            <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm" onClick={() => navigate(`/student-rewards/${studentId}?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`)}>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Award className="h-5 w-5 text-purple-600" />
-                  الجوائز والإنجازات
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">عرض الجوائز والمكافآت</p>
-              </CardContent>
-            </Card>
+          <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm" 
+                onClick={() => {
+                  const guardianParam = searchParams.get('guardian') === 'true' ? '?guardian=true' : '';
+                  navigate(`/student-rewards/${studentId}?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}${guardianParam}`);
+                }}>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Award className="h-5 w-5 text-purple-600" />
+                الجوائز والإنجازات
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">عرض الجوائز والمكافآت</p>
+            </CardContent>
+          </Card>
 
-          <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm" onClick={() => navigate(`/student-notes-detail/${studentId}`)}>
+          <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm" 
+                onClick={() => {
+                  const guardianParam = searchParams.get('guardian') === 'true' ? '?guardian=true' : '';
+                  navigate(`/student-notes-detail/${studentId}${guardianParam}`);
+                }}>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Activity className="h-5 w-5 text-orange-600" />
@@ -542,7 +395,11 @@ export default function StudentReport() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm" onClick={() => navigate(`/student-media/${studentId}`)}>
+          <Card className="hover:shadow-lg transition-all duration-300 cursor-pointer bg-white/80 backdrop-blur-sm" 
+                onClick={() => {
+                  const guardianParam = searchParams.get('guardian') === 'true' ? '?guardian=true' : '';
+                  navigate(`/student-media/${studentId}${guardianParam}`);
+                }}>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Camera className="h-5 w-5 text-pink-600" />
@@ -830,7 +687,7 @@ export default function StudentReport() {
         {/* Footer */}
         <div className="mt-12 text-center text-gray-500">
           <p>تقرير شامل للطالب - تم إنشاؤه في {format(new Date(), 'dd MMMM yyyy', { locale: ar })}</p>
-          <p className="text-sm mt-1">روضة {reportData.student.tenant_name || tenant?.name}</p>
+          <p className="text-sm mt-1">روضة {reportData.student.tenant_name}</p>
         </div>
       </div>
     </div>
