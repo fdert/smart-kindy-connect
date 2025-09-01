@@ -69,9 +69,16 @@ const Students = () => {
   });
 
   useEffect(() => {
-    if (tenant) {
+    if (tenant?.id) {
       loadStudents();
       loadClasses();
+    } else if (tenant === null) {
+      setLoading(false);
+      toast({
+        title: "خطأ في تحميل بيانات الروضة",
+        description: "لا يمكن الوصول إلى بيانات الروضة. تأكد من صلاحياتك.",
+        variant: "destructive",
+      });
     }
   }, [tenant]);
 

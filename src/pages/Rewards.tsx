@@ -81,8 +81,15 @@ const Rewards = () => {
   ];
 
   useEffect(() => {
-    if (tenant) {
+    if (tenant?.id) {
       loadData();
+    } else if (tenant === null) {
+      setLoading(false);
+      toast({
+        title: "خطأ في تحميل بيانات الروضة",
+        description: "لا يمكن الوصول إلى بيانات الروضة. تأكد من صلاحياتك.",
+        variant: "destructive",
+      });
     }
   }, [tenant]);
 
@@ -94,6 +101,13 @@ const Rewards = () => {
         loadRewards(),
         loadStudentStats()
       ]);
+    } catch (error) {
+      console.error('Error loading rewards data:', error);
+      toast({
+        title: "خطأ في تحميل البيانات",
+        description: "حدث خطأ أثناء تحميل بيانات التحفيز",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

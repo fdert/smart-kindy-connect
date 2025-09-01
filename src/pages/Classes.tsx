@@ -61,8 +61,15 @@ const Classes = () => {
   });
 
   useEffect(() => {
-    if (tenant) {
+    if (tenant?.id) {
       loadData();
+    } else if (tenant === null) {
+      setLoading(false);
+      toast({
+        title: "خطأ في تحميل بيانات الروضة",
+        description: "لا يمكن الوصول إلى بيانات الروضة. تأكد من صلاحياتك.",
+        variant: "destructive",
+      });
     }
   }, [tenant]);
 
@@ -74,6 +81,13 @@ const Classes = () => {
         loadStudents(),
         loadTeachers()
       ]);
+    } catch (error) {
+      console.error('Error loading classes data:', error);
+      toast({
+        title: "خطأ في تحميل البيانات",
+        description: "حدث خطأ أثناء تحميل بيانات الفصول",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

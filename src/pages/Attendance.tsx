@@ -55,8 +55,15 @@ const Attendance = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (tenant) {
+    if (tenant?.id) {
       loadData();
+    } else if (tenant === null) {
+      setLoading(false);
+      toast({
+        title: "خطأ في تحميل بيانات الروضة",
+        description: "لا يمكن الوصول إلى بيانات الروضة. تأكد من صلاحياتك.",
+        variant: "destructive",
+      });
     }
   }, [tenant, selectedDate]);
 
@@ -68,6 +75,13 @@ const Attendance = () => {
         loadClasses(),
         loadAttendance()
       ]);
+    } catch (error) {
+      console.error('Error loading attendance data:', error);
+      toast({
+        title: "خطأ في تحميل البيانات",
+        description: "حدث خطأ أثناء تحميل بيانات الحضور",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

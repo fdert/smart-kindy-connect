@@ -84,19 +84,37 @@ const FinancialSystem = () => {
   });
 
   useEffect(() => {
-    if (tenant) {
+    if (tenant?.id) {
       loadData();
+    } else if (tenant === null) {
+      // If tenant is explicitly null, stop loading
+      setLoading(false);
+      toast({
+        title: "خطأ في تحميل بيانات الروضة",
+        description: "لا يمكن الوصول إلى بيانات الروضة. تأكد من صلاحياتك.",
+        variant: "destructive",
+      });
     }
   }, [tenant]);
 
   const loadData = async () => {
-    await Promise.all([
-      loadStudentFees(),
-      loadTransactions(),
-      loadStudents(),
-      calculateStats()
-    ]);
-    setLoading(false);
+    try {
+      await Promise.all([
+        loadStudentFees(),
+        loadTransactions(),
+        loadStudents(),
+        calculateStats()
+      ]);
+    } catch (error) {
+      console.error('Error loading financial data:', error);
+      toast({
+        title: "خطأ في تحميل البيانات",
+        description: "حدث خطأ أثناء تحميل البيانات المالية",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadStudentFees = async () => {
