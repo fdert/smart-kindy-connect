@@ -57,6 +57,8 @@ const Teachers = () => {
   }, [tenant]);
 
   const loadTeachers = async () => {
+    if (!tenant?.id) return;
+    
     try {
       const { data, error } = await supabase
         .from('users')
@@ -64,13 +66,16 @@ const Teachers = () => {
           *,
           classes (name)
         `)
-        .eq('tenant_id', tenant?.id)
+        .eq('tenant_id', tenant.id)
         .in('role', ['teacher', 'admin'])
+        .eq('is_active', true)
         .order('full_name');
 
       if (error) throw error;
+      console.log('Loaded teachers:', data);
       setTeachers(data || []);
     } catch (error: any) {
+      console.error('Error loading teachers:', error);
       toast({
         title: "خطأ في تحميل المعلمات",
         description: error.message,
@@ -129,6 +134,8 @@ const Teachers = () => {
         // Generate a UUID for the new user
         const newUserId = crypto.randomUUID();
         
+        console.log('Creating teacher with data:', teacherData);
+        
         // Create teacher record directly in users table
         const { error: userError } = await supabase
           .from('users')
@@ -137,7 +144,12 @@ const Teachers = () => {
             ...teacherData
           });
 
-        if (userError) throw userError;
+        if (userError) {
+          console.error('Error creating teacher:', userError);
+          throw userError;
+        }
+
+        console.log('Teacher created successfully with ID:', newUserId);
 
         // Try to create auth user (this might fail, but that's ok)
         try {
@@ -174,7 +186,7 @@ const Teachers = () => {
 للدعم الفني: 920012345
 مرحباً بك في فريق SmartKindy! 🌟`;
 
-          await supabase
+          const { error: whatsappError } = await supabase
             .from('whatsapp_messages')
             .insert({
               tenant_id: tenant.id,
@@ -184,6 +196,20 @@ const Teachers = () => {
               scheduled_at: new Date().toISOString(),
               status: 'pending'
             });
+
+          if (whatsappError) {
+            console.warn('WhatsApp message creation failed:', whatsappError);
+          } else {
+            console.log('WhatsApp message queued for sending');
+            
+            // Trigger WhatsApp sending function
+            try {
+              const { data: sendResult } = await supabase.functions.invoke('send-whatsapp-notifications');
+              console.log('WhatsApp sending triggered:', sendResult);
+            } catch (sendError) {
+              console.warn('WhatsApp sending trigger failed:', sendError);
+            }
+          }
         } catch (whatsappError) {
           console.warn('WhatsApp sending failed:', whatsappError);
         }
@@ -194,7 +220,8 @@ const Teachers = () => {
         });
       }
 
-      loadTeachers();
+      // Force reload teachers to ensure UI updates
+      await loadTeachers();
       resetForm();
       setIsAddDialogOpen(false);
     } catch (error: any) {
