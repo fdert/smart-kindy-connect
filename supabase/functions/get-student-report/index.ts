@@ -14,6 +14,8 @@ serve(async (req) => {
 
   try {
     console.log('Processing student report request');
+    console.log('Request URL:', req.url);
+    console.log('Request method:', req.method);
     
     let studentId: string;
     let isGuardianAccess: boolean;
@@ -23,11 +25,14 @@ serve(async (req) => {
       const url = new URL(req.url);
       studentId = url.searchParams.get('studentId') || '';
       isGuardianAccess = url.searchParams.get('guardian') === 'true';
+      console.log('GET request - studentId:', studentId, 'guardian:', isGuardianAccess);
     } else if (req.method === 'POST') {
       const body = await req.json();
       studentId = body.studentId || '';
       isGuardianAccess = body.guardian === 'true' || body.guardian === true;
+      console.log('POST request - studentId:', studentId, 'guardian:', isGuardianAccess);
     } else {
+      console.log('Method not allowed:', req.method);
       return new Response('Method not allowed', { 
         status: 405, 
         headers: corsHeaders 
@@ -35,6 +40,7 @@ serve(async (req) => {
     }
 
     if (!studentId) {
+      console.log('No student ID provided');
       return new Response(JSON.stringify({
         success: false,
         error: 'Student ID is required'
@@ -53,6 +59,7 @@ serve(async (req) => {
     });
 
     // Get student information
+    console.log('Fetching student data for ID:', studentId);
     const { data: studentData, error: studentError } = await supabase
       .from('students')
       .select(`
@@ -63,17 +70,23 @@ serve(async (req) => {
         date_of_birth,
         gender,
         tenant_id,
+        class_id,
         classes (name),
         tenants (name)
       `)
       .eq('id', studentId)
       .single();
 
+    console.log('Student query result:', { studentData, studentError });
+
     if (studentError || !studentData) {
       console.error('Student not found:', studentError);
-      return new Response('Student not found', { 
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Student not found'
+      }), { 
         status: 404, 
-        headers: corsHeaders 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 

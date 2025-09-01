@@ -187,9 +187,27 @@ export default function StudentReport() {
     } catch (error: any) {
       clearTimeout(timeoutId);
       console.error('Error loading report data:', error);
+      console.error('Error details:', { 
+        message: error.message, 
+        stack: error.stack,
+        name: error.name,
+        cause: error.cause
+      });
+      
+      let errorMessage = 'حدث خطأ أثناء تحميل التقرير';
+      if (error.message?.includes('Student not found')) {
+        errorMessage = 'لم يتم العثور على بيانات الطالب';
+      } else if (error.message?.includes('timeout')) {
+        errorMessage = 'انتهت مهلة التحميل. يرجى المحاولة مرة أخرى';
+      } else if (error.message?.includes('network')) {
+        errorMessage = 'مشكلة في الاتصال بالخادم';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
-        title: "خطأ في التحميل",
-        description: error.message || 'حدث خطأ أثناء تحميل التقرير',
+        title: "خطأ في التحميل", 
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
