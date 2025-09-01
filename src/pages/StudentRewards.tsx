@@ -174,7 +174,11 @@ export default function StudentRewards() {
         <div className="flex items-center gap-4 mb-6">
           <Button
             variant="outline"
-            onClick={() => navigate(`/student-report/${studentId}`)}
+            onClick={() => {
+              const isGuardianAccess = searchParams.get('guardian') === 'true';
+              const guardianParam = isGuardianAccess ? '?guardian=true' : '';
+              navigate(`/student-report/${studentId}${guardianParam}`);
+            }}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />

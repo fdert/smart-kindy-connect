@@ -41,31 +41,87 @@ export default function StudentMedia() {
   };
 
   useEffect(() => {
-    if (tenant && studentId) {
-      loadData();
+    // Check if this is guardian access or regular authenticated access
+    const isGuardianAccess = searchParams.get('guardian') === 'true';
+    
+    if (isGuardianAccess) {
+      // For guardian access, we only need studentId
+      if (studentId) {
+        loadData();
+      }
+    } else {
+      // For regular access, we need both tenant and studentId
+      if (tenant && studentId) {
+        loadData();
+      }
     }
-  }, [tenant, studentId]);
+  }, [tenant, studentId, searchParams]);
 
   const loadData = async () => {
-    if (!tenant || !studentId) return;
+    if (!studentId) return;
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(studentId)) {
+      toast({
+        title: "خطأ في الرابط",
+        description: "معرف الطالب غير صحيح",
+        variant: "destructive"
+      });
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     try {
-      // Load student info with error handling
-      const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .select('full_name, student_id, photo_url, classes(name)')
-        .eq('id', studentId)
-        .eq('tenant_id', tenant.id)
-        .maybeSingle();
+      const isGuardianAccess = searchParams.get('guardian') === 'true';
+      let tenantId: string;
 
-      if (studentError) throw studentError;
-      if (!studentData) {
-        throw new Error('لم يتم العثور على بيانات الطالب');
+      if (isGuardianAccess) {
+        // For guardian access, get student data without tenant restriction
+        const { data: studentData, error: studentError } = await supabase
+          .from('students')
+          .select(`
+            full_name,
+            student_id,
+            photo_url,
+            tenant_id,
+            classes (name)
+          `)
+          .eq('id', studentId)
+          .maybeSingle();
+
+        if (studentError) throw studentError;
+        if (!studentData) {
+          throw new Error('لم يتم العثور على بيانات الطالب');
+        }
+        
+        setStudentInfo(studentData);
+        tenantId = studentData.tenant_id;
+        
+      } else {
+        // Regular authenticated access - require tenant
+        if (!tenant?.id) {
+          throw new Error('معرف الروضة غير صحيح');
+        }
+
+        // Load student info with tenant verification
+        const { data: studentData, error: studentError } = await supabase
+          .from('students')
+          .select('full_name, student_id, photo_url, classes(name)')
+          .eq('id', studentId)
+          .eq('tenant_id', tenant.id)
+          .maybeSingle();
+
+        if (studentError) throw studentError;
+        if (!studentData) {
+          throw new Error('لم يتم العثور على بيانات الطالب');
+        }
+        
+        setStudentInfo(studentData);
+        tenantId = tenant.id;
       }
-      setStudentInfo(studentData);
 
-      // Load media through student links with exact same query as in StudentReport
+      // Load media through student links
       const { data: mediaLinks, error: mediaError } = await supabase
         .from('media_student_links')
         .select(`
@@ -81,17 +137,17 @@ export default function StudentMedia() {
           )
         `)
         .eq('student_id', studentId)
-        .eq('tenant_id', tenant.id);
+        .eq('tenant_id', tenantId);
 
       if (mediaError) throw mediaError;
 
-      // Filter media by date range and ensure proper tenant isolation (exactly as in StudentReport)
+      // Filter media by date range and ensure proper tenant isolation
       const mediaFiles = mediaLinks
         ?.map(link => link.media)
         .filter(Boolean)
         .filter(mediaItem => {
           // Ensure media belongs to same tenant
-          if (mediaItem.tenant_id !== tenant.id) return false;
+          if (mediaItem.tenant_id !== tenantId) return false;
           const albumDate = new Date(mediaItem.album_date);
           return albumDate >= dateRange.from && albumDate <= dateRange.to;
         })
@@ -163,7 +219,11 @@ export default function StudentMedia() {
         <div className="flex items-center gap-4 mb-6">
           <Button
             variant="outline"
-            onClick={() => navigate(`/student-report/${studentId}`)}
+            onClick={() => {
+              const isGuardianAccess = searchParams.get('guardian') === 'true';
+              const guardianParam = isGuardianAccess ? '?guardian=true' : '';
+              navigate(`/student-report/${studentId}${guardianParam}`);
+            }}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />

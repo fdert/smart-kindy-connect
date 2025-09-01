@@ -130,12 +130,13 @@ export default function StudentNotesDetail() {
         tenantId = tenant.id;
       }
 
-      // Load notes with exact same query as in StudentReport (include all notes)
+      // Load notes with guardian access filter (only non-private notes)
       const { data: notesData, error: notesError } = await supabase
         .from('student_notes')
         .select('*')
         .eq('student_id', studentId)
         .eq('tenant_id', tenantId)
+        .eq('is_private', isGuardianAccess ? false : undefined) // Filter private notes for guardian access
         .gte('created_at', dateRange.from.toISOString())
         .lte('created_at', dateRange.to.toISOString())
         .order('created_at', { ascending: false });

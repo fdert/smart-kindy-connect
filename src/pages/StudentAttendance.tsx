@@ -40,33 +40,92 @@ export default function StudentAttendance() {
   };
 
   useEffect(() => {
-    if (tenant && studentId) {
-      loadData();
+    // Check if this is guardian access or regular authenticated access
+    const isGuardianAccess = searchParams.get('guardian') === 'true';
+    
+    if (isGuardianAccess) {
+      // For guardian access, we only need studentId
+      if (studentId) {
+        loadData();
+      }
+    } else {
+      // For regular access, we need both tenant and studentId
+      if (tenant && studentId) {
+        loadData();
+      }
     }
-  }, [tenant, studentId]);
+  }, [tenant, studentId, searchParams]);
 
   const loadData = async () => {
-    if (!tenant || !studentId) return;
+    if (!studentId) return;
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(studentId)) {
+      toast({
+        title: "خطأ في الرابط",
+        description: "معرف الطالب غير صحيح",
+        variant: "destructive"
+      });
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     try {
-      // Load student info
-      const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .select('full_name, student_id, photo_url, classes(name)')
-        .eq('id', studentId)
-        .eq('tenant_id', tenant.id)
-        .single();
+      const isGuardianAccess = searchParams.get('guardian') === 'true';
+      let tenantId: string;
 
-      if (studentError) throw studentError;
-      setStudentInfo(studentData);
+      if (isGuardianAccess) {
+        // For guardian access, get student data without tenant restriction
+        const { data: studentData, error: studentError } = await supabase
+          .from('students')
+          .select(`
+            full_name,
+            student_id,
+            photo_url,
+            tenant_id,
+            classes (name)
+          `)
+          .eq('id', studentId)
+          .maybeSingle();
 
-      // Load attendance with exact same query as in StudentReport
+        if (studentError) throw studentError;
+        if (!studentData) {
+          throw new Error('لم يتم العثور على بيانات الطالب');
+        }
+        
+        setStudentInfo(studentData);
+        tenantId = studentData.tenant_id;
+        
+      } else {
+        // Regular authenticated access - require tenant
+        if (!tenant?.id) {
+          throw new Error('معرف الروضة غير صحيح');
+        }
+
+        // Load student info with tenant verification
+        const { data: studentData, error: studentError } = await supabase
+          .from('students')
+          .select('full_name, student_id, photo_url, classes(name)')
+          .eq('id', studentId)
+          .eq('tenant_id', tenant.id)
+          .maybeSingle();
+
+        if (studentError) throw studentError;
+        if (!studentData) {
+          throw new Error('لم يتم العثور على بيانات الطالب');
+        }
+        
+        setStudentInfo(studentData);
+        tenantId = tenant.id;
+      }
+
+      // Load attendance data
       const { data: attendanceData, error: attendanceError } = await supabase
         .from('attendance_events')
         .select('*')
         .eq('student_id', studentId)
-        .eq('tenant_id', tenant.id)
+        .eq('tenant_id', tenantId)
         .gte('date', format(dateRange.from, 'yyyy-MM-dd'))
         .lte('date', format(dateRange.to, 'yyyy-MM-dd'))
         .order('date', { ascending: false });
@@ -146,7 +205,11 @@ export default function StudentAttendance() {
         <div className="flex items-center gap-4 mb-6">
           <Button
             variant="outline"
-            onClick={() => navigate(`/student-report/${studentId}`)}
+            onClick={() => {
+              const isGuardianAccess = searchParams.get('guardian') === 'true';
+              const guardianParam = isGuardianAccess ? '?guardian=true' : '';
+              navigate(`/student-report/${studentId}${guardianParam}`);
+            }}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
