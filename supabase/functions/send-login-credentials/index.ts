@@ -48,7 +48,7 @@ serve(async (req) => {
 
 حضانة: ${tenant.name}
 
-📧 البريد الإلكتروني: ${tenant.owner_email}
+📧 البريد الإلكتروني: ${tenant.email}
 🔑 كلمة المرور: ${newTempPassword}
 
 🌐 رابط تسجيل الدخول:
@@ -81,7 +81,7 @@ SmartKindy - منصة إدارة رياض الأطفال الذكية 🌟`;
       .from('whatsapp_messages')
       .insert({
         tenant_id: tenantId,
-        recipient_phone: tenant.owner_phone,
+        recipient_phone: tenant.phone,
         message_content: whatsappMessage,
         message_type: 'login_credentials',
         scheduled_at: new Date().toISOString(),
@@ -95,13 +95,13 @@ SmartKindy - منصة إدارة رياض الأطفال الذكية 🌟`;
 
     console.log(`Login credentials prepared for tenant: ${tenant.name}`);
     console.log(`Temporary password: ${newTempPassword}`);
-    console.log(`WhatsApp recipient: ${tenant.owner_phone}`);
+    console.log(`WhatsApp recipient: ${tenant.phone}`);
 
     return new Response(JSON.stringify({
       success: true,
       message: "تم إرسال بيانات تسجيل الدخول بنجاح",
       tempPassword: newTempPassword,
-      recipient: tenant.owner_phone
+      recipient: tenant.phone
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
