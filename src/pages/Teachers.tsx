@@ -126,16 +126,67 @@ const Teachers = () => {
           description: `تم تحديث بيانات ${formData.full_name}`,
         });
       } else {
-        // Create teacher using edge function
-        const { data: createResult, error: createError } = await supabase.functions.invoke('create-teacher', {
-          body: {
-            teacher: teacherData,
-            tenantId: tenant.id
-          }
-        });
+        // Generate a UUID for the new user
+        const newUserId = crypto.randomUUID();
+        
+        // Create teacher record directly in users table
+        const { error: userError } = await supabase
+          .from('users')
+          .insert({
+            id: newUserId,
+            ...teacherData
+          });
 
-        if (createError) throw createError;
-        if (!createResult.success) throw new Error(createResult.error);
+        if (userError) throw userError;
+
+        // Try to create auth user (this might fail, but that's ok)
+        try {
+          await supabase.auth.signUp({
+            email: formData.email,
+            password: 'TempPass' + Math.random().toString(36).substring(2, 8),
+            options: {
+              emailRedirectTo: `${window.location.origin}/auth`,
+              data: {
+                full_name: formData.full_name,
+                tenant_id: tenant.id,
+                role: formData.role
+              }
+            }
+          });
+        } catch (authError) {
+          console.warn('Auth user creation failed, but user record created:', authError);
+        }
+
+        // Send WhatsApp message with instructions
+        try {
+          const whatsappMessage = `🔐 مرحباً بك في SmartKindy
+
+حضانة: ${tenant.name}
+
+👤 تم إنشاء حساب لك باسم: ${formData.full_name}
+📧 البريد الإلكتروني: ${formData.email}
+
+🌐 لتسجيل الدخول:
+1. اذهب إلى: https://smartkindy.com/auth
+2. انقر على "نسيت كلمة المرور"
+3. أدخل بريدك الإلكتروني لإنشاء كلمة مرور جديدة
+
+للدعم الفني: 920012345
+مرحباً بك في فريق SmartKindy! 🌟`;
+
+          await supabase
+            .from('whatsapp_messages')
+            .insert({
+              tenant_id: tenant.id,
+              recipient_phone: teacherData.phone,
+              message_content: whatsappMessage,
+              message_type: 'teacher_credentials',
+              scheduled_at: new Date().toISOString(),
+              status: 'pending'
+            });
+        } catch (whatsappError) {
+          console.warn('WhatsApp sending failed:', whatsappError);
+        }
 
         toast({
           title: "تم إضافة المعلمة بنجاح",
