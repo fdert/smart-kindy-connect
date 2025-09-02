@@ -1,10 +1,12 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
+import { Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/hooks/useAuth";
 import { TenantProvider } from "@/hooks/useTenant";
+import { LanguageProvider } from "@/hooks/useLanguage";
+import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import Index from "./pages/Index";
 import Tour from "./pages/Tour";
@@ -234,17 +236,19 @@ const AppRoutes = () => (
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TenantProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
-        </TooltipProvider>
-      </TenantProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <TenantProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </TooltipProvider>
+        </TenantProvider>
+      </AuthProvider>
+    </LanguageProvider>
   </QueryClientProvider>
 );
 

@@ -5,9 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useLanguage } from '@/hooks/useLanguage';
 import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
-import { Star, Award, Trophy, ArrowLeft } from 'lucide-react';
+import { ar, enUS } from 'date-fns/locale';
+import { Star, Award, Trophy, ArrowLeft, Globe } from 'lucide-react';
+import { LanguageSwitcher } from '@/components/ui/language-switcher';
 
 interface RewardData {
   id: string;
@@ -39,6 +41,7 @@ export default function StudentRewards() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { t, language } = useLanguage();
 
   // Get date filters from URL params
   const fromParam = searchParams.get('from');
@@ -57,7 +60,7 @@ export default function StudentRewards() {
     
     if (!studentId) {
       console.log('No studentId provided');
-      setError('معرف الطالب غير متوفر');
+      setError(t('report.invalid_student_id'));
       setLoading(false);
       return;
     }
@@ -65,7 +68,7 @@ export default function StudentRewards() {
     // Simple UUID validation
     if (studentId.length !== 36 || !studentId.includes('-')) {
       console.log('Invalid studentId format:', studentId);
-      setError('معرف الطالب غير صحيح');
+      setError(t('report.invalid_student_id'));
       setLoading(false);
       return;
     }
@@ -135,7 +138,7 @@ export default function StudentRewards() {
       });
 
       if (!student) {
-        throw new Error('لم يتم العثور على بيانات الطالب');
+        throw new Error(t('report.student_not_found'));
       }
 
       setStudentInfo(student);
@@ -149,7 +152,7 @@ export default function StudentRewards() {
       const errorMessage = err.message || 'حدث خطأ غير متوقع';
       setError(errorMessage);
       toast({
-        title: "خطأ في التحميل",
+        title: t('report.error_loading'),
         description: errorMessage,
         variant: "destructive",
       });
@@ -165,7 +168,7 @@ export default function StudentRewards() {
     
     if (!studentId) {
       console.log('No studentId, stopping');
-      setError('معرف الطالب مفقود');
+      setError(t('report.invalid_student_id'));
       setLoading(false);
       return;
     }
@@ -189,11 +192,11 @@ export default function StudentRewards() {
 
   const getRewardTypeText = (type: string) => {
     switch (type) {
-      case 'star': return 'نجمة';
-      case 'badge': return 'شارة';
-      case 'certificate': return 'شهادة';
-      case 'achievement': return 'إنجاز';
-      default: return 'عامة';
+      case 'star': return t('reward.star');
+      case 'badge': return t('reward.badge');
+      case 'certificate': return t('reward.certificate');
+      case 'achievement': return t('reward.achievement');
+      default: return t('reward.general');
     }
   };
 
@@ -204,7 +207,7 @@ export default function StudentRewards() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center px-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground text-sm md:text-base">جاري تحميل البيانات...</p>
+          <p className="text-muted-foreground text-sm md:text-base">{t('report.loading_data')}</p>
         </div>
       </div>
     );
@@ -215,14 +218,14 @@ export default function StudentRewards() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center px-4">
         <div className="text-center max-w-md mx-auto p-4 md:p-6">
           <div className="text-red-500 text-4xl md:text-6xl mb-4">⚠️</div>
-          <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">خطأ في التحميل</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">{t('report.error_loading')}</h2>
           <p className="text-sm md:text-base text-gray-600 mb-4">{error}</p>
           <div className="space-y-2">
             <Button onClick={() => window.location.reload()} variant="outline" className="w-full text-sm md:text-base">
-              إعادة المحاولة
+              {t('common.retry')}
             </Button>
             <Button onClick={() => window.history.back()} variant="ghost" className="w-full text-sm md:text-base">
-              العودة
+              {t('nav.back')}
             </Button>
           </div>
         </div>
@@ -235,25 +238,28 @@ export default function StudentRewards() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-          <Button
-            variant="outline"
-            onClick={() => {
-              const isGuardianAccess = searchParams.get('guardian') === 'true';
-              const guardianParam = isGuardianAccess ? '?guardian=true' : '';
-              navigate(`/student-report/${studentId}${guardianParam}`);
-            }}
-            className="flex items-center gap-2 text-sm md:text-base"
-            size={isMobile ? "sm" : "default"}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            العودة للتقرير
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const isGuardianAccess = searchParams.get('guardian') === 'true';
+                const guardianParam = isGuardianAccess ? '?guardian=true' : '';
+                navigate(`/student-report/${studentId}${guardianParam}`);
+              }}
+              className="flex items-center gap-2 text-sm md:text-base"
+              size={isMobile ? "sm" : "default"}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {t('report.back_to_report')}
+            </Button>
+            <LanguageSwitcher />
+          </div>
           <div className="flex-1">
             <h1 className="text-xl md:text-3xl font-bold text-gray-900 leading-tight">
-              مكافآت الطالب: {studentInfo?.full_name || 'غير متوفر'}
+              {t('report.student_rewards')}: {studentInfo?.full_name || 'غير متوفر'}
             </h1>
             <p className="text-sm md:text-base text-gray-600 mt-1">
-              الفترة: {format(dateRange.from, 'dd MMM yyyy', { locale: ar })} - {format(dateRange.to, 'dd MMM yyyy', { locale: ar })}
+              {t('report.period')}: {format(dateRange.from, 'dd MMM yyyy', { locale: language === 'ar' ? ar : enUS })} - {format(dateRange.to, 'dd MMM yyyy', { locale: language === 'ar' ? ar : enUS })}
             </p>
           </div>
         </div>
@@ -264,7 +270,7 @@ export default function StudentRewards() {
             <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs md:text-sm opacity-90">إجمالي المكافآت</p>
+                  <p className="text-xs md:text-sm opacity-90">{t('report.total_rewards')}</p>
                   <p className="text-2xl md:text-3xl font-bold">{rewards.length}</p>
                 </div>
                 <Award className="h-6 w-6 md:h-8 md:w-8 opacity-80" />
@@ -276,7 +282,7 @@ export default function StudentRewards() {
             <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs md:text-sm opacity-90">إجمالي النقاط</p>
+                  <p className="text-xs md:text-sm opacity-90">{t('report.total_points')}</p>
                   <p className="text-2xl md:text-3xl font-bold">{totalPoints}</p>
                 </div>
                 <Star className="h-6 w-6 md:h-8 md:w-8 opacity-80" />
@@ -288,7 +294,7 @@ export default function StudentRewards() {
             <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs md:text-sm opacity-90">متوسط النقاط</p>
+                  <p className="text-xs md:text-sm opacity-90">{t('report.average_points')}</p>
                   <p className="text-2xl md:text-3xl font-bold">
                     {rewards.length > 0 ? (totalPoints / rewards.length).toFixed(1) : '0'}
                   </p>
@@ -306,7 +312,7 @@ export default function StudentRewards() {
               <Card className="bg-white/90 backdrop-blur-sm">
                 <CardContent className="p-8 md:p-12 text-center">
                   <Trophy className="h-12 w-12 md:h-16 md:w-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg md:text-xl font-semibold text-gray-600 mb-2">لا توجد مكافآت</h3>
+                  <h3 className="text-lg md:text-xl font-semibold text-gray-600 mb-2">{t('report.no_rewards')}</h3>
                   <p className="text-sm md:text-base text-gray-500">لم يتم منح أي مكافآت للطالب في هذه الفترة</p>
                 </CardContent>
               </Card>
@@ -340,10 +346,10 @@ export default function StudentRewards() {
                     </div>
                   )}
                   <div className="flex justify-between items-center text-xs text-gray-500">
-                    <span>{format(new Date(reward.awarded_at), 'dd MMM yyyy', { locale: ar })}</span>
+                    <span>{format(new Date(reward.awarded_at), 'dd MMM yyyy', { locale: language === 'ar' ? ar : enUS })}</span>
                     <div className="flex items-center gap-1">
                       <Award className="h-3 w-3" />
-                      <span>مكافأة</span>
+                      <span>{t('nav.rewards')}</span>
                     </div>
                   </div>
                 </CardContent>

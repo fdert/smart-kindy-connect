@@ -1,7 +1,9 @@
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useTenant } from '@/hooks/useTenant';
+import { useLanguage } from '@/hooks/useLanguage';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { LanguageSwitcher } from '@/components/ui/language-switcher';
 import { 
   Users, 
   Calendar, 
@@ -35,6 +37,7 @@ const Navigation = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const { user, signOut } = useAuth();
   const { tenant } = useTenant();
+  const { t } = useLanguage();
   const location = useLocation();
 
   useEffect(() => {
@@ -63,40 +66,40 @@ const Navigation = () => {
 
   // Navigation items for different roles
   const superAdminNavigation = [
-    { name: 'لوحة التحكم', href: '/dashboard', icon: Settings },
+    { name: t('nav.dashboard'), href: '/dashboard', icon: Settings },
     { name: 'إدارة النظام', href: '/super-admin', icon: Shield },
     { name: 'إدارة الخطط', href: '/plans-management', icon: Building },
     { name: 'إدارة المحتوى', href: '/cms-management', icon: FileText },
   ];
 
   const adminNavigation = [
-    { name: 'لوحة التحكم', href: '/dashboard', icon: Settings },
-    { name: 'الطلاب', href: '/students', icon: Users },
-    { name: 'المعلمات', href: '/teachers', icon: GraduationCap },
-    { name: 'الفصول', href: '/classes', icon: BookOpen },
-    { name: 'الحضور', href: '/attendance', icon: Calendar },
-    { name: 'التحفيز', href: '/rewards', icon: Star },
-    { name: 'الألبوم', href: '/media', icon: Image },
-    { name: 'أولياء الأمور', href: '/guardians', icon: UserCheck },
-    { name: 'المالية', href: '/financial-system', icon: DollarSign },
-    { name: 'التقارير', href: '/reports', icon: FileText },
-    { name: 'الإعدادات', href: '/settings', icon: Settings },
+    { name: t('nav.dashboard'), href: '/dashboard', icon: Settings },
+    { name: t('nav.students'), href: '/students', icon: Users },
+    { name: t('nav.teachers'), href: '/teachers', icon: GraduationCap },
+    { name: t('nav.classes'), href: '/classes', icon: BookOpen },
+    { name: t('nav.attendance'), href: '/attendance', icon: Calendar },
+    { name: t('nav.rewards'), href: '/rewards', icon: Star },
+    { name: t('nav.media'), href: '/media', icon: Image },
+    { name: t('nav.guardians'), href: '/guardians', icon: UserCheck },
+    { name: t('nav.financial'), href: '/financial-system', icon: DollarSign },
+    { name: t('nav.reports'), href: '/reports', icon: FileText },
+    { name: t('nav.settings'), href: '/settings', icon: Settings },
   ];
 
   const teacherNavigation = [
-    { name: 'لوحة التحكم', href: '/dashboard', icon: Settings },
-    { name: 'فصولي', href: '/classes', icon: BookOpen },
-    { name: 'الحضور', href: '/attendance', icon: Calendar },
+    { name: t('nav.dashboard'), href: '/dashboard', icon: Settings },
+    { name: t('nav.classes'), href: '/classes', icon: BookOpen },
+    { name: t('nav.attendance'), href: '/attendance', icon: Calendar },
     { name: 'الواجبات', href: '/assignments', icon: PenTool },
     { name: 'ملاحظات الطلاب', href: '/student-notes', icon: ClipboardList },
-    { name: 'التحفيز', href: '/rewards', icon: Star },
-    { name: 'الألبوم', href: '/media', icon: Image },
+    { name: t('nav.rewards'), href: '/rewards', icon: Star },
+    { name: t('nav.media'), href: '/media', icon: Image },
   ];
 
   const guardianNavigation = [
-    { name: 'لوحة التحكم', href: '/dashboard', icon: Settings },
+    { name: t('nav.dashboard'), href: '/dashboard', icon: Settings },
     { name: 'أطفالي', href: '/students', icon: Baby },
-    { name: 'الألبوم', href: '/media', icon: Image },
+    { name: t('nav.media'), href: '/media', icon: Image },
   ];
 
   const getNavigationItems = () => {
@@ -158,6 +161,7 @@ const Navigation = () => {
           <div className="flex items-center">
             {/* User Menu */}
             <div className="flex items-center space-x-reverse space-x-4">
+              <LanguageSwitcher />
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-primary text-primary-foreground text-sm">
                   {getInitials(fullName)}
@@ -173,7 +177,7 @@ const Navigation = () => {
                 className="text-gray-500 hover:text-gray-700"
               >
                 <LogOut className="h-4 w-4" />
-                <span className="hidden md:inline mr-2">خروج</span>
+                <span className="hidden md:inline mr-2">{t('nav.logout')}</span>
               </Button>
             </div>
 

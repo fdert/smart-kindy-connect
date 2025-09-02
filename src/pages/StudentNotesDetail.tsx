@@ -3,11 +3,13 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/hooks/useLanguage';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
-import { ar } from 'date-fns/locale';
+import { ar, enUS } from 'date-fns/locale';
 import { BookOpen, Heart, Users, Brain, Stethoscope, ArrowLeft, FileText, Star, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { LanguageSwitcher } from '@/components/ui/language-switcher';
 
 interface NoteData {
   id: string;
@@ -58,6 +60,7 @@ export default function StudentNotesDetail() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t, language } = useLanguage();
 
   // Get date filters from URL params
   const fromParam = searchParams.get('from');
@@ -76,7 +79,7 @@ export default function StudentNotesDetail() {
     
     if (!studentId) {
       console.log('No studentId provided');
-      setError('معرف الطالب غير متوفر');
+      setError(t('report.invalid_student_id'));
       setLoading(false);
       return;
     }
@@ -84,7 +87,7 @@ export default function StudentNotesDetail() {
     // Simple UUID validation
     if (studentId.length !== 36 || !studentId.includes('-')) {
       console.log('Invalid studentId format:', studentId);
-      setError('معرف الطالب غير صحيح');
+      setError(t('report.invalid_student_id'));
       setLoading(false);
       return;
     }
@@ -147,7 +150,7 @@ export default function StudentNotesDetail() {
       });
 
       if (!student) {
-        throw new Error('لم يتم العثور على بيانات الطالب');
+        throw new Error(t('report.student_not_found'));
       }
 
       setStudentInfo(student);
@@ -162,7 +165,7 @@ export default function StudentNotesDetail() {
       const errorMessage = err.message || 'حدث خطأ غير متوقع';
       setError(errorMessage);
       toast({
-        title: "خطأ في التحميل",
+        title: t('report.error_loading'),
         description: errorMessage,
         variant: "destructive",
       });
@@ -178,7 +181,7 @@ export default function StudentNotesDetail() {
     
     if (!studentId) {
       console.log('No studentId, stopping');
-      setError('معرف الطالب مفقود');
+      setError(t('report.invalid_student_id'));
       setLoading(false);
       return;
     }
@@ -212,11 +215,11 @@ export default function StudentNotesDetail() {
 
   const getNoteTypeText = (type: string) => {
     switch (type) {
-      case 'academic': return 'أكاديمية';
-      case 'behavioral': return 'سلوكية';
-      case 'health': return 'صحية';
-      case 'social': return 'اجتماعية';
-      default: return 'عامة';
+      case 'academic': return t('note.academic');
+      case 'behavioral': return t('note.behavioral');
+      case 'health': return t('note.health');
+      case 'social': return t('note.social');
+      default: return t('note.general');
     }
   };
 
@@ -231,9 +234,9 @@ export default function StudentNotesDetail() {
 
   const getSeverityText = (severity: string) => {
     switch (severity) {
-      case 'high': return 'عالية';
-      case 'medium': return 'متوسطة';
-      case 'low': return 'منخفضة';
+      case 'high': return t('severity.high');
+      case 'medium': return t('severity.medium');
+      case 'low': return t('severity.low');
       default: return 'غير محدد';
     }
   };
@@ -251,7 +254,7 @@ export default function StudentNotesDetail() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">جاري تحميل البيانات...</p>
+          <p className="text-muted-foreground">{t('report.loading_data')}</p>
         </div>
       </div>
     );
@@ -262,14 +265,14 @@ export default function StudentNotesDetail() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">خطأ في التحميل</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('report.error_loading')}</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <div className="space-y-2">
             <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
-              إعادة المحاولة
+              {t('common.retry')}
             </Button>
             <Button onClick={() => window.history.back()} variant="ghost" className="w-full">
-              العودة
+              {t('nav.back')}
             </Button>
           </div>
         </div>
@@ -282,24 +285,27 @@ export default function StudentNotesDetail() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
-          <Button
-            variant="outline"
-            onClick={() => {
-              const isGuardianAccess = searchParams.get('guardian') === 'true';
-              const guardianParam = isGuardianAccess ? '?guardian=true' : '';
-              navigate(`/student-report/${studentId}${guardianParam}`);
-            }}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            العودة للتقرير
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const isGuardianAccess = searchParams.get('guardian') === 'true';
+                const guardianParam = isGuardianAccess ? '?guardian=true' : '';
+                navigate(`/student-report/${studentId}${guardianParam}`);
+              }}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {t('report.back_to_report')}
+            </Button>
+            <LanguageSwitcher />
+          </div>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              ملاحظات الطالب: {studentInfo?.full_name}
+              {t('report.student_notes')}: {studentInfo?.full_name}
             </h1>
             <p className="text-gray-600">
-              الفترة: {format(dateRange.from, 'dd MMM yyyy', { locale: ar })} - {format(dateRange.to, 'dd MMM yyyy', { locale: ar })}
+              {t('report.period')}: {format(dateRange.from, 'dd MMM yyyy', { locale: language === 'ar' ? ar : enUS })} - {format(dateRange.to, 'dd MMM yyyy', { locale: language === 'ar' ? ar : enUS })}
             </p>
           </div>
         </div>
@@ -310,7 +316,7 @@ export default function StudentNotesDetail() {
             <CardContent className="p-4">
               <div className="text-center">
                 <p className="text-2xl font-bold">{notes.filter(n => n.note_type === 'academic').length}</p>
-                <p className="text-sm opacity-90">أكاديمية</p>
+                <p className="text-sm opacity-90">{t('note.academic')}</p>
               </div>
             </CardContent>
           </Card>
@@ -319,7 +325,7 @@ export default function StudentNotesDetail() {
             <CardContent className="p-4">
               <div className="text-center">
                 <p className="text-2xl font-bold">{notes.filter(n => n.note_type === 'behavioral').length}</p>
-                <p className="text-sm opacity-90">سلوكية</p>
+                <p className="text-sm opacity-90">{t('note.behavioral')}</p>
               </div>
             </CardContent>
           </Card>
@@ -328,7 +334,7 @@ export default function StudentNotesDetail() {
             <CardContent className="p-4">
               <div className="text-center">
                 <p className="text-2xl font-bold">{notes.filter(n => n.note_type === 'social').length}</p>
-                <p className="text-sm opacity-90">اجتماعية</p>
+                <p className="text-sm opacity-90">{t('note.social')}</p>
               </div>
             </CardContent>
           </Card>
@@ -337,7 +343,7 @@ export default function StudentNotesDetail() {
             <CardContent className="p-4">
               <div className="text-center">
                 <p className="text-2xl font-bold">{notes.filter(n => n.note_type === 'health').length}</p>
-                <p className="text-sm opacity-90">صحية</p>
+                <p className="text-sm opacity-90">{t('note.health')}</p>
               </div>
             </CardContent>
           </Card>
@@ -348,7 +354,7 @@ export default function StudentNotesDetail() {
           <Card className="bg-white/90 backdrop-blur-sm">
             <CardContent className="p-12 text-center">
               <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-600 mb-2">لا توجد ملاحظات أو مهارات</h3>
+              <h3 className="text-xl font-semibold text-gray-600 mb-2">{t('report.no_notes')}</h3>
               <p className="text-gray-500">لم يتم تسجيل أي ملاحظات أو مهارات تطوير للطالب في هذه الفترة</p>
             </CardContent>
           </Card>
@@ -359,7 +365,7 @@ export default function StudentNotesDetail() {
               <div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-3">
                   <TrendingUp className="h-6 w-6 text-green-600" />
-                  مهارات التطوير
+                  {t('report.development_skills')}
                   <Badge className="bg-green-100 text-green-800">
                     {developmentSkills.length}
                   </Badge>
@@ -396,7 +402,7 @@ export default function StudentNotesDetail() {
                           <p className="text-gray-600 mb-3 text-sm">{skill.notes}</p>
                         )}
                         <div className="text-xs text-gray-500">
-                          تاريخ التقييم: {format(new Date(skill.assessment_date), 'dd MMM yyyy', { locale: ar })}
+                          تاريخ التقييم: {format(new Date(skill.assessment_date), 'dd MMM yyyy', { locale: language === 'ar' ? ar : enUS })}
                         </div>
                       </CardContent>
                     </Card>
@@ -410,7 +416,7 @@ export default function StudentNotesDetail() {
               <div key={noteType}>
                 <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-3">
                   {getNoteTypeIcon(noteType)}
-                  الملاحظات {getNoteTypeText(noteType)}
+                  {t('report.student_notes')} {getNoteTypeText(noteType)}
                   <Badge className={getNoteTypeColor(noteType)}>
                     {typeNotes.length}
                   </Badge>
