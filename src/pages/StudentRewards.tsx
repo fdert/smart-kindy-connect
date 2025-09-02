@@ -92,7 +92,7 @@ export default function StudentRewards() {
         
         if (studentError) {
           console.error('Student query error:', studentError);
-          throw studentError;
+          throw new Error(`خطأ في قاعدة البيانات: ${studentError.message}`);
         }
         if (!studentData) {
           console.error('No student data found');
@@ -126,12 +126,14 @@ export default function StudentRewards() {
         
         if (rewardsError) {
           console.error('Rewards query error:', rewardsError);
-          throw rewardsError;
+          throw new Error(`خطأ في تحميل الجوائز: ${rewardsError.message}`);
         }
         console.log('Successfully loaded rewards:', rewardsData?.length || 0, 'rewards found');
         setRewards(rewardsData || []);
 
       } else {
+        console.log('Loading data for authenticated user...');
+        
         // Load student info with tenant verification  
         const { data: studentData, error: studentError } = await supabase
           .from('students')
@@ -140,10 +142,14 @@ export default function StudentRewards() {
           .eq('tenant_id', tenant.id)
           .maybeSingle();
         
+        console.log('Authenticated student query result:', { studentData, studentError });
+        
         if (studentError) {
-          throw studentError;
+          console.error('Authenticated student query error:', studentError);
+          throw new Error(`خطأ في قاعدة البيانات: ${studentError.message}`);
         }
         if (!studentData) {
+          console.error('Student not found for tenant');
           throw new Error('لم يتم العثور على بيانات الطالب');
         }
         setStudentInfo(studentData);
@@ -158,19 +164,35 @@ export default function StudentRewards() {
           .lte('awarded_at', dateRange.to.toISOString())
           .order('awarded_at', { ascending: false });
         
+        console.log('Authenticated rewards query result:', { rewardsData, rewardsError });
+        
         if (rewardsError) {
-          throw rewardsError;
+          console.error('Authenticated rewards query error:', rewardsError);
+          throw new Error(`خطأ في تحميل الجوائز: ${rewardsError.message}`);
         }
+        console.log('Successfully loaded rewards for authenticated user:', rewardsData?.length || 0, 'rewards found');
         setRewards(rewardsData || []);
       }
 
+      console.log('=== Data loading completed successfully ===');
+
     } catch (error: any) {
+      console.error('=== Error in loadData ===');
+      console.error('Error object:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      
       toast({
         title: "خطأ في تحميل البيانات",
-        description: error.message,
+        description: error.message || 'حدث خطأ غير متوقع',
         variant: "destructive",
       });
+      
+      // Don't leave loading state on error
+      setRewards([]);
+      setStudentInfo(null);
     } finally {
+      console.log('=== Setting loading to false ===');
       setLoading(false);
     }
   };
