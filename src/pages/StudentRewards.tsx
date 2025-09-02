@@ -72,39 +72,62 @@ export default function StudentRewards() {
       const isGuardianAccess = searchParams.get('guardian') === 'true';
       console.log('Guardian access:', isGuardianAccess);
 
-      // Use edge function for both guardian and authenticated access
-      console.log('Calling get-student-rewards edge function...');
+      // Direct database query without edge function
+      console.log('Fetching student data directly...');
       
-      const { data: response, error: functionError } = await supabase.functions.invoke('get-student-rewards', {
-        body: {
-          studentId: studentId,
-          guardian: isGuardianAccess,
-          from: dateRange.from.toISOString(),
-          to: dateRange.to.toISOString()
-        }
-      });
+      const { data: studentData, error: studentError } = await supabase
+        .from('students')
+        .select(`
+          id,
+          full_name,
+          student_id,
+          photo_url,
+          tenant_id,
+          classes (name)
+        `)
+        .eq('id', studentId)
+        .maybeSingle();
 
-      console.log('Edge function response:', { response, functionError });
+      console.log('Student query result:', { studentData, studentError });
 
-      if (functionError) {
-        console.error('Edge function error:', functionError);
-        throw new Error(`خطأ في الاتصال بالخادم: ${functionError.message}`);
+      if (studentError) {
+        console.error('Student query error:', studentError);
+        throw new Error(`خطأ في جلب بيانات الطالب: ${studentError.message}`);
       }
 
-      if (!response || !response.success) {
-        console.error('Edge function returned error:', response);
-        throw new Error(response?.error || 'فشل في تحميل البيانات');
+      if (!studentData) {
+        throw new Error('لم يتم العثور على الطالب');
       }
 
-      const { student, rewards } = response.data;
+      // Get rewards data
+      console.log('Fetching rewards data...');
+      const { data: rewardsData, error: rewardsError } = await supabase
+        .from('rewards')
+        .select('*')
+        .eq('student_id', studentId)
+        .gte('awarded_at', dateRange.from.toISOString())
+        .lte('awarded_at', dateRange.to.toISOString())
+        .order('awarded_at', { ascending: false });
+
+      console.log('Rewards query result:', { rewardsData, rewardsError });
+
+      if (rewardsError) {
+        console.error('Rewards query error:', rewardsError);
+        // Don't fail completely for rewards error, just use empty array
+      }
+
+      const student = {
+        ...studentData,
+        class_name: studentData.classes?.name
+      };
       
-      console.log('Data received:', {
+      console.log('Data loaded successfully:', {
         studentName: student.full_name,
-        rewardsCount: rewards.length
+        rewardsCount: rewardsData?.length || 0
       });
 
       setStudentInfo(student);
-      setRewards(rewards);
+      setRewards(rewardsData || []);
 
       console.log('=== Data loading completed successfully ===');
 
