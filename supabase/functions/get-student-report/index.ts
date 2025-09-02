@@ -6,6 +6,40 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// دالة التحقق من التوكن
+async function validateToken(token: string, studentId: string) {
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false }
+    });
+
+    const { data, error } = await supabase
+      .rpc('validate_report_token', { p_token_hash: token });
+
+    if (error || !data || !data.student_id) {
+      console.log('Token validation failed:', error);
+      return { isValid: false, guardianAccess: false };
+    }
+
+    // تحقق أن التوكن خاص بنفس الطالب
+    if (data.student_id !== studentId) {
+      console.log('Token student ID mismatch');
+      return { isValid: false, guardianAccess: false };
+    }
+
+    return { 
+      isValid: true, 
+      guardianAccess: data.guardian_access || false 
+    };
+  } catch (error) {
+    console.error('Token validation error:', error);
+    return { isValid: false, guardianAccess: false };
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -30,6 +64,24 @@ serve(async (req) => {
       const body = await req.json();
       studentId = body.studentId || '';
       isGuardianAccess = body.guardian === 'true' || body.guardian === true;
+      
+      // التحقق من التوكن إذا كان متوفراً
+      if (body.token) {
+        console.log('Token provided, validating...');
+        const tokenValidation = await validateToken(body.token, studentId);
+        if (!tokenValidation.isValid) {
+          return new Response(JSON.stringify({
+            success: false,
+            error: 'Invalid or expired token - رابط منتهي الصلاحية أو غير صحيح'
+          }), { 
+            status: 403, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+        isGuardianAccess = tokenValidation.guardianAccess;
+        console.log('Token validated successfully, guardian access:', isGuardianAccess);
+      }
+      
       console.log('POST request - studentId:', studentId, 'guardian:', isGuardianAccess);
     } else {
       console.log('Method not allowed:', req.method);

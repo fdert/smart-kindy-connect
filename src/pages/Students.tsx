@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/hooks/useTenant';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useSecureReportUrl } from '@/hooks/useSecureReportUrl';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Plus, Search, Users, Calendar, Edit, Trash2, Send, FileText, Share, ExternalLink } from 'lucide-react';
 import ExcelImport from '@/components/ExcelImport';
@@ -48,9 +49,11 @@ const Students = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [loadingReports, setLoadingReports] = useState<string[]>([]);
   const { tenant } = useTenant();
   const { toast } = useToast();
   const { t } = useLanguage();
+  const { generateSecureUrl } = useSecureReportUrl();
 
   const [formData, setFormData] = useState({
     student_id: '',
@@ -222,6 +225,30 @@ const Students = () => {
       }
     });
     setIsAddDialogOpen(true);
+  };
+
+  const openStudentReport = async (studentId: string) => {
+    if (loadingReports.includes(studentId)) return;
+    
+    setLoadingReports(prev => [...prev, studentId]);
+    
+    try {
+      const reportUrl = await generateSecureUrl({
+        studentId: studentId,
+        reportType: 'student-report',
+        guardianAccess: false
+      });
+      
+      window.open(reportUrl, '_blank');
+    } catch (error: any) {
+      toast({
+        title: "خطأ في فتح التقرير",
+        description: error.message || "حدث خطأ في إنشاء التقرير",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingReports(prev => prev.filter(id => id !== studentId));
+    }
   };
 
   const sendRegistrationLink = async (studentId: string) => {
@@ -671,11 +698,16 @@ const Students = () => {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => window.open(`/student-report/${student.id}`, '_blank')}
+                        onClick={() => openStudentReport(student.id)}
                         className="text-blue-500 hover:text-blue-700"
                         title="عرض التقرير الشامل"
+                        disabled={loadingReports.includes(student.id)}
                       >
-                        <ExternalLink className="h-4 w-4" />
+                        {loadingReports.includes(student.id) ? (
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500"></div>
+                        ) : (
+                          <ExternalLink className="h-4 w-4" />
+                        )}
                       </Button>
                     <Button
                       size="sm"

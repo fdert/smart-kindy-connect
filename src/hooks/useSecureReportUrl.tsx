@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface ReportUrlOptions {
   studentId: string;
-  reportType: 'student-rewards' | 'student-notes-detail' | 'student-media' | 'student-attendance' | 'student-assignments';
+  reportType: 'student-rewards' | 'student-notes-detail' | 'student-media' | 'student-attendance' | 'student-assignments' | 'student-report';
   guardianAccess?: boolean;
 }
 

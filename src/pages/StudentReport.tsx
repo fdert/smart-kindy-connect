@@ -126,12 +126,20 @@ export default function StudentReport() {
 
   useEffect(() => {
     const isGuardianAccess = searchParams.get('guardian') === 'true';
+    const hasToken = searchParams.get('token');
     
-    if (isGuardianAccess) {
+    if (hasToken) {
+      // إذا كان هناك توكن، قم بتحميل البيانات مباشرة
+      if (studentId) {
+        loadReportData();
+      }
+    } else if (isGuardianAccess) {
+      // إذا كان وصول ولي أمر بدون توكن
       if (studentId) {
         loadReportData();
       }
     } else {
+      // إذا كان وصول داخلي يتطلب tenant
       if (tenant && studentId) {
         loadReportData();
       }
@@ -173,15 +181,23 @@ export default function StudentReport() {
 
     try {
       const isGuardianAccess = searchParams.get('guardian') === 'true';
+      const token = searchParams.get('token');
       
       console.log('About to call supabase.functions.invoke');
-      console.log('Function call params:', { studentId, guardian: isGuardianAccess });
+      console.log('Function call params:', { studentId, guardian: isGuardianAccess, token });
+      
+      const requestBody: any = { 
+        studentId, 
+        guardian: isGuardianAccess 
+      };
+      
+      // إضافة التوكن إذا كان متوفراً
+      if (token) {
+        requestBody.token = token;
+      }
       
       const { data: reportResponse, error } = await supabase.functions.invoke('get-student-report', {
-        body: { 
-          studentId, 
-          guardian: isGuardianAccess 
-        }
+        body: requestBody
       });
 
       console.log('Function response received:', { reportResponse, error });
