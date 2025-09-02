@@ -51,6 +51,7 @@ export default function StudentRewards() {
     console.log('Current URL:', window.location.href);
     console.log('StudentId param:', studentId);
     console.log('Guardian param:', searchParams.get('guardian'));
+    console.log('Date range:', { from: dateRange.from.toISOString(), to: dateRange.to.toISOString() });
     
     if (!studentId) {
       console.log('No studentId provided');
@@ -114,11 +115,13 @@ export default function StudentRewards() {
         throw new Error(data?.error || 'فشل في تحميل البيانات');
       }
 
-      const { student, rewards: rewardsData } = data.data;
+      const { student, rewards: rewardsData, metadata } = data.data;
       
       console.log('Data received:', {
         studentName: student?.full_name,
-        rewardsCount: rewardsData?.length || 0
+        rewardsCount: rewardsData?.length || 0,
+        totalRewardsEver: metadata?.totalRewardsCount || 0,
+        dateRangeCount: metadata?.dateRangeCount || 0
       });
 
       if (!student) {
@@ -129,6 +132,7 @@ export default function StudentRewards() {
       setRewards(rewardsData || []);
 
       console.log('=== Data loading completed successfully ===');
+      console.log('Final state - Student:', student.full_name, 'Rewards:', rewardsData?.length || 0);
 
     } catch (err: any) {
       console.error('=== Error in loadRewardsData ===', err);

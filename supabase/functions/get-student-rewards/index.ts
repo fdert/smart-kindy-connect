@@ -64,17 +64,26 @@ serve(async (req) => {
       auth: { persistSession: false }
     });
 
-    // Get student information
+    // Get student information with better validation
     console.log('Fetching student data for ID:', studentId);
+    console.log('Student ID validation:', {
+      length: studentId.length,
+      isUUID: /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(studentId)
+    });
+    
     const { data: studentData, error: studentError } = await supabase
       .from('students')
       .select(`
         id,
         full_name,
-        student_id,
+        student_id,  
         photo_url,
+        date_of_birth,
+        gender,
         tenant_id,
-        classes (name)
+        class_id,
+        classes!left (name),
+        tenants!left (name)
       `)
       .eq('id', studentId)
       .single();
@@ -85,45 +94,98 @@ serve(async (req) => {
       console.error('Student not found:', studentError);
       return new Response(JSON.stringify({
         success: false,
-        error: 'Student not found'
+        error: `Student not found - ${studentError?.message || 'معرف الطالب غير صحيح'}`
       }), { 
         status: 404, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // Get rewards data
-    console.log('Fetching rewards for student:', studentId);
+    const tenantId = studentData.tenant_id;
+    console.log('Using tenant ID:', tenantId);
+    console.log('Date range for rewards:', { fromDate, toDate });
+
+    // Get rewards data with detailed logging
+    console.log('Fetching rewards for student:', studentId, 'in tenant:', tenantId);
     const { data: rewardsData, error: rewardsError } = await supabase
       .from('rewards')
-      .select('*')
+      .select(`
+        id,
+        title,
+        description,
+        type,
+        points,
+        awarded_at,
+        awarded_by,
+        notes,
+        badge_color,
+        icon_url,
+        is_public,
+        created_at
+      `)
       .eq('student_id', studentId)
-      .eq('tenant_id', studentData.tenant_id)
+      .eq('tenant_id', tenantId)
       .gte('awarded_at', fromDate)
       .lte('awarded_at', toDate)
       .order('awarded_at', { ascending: false });
 
-    console.log('Rewards query result:', { rewardsData, rewardsError });
+    console.log('Rewards query result:', { 
+      rewardsCount: rewardsData?.length || 0, 
+      rewardsError,
+      queryParams: { studentId, tenantId, fromDate, toDate },
+      sampleReward: rewardsData?.[0] || 'No rewards found'
+    });
+
+    // Get total count of all rewards for this student (for debugging)
+    const { count: totalRewardsCount } = await supabase
+      .from('rewards')
+      .select('*', { count: 'exact', head: true })
+      .eq('student_id', studentId)
+      .eq('tenant_id', tenantId);
+
+    console.log('Total rewards count for student (all time):', totalRewardsCount);
 
     if (rewardsError) {
       console.error('Error fetching rewards:', rewardsError);
-      // Don't fail completely for rewards error, just return empty array
+      // Don't fail completely for rewards error, just log and continue with empty array
+      console.log('Continuing with empty rewards array due to error');
     }
 
+    // Prepare final rewards data
+    const finalRewards = rewardsData || [];
+    
     const responseData = {
       success: true,
       data: {
         student: {
-          ...studentData,
-          class_name: studentData.classes?.name
+          id: studentData.id,
+          full_name: studentData.full_name,
+          student_id: studentData.student_id,
+          photo_url: studentData.photo_url,
+          date_of_birth: studentData.date_of_birth,
+          gender: studentData.gender,
+          class_name: studentData.classes?.name || null,
+          tenant_name: studentData.tenants?.name || null
         },
-        rewards: rewardsData || []
+        rewards: finalRewards,
+        metadata: {
+          totalRewardsCount: totalRewardsCount || 0,
+          dateRangeCount: finalRewards.length,
+          dateRange: { from: fromDate, to: toDate },
+          queryInfo: {
+            studentId,
+            tenantId,
+            isGuardianAccess
+          }
+        }
       }
     };
 
     console.log('Returning response with:', {
       studentName: studentData.full_name,
-      rewardsCount: rewardsData?.length || 0
+      rewardsInDateRange: finalRewards.length,
+      totalRewardsEver: totalRewardsCount || 0,
+      hasError: !!rewardsError
     });
 
     return new Response(JSON.stringify(responseData), { 
