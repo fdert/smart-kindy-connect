@@ -109,6 +109,7 @@ export default function StudentReport() {
   const navigate = useNavigate();
   const [reportData, setReportData] = useState<StudentReportData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [dateRange] = useState({
     from: new Date(new Date().getFullYear() - 1, 0, 1),
     to: new Date()
@@ -168,6 +169,7 @@ export default function StudentReport() {
 
     console.log('Starting to load report data for valid studentId:', studentId);
     setLoading(true);
+    setError(null);
     
     try {
       const isGuardianAccess = searchParams.get('guardian') === 'true';
@@ -358,24 +360,46 @@ export default function StudentReport() {
         .map(m => m.media)
         .filter(Boolean);
 
-      // Get class and tenant names separately if needed
-      const classData = studentData.data.class_id ? await supabase
-        .from('classes')
-        .select('name')
-        .eq('id', studentData.data.class_id)
-        .single() : null;
+      // Check if student data exists
+      if (!studentData.data) {
+        throw new Error('لم يتم العثور على بيانات الطالب');
+      }
 
-      const tenantData = studentData.data.tenant_id ? await supabase
-        .from('tenants')
-        .select('name')
-        .eq('id', studentData.data.tenant_id)
-        .single() : null;
+      // Get class and tenant names separately with error handling
+      let classData = null;
+      let tenantData = null;
+
+      try {
+        if (studentData.data.class_id) {
+          const { data } = await supabase
+            .from('classes')
+            .select('name')
+            .eq('id', studentData.data.class_id)
+            .single();
+          classData = data;
+        }
+      } catch (err) {
+        console.warn('Could not fetch class data:', err);
+      }
+
+      try {
+        if (studentData.data.tenant_id) {
+          const { data } = await supabase
+            .from('tenants')
+            .select('name')
+            .eq('id', studentData.data.tenant_id)
+            .single();
+          tenantData = data;
+        }
+      } catch (err) {
+        console.warn('Could not fetch tenant data:', err);
+      }
 
       const reportData = {
         student: {
           ...studentData.data,
-          class_name: classData?.data?.name || null,
-          tenant_name: tenantData?.data?.name || null
+          class_name: classData?.name || null,
+          tenant_name: tenantData?.name || null
         },
         assignments: assignmentStats,
         attendance: attendanceStats,
@@ -394,7 +418,7 @@ export default function StudentReport() {
       console.error('Error loading report data:', error);
       
       let errorMessage = 'حدث خطأ أثناء تحميل التقرير';
-      if (error.message?.includes('Student not found')) {
+      if (error.message?.includes('Student not found') || error.message?.includes('لم يتم العثور')) {
         errorMessage = 'لم يتم العثور على بيانات الطالب';
       } else if (error.message?.includes('timeout')) {
         errorMessage = 'انتهت مهلة التحميل. يرجى المحاولة مرة أخرى';
@@ -404,6 +428,7 @@ export default function StudentReport() {
         errorMessage = error.message;
       }
       
+      setError(errorMessage);
       toast({
         title: "خطأ في التحميل", 
         description: errorMessage,
@@ -463,6 +488,27 @@ export default function StudentReport() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">جاري تحميل التقرير...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!reportData && error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">خطأ في التحميل</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Button onClick={() => {
+            setError(null);
+            loadReportData();
+          }}>
+            إعادة المحاولة
+          </Button>
+          <Button variant="outline" className="mr-2" onClick={() => navigate(-1)}>
+            العودة
+          </Button>
         </div>
       </div>
     );
