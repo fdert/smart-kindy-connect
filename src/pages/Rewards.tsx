@@ -36,10 +36,10 @@ interface Reward {
   notes: string | null;
   badge_color: string | null;
   icon_url: string | null;
-  students: {
+  students?: {
     full_name: string;
     student_id: string;
-  };
+  } | null;
 }
 
 interface StudentStats {
@@ -119,7 +119,7 @@ const Rewards = () => {
         .from('students')
         .select(`
           *,
-          classes (name)
+          classes!left (name)
         `)
         .eq('tenant_id', tenant?.id)
         .eq('is_active', true)
@@ -128,6 +128,7 @@ const Rewards = () => {
       if (error) throw error;
       setStudents(data || []);
     } catch (error: any) {
+      console.error('Error loading students:', error);
       toast({
         title: "خطأ في تحميل الطلاب",
         description: error.message,
@@ -142,7 +143,7 @@ const Rewards = () => {
         .from('rewards')
         .select(`
           *,
-          students (full_name, student_id)
+          students!left (full_name, student_id)
         `)
         .eq('tenant_id', tenant?.id)
         .order('awarded_at', { ascending: false });
@@ -150,6 +151,7 @@ const Rewards = () => {
       if (error) throw error;
       setRewards(data || []);
     } catch (error: any) {
+      console.error('Error loading rewards:', error);
       toast({
         title: "خطأ في تحميل الجوائز",
         description: error.message,
@@ -177,7 +179,9 @@ const Rewards = () => {
       
       data?.forEach((reward: any) => {
         const studentId = reward.student_id;
-        const studentName = reward.students.full_name;
+        const studentName = reward.students?.full_name;
+        
+        if (!studentName) return; // Skip rewards without student data
         
         if (!statsMap.has(studentId)) {
           statsMap.set(studentId, {
@@ -336,11 +340,11 @@ const Rewards = () => {
   };
 
   const filteredRewards = rewards.filter(reward => {
-    const matchesSearch = reward.students.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         reward.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (reward.students?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          reward.title.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesType = selectedType === 'all' || reward.type === selectedType;
     const matchesStudent = selectedStudent === '' || reward.student_id === selectedStudent;
-    return matchesSearch && matchesType && matchesStudent;
+    return matchesSearch && matchesType && matchesStudent && reward.students;
   });
 
   // Statistics
@@ -630,7 +634,7 @@ const Rewards = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold">{reward.title}</h3>
-                      <p className="text-sm text-muted-foreground">{reward.students.full_name}</p>
+                      <p className="text-sm text-muted-foreground">{reward.students?.full_name}</p>
                     </div>
                   </div>
                   <Badge variant="secondary" className="flex items-center gap-1">
