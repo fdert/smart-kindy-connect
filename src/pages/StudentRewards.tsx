@@ -72,99 +72,39 @@ export default function StudentRewards() {
       const isGuardianAccess = searchParams.get('guardian') === 'true';
       console.log('Guardian access:', isGuardianAccess);
 
-      if (isGuardianAccess) {
-        console.log('=== Loading for Guardian ===');
-        
-        // Step 1: Get student basic info (with public access)
-        console.log('Fetching student info...');
-        const { data: student, error: studentError } = await supabase
-          .from('students')
-          .select('full_name, student_id, photo_url, tenant_id, classes(name)')
-          .eq('id', studentId)
-          .maybeSingle();
-
-        console.log('Student query result:', { student, studentError });
-
-        if (studentError) {
-          console.error('Student error:', studentError);
-          throw new Error(`خطأ في البحث عن الطالب: ${studentError.message}`);
+      // Use edge function for both guardian and authenticated access
+      console.log('Calling get-student-rewards edge function...');
+      
+      const { data: response, error: functionError } = await supabase.functions.invoke('get-student-rewards', {
+        body: {
+          studentId: studentId,
+          guardian: isGuardianAccess,
+          from: dateRange.from.toISOString(),
+          to: dateRange.to.toISOString()
         }
+      });
 
-        if (!student) {
-          console.log('Student not found');
-          throw new Error('لم يتم العثور على بيانات الطالب');
-        }
+      console.log('Edge function response:', { response, functionError });
 
-        console.log('Student found:', student);
-        setStudentInfo(student);
-
-        // Step 2: Get rewards for this student (with public access)
-        console.log('Fetching rewards...');
-        const { data: rewardsData, error: rewardsError } = await supabase
-          .from('rewards')
-          .select('*')
-          .eq('student_id', studentId)
-          .eq('tenant_id', student.tenant_id)
-          .gte('awarded_at', dateRange.from.toISOString())
-          .lte('awarded_at', dateRange.to.toISOString())
-          .order('awarded_at', { ascending: false });
-
-        console.log('Rewards query result:', { rewardsData, rewardsError });
-
-        if (rewardsError) {
-          console.error('Rewards error:', rewardsError);
-          // Don't throw error for rewards, just show empty
-          console.log('Setting empty rewards due to error');
-          setRewards([]);
-        } else {
-          console.log('Rewards loaded successfully:', rewardsData?.length || 0);
-          setRewards(rewardsData || []);
-        }
-
-      } else {
-        console.log('=== Loading for Authenticated User ===');
-        
-        if (!tenant?.id) {
-          throw new Error('يرجى تسجيل الدخول أولاً');
-        }
-
-        console.log('Using tenant:', tenant.id);
-
-        // Get student with tenant restriction
-        const { data: student, error: studentError } = await supabase
-          .from('students')
-          .select('full_name, student_id, photo_url, classes(name)')
-          .eq('id', studentId)
-          .eq('tenant_id', tenant.id)
-          .maybeSingle();
-
-        if (studentError) {
-          throw new Error(`خطأ في البحث عن الطالب: ${studentError.message}`);
-        }
-
-        if (!student) {
-          throw new Error('لم يتم العثور على بيانات الطالب في هذا الحساب');
-        }
-
-        setStudentInfo(student);
-
-        // Get rewards with tenant restriction
-        const { data: rewardsData, error: rewardsError } = await supabase
-          .from('rewards')
-          .select('*')
-          .eq('student_id', studentId)
-          .eq('tenant_id', tenant.id)
-          .gte('awarded_at', dateRange.from.toISOString())
-          .lte('awarded_at', dateRange.to.toISOString())
-          .order('awarded_at', { ascending: false });
-
-        if (rewardsError) {
-          console.error('Rewards error:', rewardsError);
-          setRewards([]);
-        } else {
-          setRewards(rewardsData || []);
-        }
+      if (functionError) {
+        console.error('Edge function error:', functionError);
+        throw new Error(`خطأ في الاتصال بالخادم: ${functionError.message}`);
       }
+
+      if (!response || !response.success) {
+        console.error('Edge function returned error:', response);
+        throw new Error(response?.error || 'فشل في تحميل البيانات');
+      }
+
+      const { student, rewards } = response.data;
+      
+      console.log('Data received:', {
+        studentName: student.full_name,
+        rewardsCount: rewards.length
+      });
+
+      setStudentInfo(student);
+      setRewards(rewards);
 
       console.log('=== Data loading completed successfully ===');
 
@@ -194,29 +134,13 @@ export default function StudentRewards() {
       return;
     }
 
-    if (isGuardianAccess) {
-      console.log('Guardian access - loading immediately');
-      loadRewardsData();
-    } else if (tenant?.id) {
-      console.log('Tenant available - loading for authenticated user');
-      loadRewardsData();
-    } else {
-      console.log('Waiting for tenant...');
-      // Wait for tenant to load
-      const timeout = setTimeout(() => {
-        if (!tenant?.id) {
-          console.log('Timeout waiting for tenant');
-          setError('فشل في تحميل معلومات الحساب');
-          setLoading(false);
-        } else {
-          console.log('Tenant loaded after timeout');
-          loadRewardsData();
-        }
-      }, 2000);
-
-      return () => clearTimeout(timeout);
-    }
-  }, [studentId, tenant?.id, searchParams.get('guardian')]);
+    console.log('Loading rewards data for studentId:', studentId);
+    console.log('Guardian access:', isGuardianAccess);
+    
+    // Load data immediately for both guardian and authenticated access
+    loadRewardsData();
+    
+  }, [studentId, searchParams.get('guardian')]);
 
   const getRewardTypeColor = (type: string) => {
     switch (type) {
