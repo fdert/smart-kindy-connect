@@ -169,62 +169,218 @@ export default function StudentReport() {
     console.log('Starting to load report data for valid studentId:', studentId);
     setLoading(true);
     
-    // Add timeout to prevent hanging
-    const timeoutId = setTimeout(() => {
-      setLoading(false);
-      toast({
-        title: "انتهت مهلة التحميل",
-        description: "يرجى إعادة تحميل الصفحة والمحاولة مرة أخرى",
-        variant: "destructive"
-      });
-    }, 10000); // 10 seconds timeout
-
     try {
       const isGuardianAccess = searchParams.get('guardian') === 'true';
-      const token = searchParams.get('token');
       
-      console.log('About to call supabase.functions.invoke');
-      console.log('Function call params:', { studentId, guardian: isGuardianAccess, token });
+      console.log('Loading data directly from Supabase');
+      console.log('Student ID:', studentId, 'Guardian Access:', isGuardianAccess);
       
-      const requestBody: any = { 
-        studentId, 
-        guardian: isGuardianAccess 
-      };
-      
-      // إضافة التوكن إذا كان متوفراً
-      if (token) {
-        requestBody.token = token;
-      }
-      
-      const { data: reportResponse, error } = await supabase.functions.invoke('get-student-report', {
-        body: requestBody
+      const currentDate = new Date();
+      const oneYearAgo = new Date(currentDate.getFullYear() - 1, 0, 1);
+
+      // Get all data in parallel
+      const [studentData, assignmentsData, attendanceData, rewardsData, notesData, healthData, mediaData, skillsData] = await Promise.all([
+        // Student information
+        supabase
+          .from('students')
+          .select(`
+            id,
+            full_name,
+            student_id,
+            photo_url,
+            date_of_birth,
+            gender,
+            tenant_id,
+            class_id,
+            classes!left (name),
+            tenants!left (name)
+          `)
+          .eq('id', studentId)
+          .single(),
+
+        // Assignments
+        supabase
+          .from('assignments')
+          .select(`
+            id,
+            title,
+            description,
+            subject,
+            due_date,
+            created_at,
+            assignment_type,
+            priority,
+            student_id,
+            is_group_assignment,
+            class_id,
+            tenant_id
+          `)
+          .or(`student_id.eq.${studentId},is_group_assignment.eq.true`)
+          .gte('created_at', oneYearAgo.toISOString())
+          .order('created_at', { ascending: false }),
+
+        // Attendance  
+        supabase
+          .from('attendance_events')
+          .select('status, date')
+          .eq('student_id', studentId)
+          .gte('date', oneYearAgo.toISOString().split('T')[0]),
+
+        // Rewards
+        supabase
+          .from('rewards')
+          .select(`
+            id,
+            title,
+            type,
+            points,
+            awarded_at,
+            description,
+            badge_color,
+            notes
+          `)
+          .eq('student_id', studentId)
+          .gte('awarded_at', oneYearAgo.toISOString())
+          .order('awarded_at', { ascending: false }),
+
+        // Notes (only non-private for guardian access)
+        isGuardianAccess 
+          ? supabase
+              .from('student_notes')
+              .select('*')
+              .eq('student_id', studentId)
+              .eq('is_private', false)
+              .gte('created_at', oneYearAgo.toISOString())
+              .order('created_at', { ascending: false })
+          : supabase
+              .from('student_notes')
+              .select('*')
+              .eq('student_id', studentId)
+              .gte('created_at', oneYearAgo.toISOString())
+              .order('created_at', { ascending: false }),
+
+        // Health checks
+        supabase
+          .from('health_checks')
+          .select('*')
+          .eq('student_id', studentId)
+          .gte('check_date', oneYearAgo.toISOString().split('T')[0])
+          .order('check_date', { ascending: false }),
+
+        // Media
+        supabase
+          .from('media_student_links')
+          .select(`
+            media!inner (
+              id,
+              file_name,
+              file_path,
+              caption,
+              album_date,
+              tenant_id
+            )
+          `)
+          .eq('student_id', studentId),
+
+        // Development skills
+        supabase
+          .from('development_skills')
+          .select('*')
+          .eq('student_id', studentId)
+          .gte('assessment_date', oneYearAgo.toISOString().split('T')[0])
+          .order('assessment_date', { ascending: false })
+      ]);
+
+      console.log('All data loaded:', { 
+        studentData, 
+        assignmentsData, 
+        attendanceData, 
+        rewardsData, 
+        notesData, 
+        healthData, 
+        mediaData, 
+        skillsData 
       });
 
-      console.log('Function response received:', { reportResponse, error });
-      clearTimeout(timeoutId);
-
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw new Error(error.message || 'فشل في الاتصال بالخادم');
+      if (studentData.error || !studentData.data) {
+        throw new Error(studentData.error?.message || 'Student not found');
       }
+
+      // Process assignments data
+      const assignments = assignmentsData.data || [];
       
-      if (!reportResponse?.success) {
-        console.error('Report response error:', reportResponse);
-        throw new Error(reportResponse?.error || 'فشل في تحميل التقرير');
-      }
+      // Get assignment evaluations separately
+      const { data: evaluationsData } = await supabase
+        .from('assignment_evaluations')
+        .select('*')
+        .in('assignment_id', assignments.map(a => a.id))
+        .eq('student_id', studentId);
+      
+      const evaluations = evaluationsData || [];
+      
+      const processedAssignments = assignments.map(assignment => {
+        let evaluation = evaluations.find(e => e.assignment_id === assignment.id) || null;
+        
+        return {
+          ...assignment,
+          evaluation_status: evaluation?.evaluation_status || 'pending',
+          evaluation_score: evaluation?.evaluation_score || null,
+          teacher_feedback: evaluation?.teacher_feedback || '',
+          evaluated_at: evaluation?.evaluated_at || null,
+          completion_date: evaluation?.completion_date || null
+        };
+      });
+      
+      const assignmentStats = {
+        total: processedAssignments.length,
+        completed: processedAssignments.filter(a => a.evaluation_status === 'completed').length,
+        pending: processedAssignments.filter(a => a.evaluation_status === 'not_completed' || a.evaluation_status === 'pending').length,
+        score_average: processedAssignments.length ? 
+          processedAssignments
+            .filter(a => a.evaluation_score !== null && a.evaluation_score !== undefined)
+            .reduce((sum, a, _, filteredArray) => {
+              return filteredArray.length > 0 ? sum + (a.evaluation_score || 0) : 0;
+            }, 0) / Math.max(processedAssignments.filter(a => a.evaluation_score !== null && a.evaluation_score !== undefined).length, 1) : 0,
+        assignments_list: processedAssignments.slice(0, 5)
+      };
 
-      console.log('Report data loaded successfully:', reportResponse.data);
-      setReportData(reportResponse.data);
+      // Process attendance data
+      const attendance = attendanceData.data || [];
+      const attendanceStats = {
+        total_days: attendance.length,
+        present_days: attendance.filter(a => a.status === 'present').length,
+        absent_days: attendance.filter(a => a.status === 'absent').length,
+        late_days: attendance.filter(a => a.status === 'late').length,
+        attendance_rate: attendance.length ? 
+          (attendance.filter(a => a.status === 'present').length / attendance.length) * 100 : 0
+      };
+
+      // Process media data
+      const mediaFiles = (mediaData.data || [])
+        .map(m => m.media)
+        .filter(Boolean);
+
+      const reportData = {
+        student: {
+          ...studentData.data,
+          class_name: studentData.data.classes?.name || null,
+          tenant_name: studentData.data.tenants?.name || null
+        },
+        assignments: assignmentStats,
+        attendance: attendanceStats,
+        rewards: rewardsData.data || [],
+        notes: notesData.data || [],
+        health_checks: healthData.data || [],
+        media: mediaFiles,
+        development_skills: skillsData.data || [],
+        raw_assignments: processedAssignments
+      };
+
+      console.log('Final report data:', reportData);
+      setReportData(reportData);
 
     } catch (error: any) {
-      clearTimeout(timeoutId);
       console.error('Error loading report data:', error);
-      console.error('Error details:', { 
-        message: error.message, 
-        stack: error.stack,
-        name: error.name,
-        cause: error.cause
-      });
       
       let errorMessage = 'حدث خطأ أثناء تحميل التقرير';
       if (error.message?.includes('Student not found')) {
@@ -243,7 +399,6 @@ export default function StudentReport() {
         variant: "destructive"
       });
     } finally {
-      clearTimeout(timeoutId);
       setLoading(false);
     }
   };
