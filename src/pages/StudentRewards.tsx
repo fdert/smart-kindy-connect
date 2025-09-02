@@ -179,6 +179,7 @@ export default function StudentRewards() {
     console.log('=== StudentRewards useEffect triggered ===');
     console.log('Student ID from params:', studentId);
     console.log('Search params:', searchParams.toString());
+    console.log('Current URL:', window.location.href);
     console.log('Tenant:', tenant);
     
     if (!studentId) {
@@ -190,26 +191,35 @@ export default function StudentRewards() {
     const isGuardianAccess = searchParams.get('guardian') === 'true';
     console.log('Is guardian access:', isGuardianAccess);
     
+    // For guardian access, load immediately without waiting for tenant
     if (isGuardianAccess) {
-      // For guardian access, we only need studentId
-      console.log('Loading data for guardian access');
+      console.log('Loading data immediately for guardian access');
       loadData();
-    } else if (tenant?.id) {
-      // For regular access, we need both tenant and studentId
+      return;
+    }
+    
+    // For regular access, wait for tenant
+    if (tenant?.id) {
       console.log('Loading data for authenticated access');
       loadData();
     } else {
       console.log('Waiting for tenant to load...', { tenant: !!tenant, tenantId: tenant?.id });
-      // Don't set loading to false here, keep waiting for tenant
+      // Set a timeout to prevent infinite loading
+      const timeout = setTimeout(() => {
+        console.log('Timeout reached - trying to load data anyway');
+        loadData();
+      }, 3000);
+      
+      return () => clearTimeout(timeout);
     }
   }, [studentId, tenant?.id]);
 
   // Separate useEffect for guardian parameter changes
   useEffect(() => {
     const isGuardianAccess = searchParams.get('guardian') === 'true';
-    console.log('Guardian parameter changed:', isGuardianAccess);
+    console.log('Guardian parameter effect:', isGuardianAccess);
     
-    if (studentId && isGuardianAccess) {
+    if (studentId && isGuardianAccess && !loading) {
       console.log('Reloading data due to guardian parameter change');
       loadData();
     }
