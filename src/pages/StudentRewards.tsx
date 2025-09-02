@@ -198,7 +198,7 @@ export default function StudentRewards() {
         console.log('Waiting for tenant or studentId', { tenant: !!tenant, studentId: !!studentId });
       }
     }
-  }, [studentId, searchParams, tenant]);
+  }, [studentId, searchParams.get('guardian'), tenant?.id]);
 
   const getRewardTypeColor = (type: string) => {
     switch (type) {
