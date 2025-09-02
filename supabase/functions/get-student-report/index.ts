@@ -204,7 +204,16 @@ serve(async (req) => {
       // Rewards
       supabase
         .from('rewards')
-        .select('*')
+        .select(`
+          id,
+          title,
+          type,
+          points,
+          awarded_at,
+          description,
+          badge_color,
+          notes
+        `)
         .eq('student_id', studentId)
         .eq('tenant_id', tenantId)
         .gte('awarded_at', oneYearAgo.toISOString())
@@ -322,6 +331,13 @@ serve(async (req) => {
       .filter(Boolean)
       .filter(media => media.tenant_id === tenantId);
 
+    // Log rewards data for debugging
+    console.log('Rewards query result:', { 
+      data: rewardsData.data, 
+      error: rewardsData.error,
+      count: rewardsData.data?.length || 0 
+    });
+
     const reportData = {
       student: {
         ...finalStudentData,
@@ -337,6 +353,15 @@ serve(async (req) => {
       development_skills: skillsData.data || [],
       raw_assignments: processedAssignments // إضافة الواجبات الكاملة للعرض التفصيلي
     };
+
+    console.log('Final report data summary:', {
+      student_id: reportData.student.id,
+      assignments_count: reportData.assignments.total,
+      attendance_days: reportData.attendance.total_days,
+      rewards_count: reportData.rewards.length,
+      notes_count: reportData.notes.length,
+      media_count: reportData.media.length
+    });
 
     return new Response(JSON.stringify({
       success: true,
