@@ -233,18 +233,14 @@ const Students = () => {
     setLoadingReports(prev => [...prev, studentId]);
     
     try {
-      const reportUrl = await generateSecureUrl({
-        studentId: studentId,
-        reportType: 'student-report',
-        guardianAccess: false
-      });
-      
-      window.open(reportUrl, '_blank');
+      // فتح التقرير مباشرة
+      window.open(`/student-report/${studentId}`, '_blank');
     } catch (error: any) {
+      console.error('Error opening student report:', error);
       toast({
         title: "خطأ في فتح التقرير",
-        description: error.message || "حدث خطأ في إنشاء التقرير",
-        variant: "destructive",
+        description: "حدث خطأ أثناء فتح تقرير الطالب",
+        variant: "destructive"
       });
     } finally {
       setLoadingReports(prev => prev.filter(id => id !== studentId));

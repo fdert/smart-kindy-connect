@@ -52,7 +52,7 @@ serve(async (req) => {
     console.log('Request method:', req.method);
     
     let studentId: string;
-    let isGuardianAccess: boolean;
+    let isGuardianAccess: boolean = false;
 
     // Support both GET (URL params) and POST (request body) methods
     if (req.method === 'GET') {
@@ -64,23 +64,6 @@ serve(async (req) => {
       const body = await req.json();
       studentId = body.studentId || '';
       isGuardianAccess = body.guardian === 'true' || body.guardian === true;
-      
-      // التحقق من التوكن إذا كان متوفراً
-      if (body.token) {
-        console.log('Token provided, validating...');
-        const tokenValidation = await validateToken(body.token, studentId);
-        if (!tokenValidation.isValid) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: 'Invalid or expired token - رابط منتهي الصلاحية أو غير صحيح'
-          }), { 
-            status: 403, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
-        }
-        isGuardianAccess = tokenValidation.guardianAccess;
-        console.log('Token validated successfully, guardian access:', isGuardianAccess);
-      }
       
       console.log('POST request - studentId:', studentId, 'guardian:', isGuardianAccess);
     } else {

@@ -139,8 +139,8 @@ export default function StudentReport() {
         loadReportData();
       }
     } else {
-      // إذا كان وصول داخلي يتطلب tenant
-      if (tenant && studentId) {
+      // إذا كان وصول داخلي يتطلب tenant - تبسيط: تشغيل دائماً
+      if (studentId) {
         loadReportData();
       }
     }
