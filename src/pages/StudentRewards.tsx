@@ -34,6 +34,11 @@ export default function StudentRewards() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  console.log('=== Component Render ===');
+  console.log('URL:', window.location.href);
+  console.log('StudentId:', studentId);
+  console.log('Guardian param:', searchParams.get('guardian'));
+
   // Get date filters from URL params
   const fromParam = searchParams.get('from');
   const toParam = searchParams.get('to');
@@ -42,111 +47,108 @@ export default function StudentRewards() {
     to: toParam ? new Date(toParam) : new Date()
   };
 
-  const loadData = async () => {
-    console.log('=== loadData START ===');
+  const loadRewardsData = async () => {
+    console.log('=== loadRewardsData START ===');
     
     if (!studentId) {
-      console.log('No studentId, aborting');
-      setError('معرف الطالب مطلوب');
+      console.log('No studentId provided');
+      setError('معرف الطالب غير متوفر');
       setLoading(false);
       return;
     }
 
+    // Simple UUID validation
+    if (studentId.length !== 36 || !studentId.includes('-')) {
+      console.log('Invalid studentId format');
+      setError('معرف الطالب غير صحيح');
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
     try {
-      console.log('Setting loading to true');
-      setLoading(true);
-      setError(null);
-      
       const isGuardianAccess = searchParams.get('guardian') === 'true';
       console.log('Guardian access:', isGuardianAccess);
-      
-      if (isGuardianAccess) {
-        console.log('=== GUARDIAN ACCESS PATH ===');
-        
-        // For guardian access, get student data first
-        console.log('Fetching student data for guardian...');
-        const { data: studentData, error: studentError } = await supabase
-          .from('students')
-          .select(`
-            full_name,
-            student_id,
-            photo_url,
-            tenant_id,
-            classes (name)
-          `)
-          .eq('id', studentId)
-          .single();
-        
-        console.log('Student query result:', { studentData, studentError });
-        
-        if (studentError) {
-          console.error('Student query failed:', studentError);
-          throw new Error('لم يتم العثور على بيانات الطالب');
-        }
-        
-        if (!studentData) {
-          console.error('No student data returned');
-          throw new Error('لم يتم العثور على بيانات الطالب');
-        }
-        
-        console.log('Student data loaded successfully:', studentData);
-        setStudentInfo(studentData);
 
-        // Load rewards using student's tenant_id
-        console.log('Loading rewards for guardian access...');
-        console.log('Date range:', { from: dateRange.from, to: dateRange.to });
+      if (isGuardianAccess) {
+        console.log('=== Loading for Guardian ===');
         
+        // Step 1: Get student basic info (with public access)
+        console.log('Fetching student info...');
+        const { data: student, error: studentError } = await supabase
+          .from('students')
+          .select('full_name, student_id, photo_url, tenant_id, classes(name)')
+          .eq('id', studentId)
+          .maybeSingle();
+
+        console.log('Student query result:', { student, studentError });
+
+        if (studentError) {
+          console.error('Student error:', studentError);
+          throw new Error(`خطأ في البحث عن الطالب: ${studentError.message}`);
+        }
+
+        if (!student) {
+          console.log('Student not found');
+          throw new Error('لم يتم العثور على بيانات الطالب');
+        }
+
+        console.log('Student found:', student);
+        setStudentInfo(student);
+
+        // Step 2: Get rewards for this student (with public access)
+        console.log('Fetching rewards...');
         const { data: rewardsData, error: rewardsError } = await supabase
           .from('rewards')
           .select('*')
           .eq('student_id', studentId)
-          .eq('tenant_id', studentData.tenant_id)
+          .eq('tenant_id', student.tenant_id)
           .gte('awarded_at', dateRange.from.toISOString())
           .lte('awarded_at', dateRange.to.toISOString())
           .order('awarded_at', { ascending: false });
-        
+
         console.log('Rewards query result:', { rewardsData, rewardsError });
-        
+
         if (rewardsError) {
-          console.error('Rewards query failed:', rewardsError);
-          throw new Error('فشل في تحميل الجوائز');
+          console.error('Rewards error:', rewardsError);
+          // Don't throw error for rewards, just show empty
+          console.log('Setting empty rewards due to error');
+          setRewards([]);
+        } else {
+          console.log('Rewards loaded successfully:', rewardsData?.length || 0);
+          setRewards(rewardsData || []);
         }
-        
-        console.log('Rewards loaded successfully:', rewardsData?.length || 0, 'items');
-        setRewards(rewardsData || []);
 
       } else {
-        console.log('=== AUTHENTICATED ACCESS PATH ===');
+        console.log('=== Loading for Authenticated User ===');
         
-        // For authenticated access
         if (!tenant?.id) {
-          console.error('No tenant ID available');
-          throw new Error('يرجى تسجيل الدخول');
+          throw new Error('يرجى تسجيل الدخول أولاً');
         }
 
-        console.log('Using tenant ID:', tenant.id);
+        console.log('Using tenant:', tenant.id);
 
-        // Load student info with tenant verification  
-        console.log('Fetching student data for authenticated user...');
-        const { data: studentData, error: studentError } = await supabase
+        // Get student with tenant restriction
+        const { data: student, error: studentError } = await supabase
           .from('students')
           .select('full_name, student_id, photo_url, classes(name)')
           .eq('id', studentId)
           .eq('tenant_id', tenant.id)
-          .single();
-        
-        console.log('Authenticated student query result:', { studentData, studentError });
-        
-        if (studentError) {
-          console.error('Authenticated student query failed:', studentError);
-          throw new Error('لم يتم العثور على بيانات الطالب');
-        }
-        
-        console.log('Authenticated student data loaded:', studentData);
-        setStudentInfo(studentData);
+          .maybeSingle();
 
-        // Load rewards
-        console.log('Loading rewards for authenticated user...');
+        if (studentError) {
+          throw new Error(`خطأ في البحث عن الطالب: ${studentError.message}`);
+        }
+
+        if (!student) {
+          throw new Error('لم يتم العثور على بيانات الطالب في هذا الحساب');
+        }
+
+        setStudentInfo(student);
+
+        // Get rewards with tenant restriction
         const { data: rewardsData, error: rewardsError } = await supabase
           .from('rewards')
           .select('*')
@@ -155,25 +157,20 @@ export default function StudentRewards() {
           .gte('awarded_at', dateRange.from.toISOString())
           .lte('awarded_at', dateRange.to.toISOString())
           .order('awarded_at', { ascending: false });
-        
-        console.log('Authenticated rewards query result:', { rewardsData, rewardsError });
-        
+
         if (rewardsError) {
-          console.error('Authenticated rewards query failed:', rewardsError);
-          throw new Error('فشل في تحميل الجوائز');
+          console.error('Rewards error:', rewardsError);
+          setRewards([]);
+        } else {
+          setRewards(rewardsData || []);
         }
-        
-        console.log('Authenticated rewards loaded:', rewardsData?.length || 0, 'items');
-        setRewards(rewardsData || []);
       }
 
-      console.log('=== loadData SUCCESS ===');
+      console.log('=== Data loading completed successfully ===');
 
     } catch (err: any) {
-      console.error('=== loadData ERROR ===');
-      console.error('Error:', err);
-      const errorMessage = err.message || 'حدث خطأ في تحميل البيانات';
-      console.error('Setting error message:', errorMessage);
+      console.error('=== Error in loadRewardsData ===', err);
+      const errorMessage = err.message || 'حدث خطأ غير متوقع';
       setError(errorMessage);
       toast({
         title: "خطأ في التحميل",
@@ -181,58 +178,42 @@ export default function StudentRewards() {
         variant: "destructive",
       });
     } finally {
-      console.log('=== loadData FINALLY - setting loading to false ===');
       setLoading(false);
+      console.log('=== loadRewardsData END ===');
     }
   };
 
   useEffect(() => {
-    console.log('=== StudentRewards Mount ===');
-    console.log('URL:', window.location.href);
-    console.log('StudentId:', studentId);
-    console.log('Guardian param:', searchParams.get('guardian'));
-    console.log('From param:', searchParams.get('from'));
-    console.log('To param:', searchParams.get('to'));
-    
+    console.log('=== useEffect triggered ===');
     const isGuardianAccess = searchParams.get('guardian') === 'true';
-    console.log('Is Guardian Access:', isGuardianAccess);
     
     if (!studentId) {
-      console.log('Missing studentId, setting error');
-      setError('معرف الطالب مفقود من الرابط');
+      console.log('No studentId, stopping');
+      setError('معرف الطالب مفقود');
       setLoading(false);
       return;
     }
-    
-    // Check if studentId is valid UUID
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(studentId)) {
-      console.log('Invalid studentId format');
-      setError('معرف الطالب غير صحيح');
-      setLoading(false);
-      return;
-    }
-    
+
     if (isGuardianAccess) {
-      console.log('Loading data immediately for guardian');
-      loadData();
+      console.log('Guardian access - loading immediately');
+      loadRewardsData();
     } else if (tenant?.id) {
-      console.log('Loading data for authenticated user');
-      loadData();
+      console.log('Tenant available - loading for authenticated user');
+      loadRewardsData();
     } else {
       console.log('Waiting for tenant...');
+      // Wait for tenant to load
       const timeout = setTimeout(() => {
-        console.log('Timeout - checking tenant again');
         if (!tenant?.id) {
-          console.log('No tenant after timeout, setting error');
+          console.log('Timeout waiting for tenant');
           setError('فشل في تحميل معلومات الحساب');
           setLoading(false);
         } else {
-          console.log('Tenant loaded after timeout, loading data');
-          loadData();
+          console.log('Tenant loaded after timeout');
+          loadRewardsData();
         }
-      }, 3000);
-      
+      }, 2000);
+
       return () => clearTimeout(timeout);
     }
   }, [studentId, tenant?.id, searchParams.get('guardian')]);
@@ -275,13 +256,18 @@ export default function StudentRewards() {
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-md mx-auto p-6">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">خطأ في التحميل</h2>
           <p className="text-gray-600 mb-4">{error}</p>
-          <Button onClick={() => window.location.reload()} variant="outline">
-            إعادة المحاولة
-          </Button>
+          <div className="space-y-2">
+            <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
+              إعادة المحاولة
+            </Button>
+            <Button onClick={() => window.history.back()} variant="ghost" className="w-full">
+              العودة
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -306,7 +292,7 @@ export default function StudentRewards() {
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              مكافآت الطالب: {studentInfo?.full_name}
+              مكافآت الطالب: {studentInfo?.full_name || 'غير متوفر'}
             </h1>
             <p className="text-gray-600">
               الفترة: {format(dateRange.from, 'dd MMM yyyy', { locale: ar })} - {format(dateRange.to, 'dd MMM yyyy', { locale: ar })}
