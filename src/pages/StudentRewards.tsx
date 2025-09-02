@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useTenant } from '@/hooks/useTenant';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Star, Award, Trophy, ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 interface RewardData {
   id: string;
@@ -23,21 +20,23 @@ interface RewardData {
   icon_url: string | null;
 }
 
+interface StudentData {
+  id: string;
+  full_name: string;
+  student_id: string;
+  photo_url: string | null;
+  class_name?: string;
+}
+
 export default function StudentRewards() {
   const { studentId } = useParams();
   const [searchParams] = useSearchParams();
   const [rewards, setRewards] = useState<RewardData[]>([]);
-  const [studentInfo, setStudentInfo] = useState<any>(null);
+  const [studentInfo, setStudentInfo] = useState<StudentData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { tenant } = useTenant();
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  console.log('=== Component Render ===');
-  console.log('URL:', window.location.href);
-  console.log('StudentId:', studentId);
-  console.log('Guardian param:', searchParams.get('guardian'));
 
   // Get date filters from URL params
   const fromParam = searchParams.get('from');
@@ -75,8 +74,10 @@ export default function StudentRewards() {
       const isGuardianAccess = searchParams.get('guardian') === 'true';
       console.log('Guardian access:', isGuardianAccess);
 
-      // Use edge function that bypasses RLS
-      console.log('Calling edge function...');
+      // Direct API call to edge function
+      console.log('Calling edge function directly...');
+      
+      const functionUrl = `https://ytjodudlnfamvnescumu.supabase.co/functions/v1/get-student-rewards`;
       
       const requestBody = {
         studentId: studentId,
@@ -85,34 +86,39 @@ export default function StudentRewards() {
         to: dateRange.to.toISOString()
       };
       
+      console.log('Request URL:', functionUrl);
       console.log('Request body:', requestBody);
       
-      const { data: response, error: functionError } = await supabase.functions.invoke('get-student-rewards', {
-        body: requestBody
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
       });
 
-      console.log('Edge function response:', { response, functionError });
+      console.log('Fetch response status:', response.status);
+      console.log('Fetch response ok:', response.ok);
 
-      if (functionError) {
-        console.error('Edge function error:', functionError);
-        throw new Error(`خطأ في الاتصال بالخادم: ${functionError.message}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Fetch error response:', response.status, errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
 
-      if (!response) {
-        console.error('No response from edge function');
-        throw new Error('لم يتم الحصول على استجابة من الخادم');
+      const data = await response.json();
+      console.log('Raw response data:', data);
+
+      if (!data || !data.success) {
+        console.error('Edge function returned error:', data);
+        throw new Error(data?.error || 'فشل في تحميل البيانات');
       }
 
-      if (!response.success) {
-        console.error('Edge function returned error:', response);
-        throw new Error(response.error || 'فشل في تحميل البيانات');
-      }
-
-      const { student, rewards } = response.data;
+      const { student, rewards: rewardsData } = data.data;
       
       console.log('Data received:', {
         studentName: student?.full_name,
-        rewardsCount: rewards?.length || 0
+        rewardsCount: rewardsData?.length || 0
       });
 
       if (!student) {
@@ -120,7 +126,7 @@ export default function StudentRewards() {
       }
 
       setStudentInfo(student);
-      setRewards(rewards || []);
+      setRewards(rewardsData || []);
 
       console.log('=== Data loading completed successfully ===');
 
@@ -153,7 +159,6 @@ export default function StudentRewards() {
     console.log('Loading rewards data for studentId:', studentId);
     console.log('Guardian access:', isGuardianAccess);
     
-    // Load data immediately for both guardian and authenticated access
     loadRewardsData();
     
   }, [studentId, searchParams.get('guardian')]);
