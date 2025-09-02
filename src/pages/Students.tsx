@@ -12,7 +12,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/hooks/useTenant';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useSecureReportUrl } from '@/hooks/useSecureReportUrl';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Plus, Search, Users, Calendar, Edit, Trash2, Send, FileText, Share, ExternalLink } from 'lucide-react';
 import ExcelImport from '@/components/ExcelImport';
@@ -53,7 +52,6 @@ const Students = () => {
   const { tenant } = useTenant();
   const { toast } = useToast();
   const { t } = useLanguage();
-  const { generateSecureUrl } = useSecureReportUrl();
 
   const [formData, setFormData] = useState({
     student_id: '',
