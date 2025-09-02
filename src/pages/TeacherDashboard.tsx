@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTenant } from '@/hooks/useTenant';
+import { useLanguage } from '@/hooks/useLanguage';
 import Navigation from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,6 +33,7 @@ import {
 const TeacherDashboard = () => {
   const { user, signOut } = useAuth();
   const { tenant } = useTenant();
+  const { t } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -151,7 +153,7 @@ const TeacherDashboard = () => {
 
     } catch (error: any) {
       toast({
-        title: "خطأ في تحميل الإحصائيات",
+        title: t('common.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -169,7 +171,7 @@ const TeacherDashboard = () => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
-  const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'معلمة';
+  const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || t('teacher.dashboard');
 
   const handleSignOut = async () => {
     try {
@@ -177,7 +179,7 @@ const TeacherDashboard = () => {
       navigate('/auth');
     } catch (error: any) {
       toast({
-        title: "خطأ في تسجيل الخروج",
+        title: t('common.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -198,9 +200,9 @@ const TeacherDashboard = () => {
               </AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">مرحباً، {fullName}</h1>
-              <p className="text-lg text-gray-600">معلمة - {tenant?.name || 'روضة غير محددة'}</p>
-              <p className="text-sm text-gray-500">لوحة التحكم الخاصة بك</p>
+              <h1 className="text-3xl font-bold text-gray-900">{t('dashboard.welcome')}، {fullName}</h1>
+              <p className="text-lg text-gray-600">{t('teacher.dashboard')} - {tenant?.name || 'روضة غير محددة'}</p>
+              <p className="text-sm text-gray-500">{t('teacher.dashboard')}</p>
             </div>
           </div>
           
@@ -211,7 +213,7 @@ const TeacherDashboard = () => {
               className="flex items-center gap-2"
             >
               <Settings className="h-4 w-4" />
-              الإعدادات
+              {t('nav.settings')}
             </Button>
             <Button 
               variant="outline" 
@@ -219,7 +221,7 @@ const TeacherDashboard = () => {
               className="flex items-center gap-2 hover:bg-red-50 hover:border-red-200 hover:text-red-600"
             >
               <LogOut className="h-4 w-4" />
-              تسجيل خروج
+              {t('nav.logout')}
             </Button>
           </div>
         </div>
@@ -228,7 +230,7 @@ const TeacherDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">فصولي</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('teacher.my_classes')}</CardTitle>
               <BookOpen className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
@@ -240,7 +242,7 @@ const TeacherDashboard = () => {
               ) : (
                 <>
                   <div className="text-2xl font-bold">{stats.myClasses}</div>
-                  <p className="text-xs text-muted-foreground">فصل دراسي</p>
+                  <p className="text-xs text-muted-foreground">{t('nav.classes')}</p>
                 </>
               )}
             </CardContent>
@@ -248,7 +250,7 @@ const TeacherDashboard = () => {
 
           <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">طلابي</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('nav.students')}</CardTitle>
               <Users className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
@@ -260,7 +262,7 @@ const TeacherDashboard = () => {
               ) : (
                 <>
                   <div className="text-2xl font-bold">{stats.totalStudents}</div>
-                  <p className="text-xs text-muted-foreground">طالب في فصولي</p>
+                  <p className="text-xs text-muted-foreground">{t('nav.students')}</p>
                 </>
               )}
             </CardContent>
@@ -268,7 +270,7 @@ const TeacherDashboard = () => {
 
           <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">الحضور اليوم</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('teacher.today_attendance')}</CardTitle>
               <Clock className="h-4 w-4 text-yellow-500" />
             </CardHeader>
             <CardContent>
@@ -280,7 +282,7 @@ const TeacherDashboard = () => {
               ) : (
                 <>
                   <div className="text-2xl font-bold">{stats.todayAttendance}</div>
-                  <p className="text-xs text-muted-foreground">من أصل {stats.totalAttendance} طالب</p>
+                  <p className="text-xs text-muted-foreground">{t('dashboard.total_students')}: {stats.totalAttendance}</p>
                 </>
               )}
             </CardContent>
@@ -288,7 +290,7 @@ const TeacherDashboard = () => {
 
           <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">النجوم الممنوحة</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('teacher.rewards_given')}</CardTitle>
               <Star className="h-4 w-4 text-purple-500" />
             </CardHeader>
             <CardContent>
@@ -300,29 +302,29 @@ const TeacherDashboard = () => {
               ) : (
                 <>
                   <div className="text-2xl font-bold">{stats.weeklyRewards}</div>
-                  <p className="text-xs text-muted-foreground">هذا الأسبوع</p>
+                  <p className="text-xs text-muted-foreground">{t('common.count')}</p>
                 </>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* الإجراءات السريعة */}
+        {/* {t('teacher.quick_actions')} */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* الطلاب */}
           <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={() => navigate('/students')}>
             <CardHeader>
               <div className="flex items-center space-x-reverse space-x-2">
                 <Users className="h-5 w-5 text-blue-500 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-lg">طلابي</CardTitle>
+                <CardTitle className="text-lg">{t('nav.students')}</CardTitle>
               </div>
               <CardDescription>
-                إدارة معلومات الطلاب في فصولي
+                {t('students.subtitle')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button className="w-full">
-                ابدأ الآن
+                {t('common.view')}
               </Button>
             </CardContent>
           </Card>
@@ -332,15 +334,15 @@ const TeacherDashboard = () => {
             <CardHeader>
               <div className="flex items-center space-x-reverse space-x-2">
                 <UserCheck className="h-5 w-5 text-green-500 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-lg">الحضور والغياب</CardTitle>
+                <CardTitle className="text-lg">{t('nav.attendance')}</CardTitle>
               </div>
               <CardDescription>
-                تسجيل حضور طلاب فصولي يومياً
+                {t('teacher.mark_attendance')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button className="w-full">
-                ابدأ الآن
+                {t('common.view')}
               </Button>
             </CardContent>
           </Card>
@@ -350,19 +352,19 @@ const TeacherDashboard = () => {
             <CardHeader>
               <div className="flex items-center space-x-reverse space-x-2">
                 <FileText className="h-5 w-5 text-indigo-500 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-lg">الواجبات</CardTitle>
+                <CardTitle className="text-lg">{t('teacher.recent_assignments')}</CardTitle>
               </div>
               <CardDescription>
-                إنشاء ومتابعة واجبات الطلاب
+                {t('teacher.add_assignment')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm">معلقة:</span>
+                <span className="text-sm">{t('superadmin.pending')}:</span>
                 <span className="text-sm font-bold">{stats.pendingAssignments}</span>
               </div>
               <Button className="w-full">
-                ابدأ الآن
+                {t('common.view')}
               </Button>
             </CardContent>
           </Card>
@@ -372,15 +374,15 @@ const TeacherDashboard = () => {
             <CardHeader>
               <div className="flex items-center space-x-reverse space-x-2">
                 <NotebookPen className="h-5 w-5 text-orange-500 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-lg">ملاحظات الطلاب</CardTitle>
+                <CardTitle className="text-lg">{t('teacher.student_notes')}</CardTitle>
               </div>
               <CardDescription>
-                كتابة وإدارة ملاحظات الطلاب
+                {t('teacher.add_note')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button className="w-full">
-                ابدأ الآن
+                {t('common.view')}
               </Button>
             </CardContent>
           </Card>
@@ -390,15 +392,15 @@ const TeacherDashboard = () => {
             <CardHeader>
               <div className="flex items-center space-x-reverse space-x-2">
                 <Award className="h-5 w-5 text-yellow-500 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-lg">نظام التحفيز</CardTitle>
+                <CardTitle className="text-lg">{t('nav.rewards')}</CardTitle>
               </div>
               <CardDescription>
-                منح النجوم والأوسمة لطلابي
+                {t('teacher.give_reward')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button className="w-full">
-                ابدأ الآن
+                {t('common.view')}
               </Button>
             </CardContent>
           </Card>
@@ -408,15 +410,15 @@ const TeacherDashboard = () => {
             <CardHeader>
               <div className="flex items-center space-x-reverse space-x-2">
                 <School className="h-5 w-5 text-cyan-500 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-lg">فصولي</CardTitle>
+                <CardTitle className="text-lg">{t('nav.classes')}</CardTitle>
               </div>
               <CardDescription>
-                إدارة الفصول المكلفة بها
+                {t('teacher.view_all_classes')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button className="w-full">
-                ابدأ الآن
+                {t('common.view')}
               </Button>
             </CardContent>
           </Card>
@@ -426,15 +428,15 @@ const TeacherDashboard = () => {
             <CardHeader>
               <div className="flex items-center space-x-reverse space-x-2">
                 <Image className="h-5 w-5 text-pink-500 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-lg">الألبوم اليومي</CardTitle>
+                <CardTitle className="text-lg">{t('nav.media')}</CardTitle>
               </div>
               <CardDescription>
-                مشاركة صور وأنشطة الطلاب
+                {t('common.view')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button className="w-full">
-                ابدأ الآن
+                {t('common.view')}
               </Button>
             </CardContent>
           </Card>
@@ -444,19 +446,19 @@ const TeacherDashboard = () => {
             <CardHeader>
               <div className="flex items-center space-x-reverse space-x-2">
                 <CheckSquare className="h-5 w-5 text-emerald-500 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-lg">الأذونات</CardTitle>
+                <CardTitle className="text-lg">{t('common.actions')}</CardTitle>
               </div>
               <CardDescription>
-                إنشاء وإدارة أذونات أولياء الأمور
+                {t('common.view')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm">نشطة:</span>
+                <span className="text-sm">{t('superadmin.active')}:</span>
                 <span className="text-sm font-bold">{stats.activePermissions}</span>
               </div>
               <Button className="w-full">
-                ابدأ الآن
+                {t('common.view')}
               </Button>
             </CardContent>
           </Card>
@@ -466,19 +468,19 @@ const TeacherDashboard = () => {
             <CardHeader>
               <div className="flex items-center space-x-reverse space-x-2">
                 <MessageSquare className="h-5 w-5 text-violet-500 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-lg">الاستطلاعات</CardTitle>
+                <CardTitle className="text-lg">{t('common.view')}</CardTitle>
               </div>
               <CardDescription>
-                إنشاء استطلاعات لأولياء الأمور
+                {t('common.view')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm">نشطة:</span>
+                <span className="text-sm">{t('superadmin.active')}:</span>
                 <span className="text-sm font-bold">{stats.activeSurveys}</span>
               </div>
               <Button className="w-full">
-                ابدأ الآن
+                {t('common.view')}
               </Button>
             </CardContent>
           </Card>

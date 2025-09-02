@@ -22,15 +22,18 @@ export const useAuthRedirect = () => {
 
     // إذا كان المستخدم مسجلاً الدخول لكن لا يوجد دور، انتظر قليلاً
     if (!role) {
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      console.log('No role found for user, waiting...');
       return;
     }
 
-    // توجيه المستخدم حسب دوره
+    // توجيه المستخدم حسب دوره - تم إصلاح المنطق
     const currentPath = window.location.pathname;
     let targetPath = '/dashboard';
+
+    console.log('=== AUTH REDIRECT DEBUG ===');
+    console.log('User ID:', user.id);
+    console.log('User Role:', role);
+    console.log('Current Path:', currentPath);
 
     switch (role) {
       case 'super_admin':
@@ -49,13 +52,21 @@ export const useAuthRedirect = () => {
         targetPath = '/dashboard';
     }
 
+    console.log('Target Path:', targetPath);
+
     // إذا كان المستخدم في الصفحة الخاطئة، وجه إلى الصفحة الصحيحة
     const publicPaths = ['/auth', '/', '/tour', '/demo', '/register', '/pricing'];
-    const isOnPublicPath = publicPaths.includes(currentPath) || currentPath.startsWith('/survey/') || currentPath.startsWith('/permission/') || currentPath.startsWith('/student-');
+    const isOnPublicPath = publicPaths.includes(currentPath) || 
+                          currentPath.startsWith('/survey/') || 
+                          currentPath.startsWith('/permission/') || 
+                          currentPath.startsWith('/student-');
 
+    // إذا كان المستخدم في صفحة عامة أو الصفحة الحالية لا تطابق الهدف
     if (isOnPublicPath || currentPath !== targetPath) {
       console.log(`Redirecting ${role} user from ${currentPath} to ${targetPath}`);
       navigate(targetPath, { replace: true });
+    } else {
+      console.log('User is already on correct path:', currentPath);
     }
 
   }, [user, role, authLoading, roleLoading, navigate]);
