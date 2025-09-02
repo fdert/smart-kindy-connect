@@ -191,9 +191,7 @@ export default function StudentReport() {
             date_of_birth,
             gender,
             tenant_id,
-            class_id,
-            classes!left (name),
-            tenants!left (name)
+            class_id
           `)
           .eq('id', studentId)
           .single(),
@@ -360,11 +358,24 @@ export default function StudentReport() {
         .map(m => m.media)
         .filter(Boolean);
 
+      // Get class and tenant names separately if needed
+      const classData = studentData.data.class_id ? await supabase
+        .from('classes')
+        .select('name')
+        .eq('id', studentData.data.class_id)
+        .single() : null;
+
+      const tenantData = studentData.data.tenant_id ? await supabase
+        .from('tenants')
+        .select('name')
+        .eq('id', studentData.data.tenant_id)
+        .single() : null;
+
       const reportData = {
         student: {
           ...studentData.data,
-          class_name: studentData.data.classes?.name || null,
-          tenant_name: studentData.data.tenants?.name || null
+          class_name: classData?.data?.name || null,
+          tenant_name: tenantData?.data?.name || null
         },
         assignments: assignmentStats,
         attendance: attendanceStats,
