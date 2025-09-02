@@ -42,12 +42,16 @@ export default function StudentRewards() {
   };
 
   const loadData = async () => {
+    console.log('loadData called with studentId:', studentId);
+    
     if (!studentId) {
+      console.log('No studentId provided');
       return;
     }
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(studentId)) {
+      console.log('Invalid studentId format:', studentId);
       toast({
         title: "خطأ في الرابط",
         description: "معرف الطالب غير صحيح",
@@ -57,13 +61,16 @@ export default function StudentRewards() {
       return;
     }
 
+    console.log('Starting to load rewards data for studentId:', studentId);
     setLoading(true);
     
     try {
       const isGuardianAccess = searchParams.get('guardian') === 'true';
+      console.log('Guardian access mode:', isGuardianAccess);
       let tenantId: string;
       
       if (isGuardianAccess || !tenant?.id) {
+        console.log('Loading student data for guardian access...');
         // For guardian access, get student data without tenant restriction
         const { data: studentData, error: studentError } = await supabase
           .from('students')
@@ -77,17 +84,31 @@ export default function StudentRewards() {
           .eq('id', studentId)
           .maybeSingle();
         
+        console.log('Student data query result:', { studentData, studentError });
+        
         if (studentError) {
+          console.error('Student query error:', studentError);
           throw studentError;
         }
         if (!studentData) {
+          console.error('No student data found');
           throw new Error('لم يتم العثور على بيانات الطالب');
         }
         
         setStudentInfo(studentData);
         tenantId = studentData.tenant_id;
+        console.log('Using tenant ID from student data:', tenantId);
 
         // Load rewards using student's tenant_id
+        console.log('Loading rewards with params:', {
+          studentId,
+          tenantId,
+          dateRange: {
+            from: dateRange.from.toISOString(),
+            to: dateRange.to.toISOString()
+          }
+        });
+        
         const { data: rewardsData, error: rewardsError } = await supabase
           .from('rewards')
           .select('*')
@@ -97,9 +118,13 @@ export default function StudentRewards() {
           .lte('awarded_at', dateRange.to.toISOString())
           .order('awarded_at', { ascending: false });
         
+        console.log('Rewards query result:', { rewardsData, rewardsError });
+        
         if (rewardsError) {
+          console.error('Rewards query error:', rewardsError);
           throw rewardsError;
         }
+        console.log('Successfully loaded rewards:', rewardsData?.length || 0, 'rewards found');
         setRewards(rewardsData || []);
 
       } else {
@@ -147,16 +172,33 @@ export default function StudentRewards() {
   };
 
   useEffect(() => {
-    if (!studentId) return;
+    console.log('StudentRewards component mounted');
+    console.log('Student ID from params:', studentId);
+    console.log('Search params:', searchParams.toString());
+    console.log('Tenant:', tenant);
+    
+    if (!studentId) {
+      console.log('No studentId provided');
+      return;
+    }
     
     const isGuardianAccess = searchParams.get('guardian') === 'true';
+    console.log('Is guardian access:', isGuardianAccess);
     
     if (isGuardianAccess) {
+      // For guardian access, we only need studentId
+      console.log('Loading data for guardian access');
       loadData();
-    } else if (tenant?.id || tenant === null) {
-      loadData();
+    } else {
+      // For regular access, we need both tenant and studentId
+      if (tenant && studentId) {
+        console.log('Loading data for authenticated access');
+        loadData();
+      } else {
+        console.log('Waiting for tenant or studentId', { tenant: !!tenant, studentId: !!studentId });
+      }
     }
-  }, [studentId, searchParams.get('guardian'), tenant]);
+  }, [studentId, searchParams, tenant]);
 
   const getRewardTypeColor = (type: string) => {
     switch (type) {
