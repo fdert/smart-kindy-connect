@@ -69,6 +69,9 @@ interface StudentReportData {
     type: string;
     points: number;
     awarded_at: string;
+    description?: string;
+    badge_color?: string;
+    notes?: string;
   }>;
   notes: Array<{
     id: string;
@@ -866,36 +869,53 @@ export default function StudentReport() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Star className="h-5 w-5 text-yellow-500" />
-                الجوائز الأخيرة ({reportData.rewards.length})
+                الجوائز الأخيرة ({reportData.rewards?.length || 0})
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {reportData.rewards.slice(0, 5).map((reward) => (
-                  <div key={reward.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <div className={`w-3 h-3 rounded-full ${getRewardTypeColor(reward.type)}`}></div>
-                    <div className="flex-1">
-                      <p className="font-medium">{reward.title}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(reward.awarded_at), 'dd/MM/yyyy', { locale: ar })}
-                      </p>
-                    </div>
-                    <Badge variant="outline">
-                      <Star className="h-3 w-3 mr-1" />
-                      {reward.points}
-                    </Badge>
-                  </div>
-                ))}
-                {reportData.rewards.length > 5 && (
-                  <Button 
-                    variant="outline" 
-                    className="w-full mt-3"
-                    onClick={() => navigate(`/student-rewards/${studentId}?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`)}
-                  >
-                    عرض جميع الجوائز ({reportData.rewards.length})
-                  </Button>
-                )}
-              </div>
+              {!reportData.rewards || reportData.rewards.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">لا توجد جوائز مسجلة</p>
+              ) : (
+                <div className="space-y-3">
+                  {reportData.rewards.slice(0, 5).map((reward) => {
+                    if (!reward?.id) return null;
+                    
+                    return (
+                      <div key={reward.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <div className={`w-3 h-3 rounded-full ${getRewardTypeColor(reward.type || 'default')}`}></div>
+                        <div className="flex-1">
+                          <p className="font-medium">{reward.title || 'جائزة بدون عنوان'}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {reward.awarded_at ? 
+                              format(new Date(reward.awarded_at), 'dd/MM/yyyy', { locale: ar }) :
+                              'تاريخ غير محدد'
+                            }
+                          </p>
+                          {reward.description && (
+                            <p className="text-xs text-muted-foreground mt-1">{reward.description}</p>
+                          )}
+                        </div>
+                        <Badge variant="outline">
+                          <Star className="h-3 w-3 mr-1" />
+                          {reward.points || 0}
+                        </Badge>
+                      </div>
+                    );
+                  }).filter(Boolean)}
+                  {reportData.rewards.length > 5 && (
+                    <Button 
+                      variant="outline" 
+                      className="w-full mt-3"
+                      onClick={() => {
+                        const guardianParam = searchParams.get('guardian') === 'true' ? '&guardian=true' : '';
+                        navigate(`/student-rewards/${studentId}?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}${guardianParam}`);
+                      }}
+                    >
+                      عرض جميع الجوائز ({reportData.rewards.length})
+                    </Button>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
