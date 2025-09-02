@@ -306,42 +306,48 @@ export default function StudentReport() {
         throw new Error(studentData.error?.message || 'Student not found');
       }
 
-      // Process assignments data
-      const assignments = assignmentsData.data || [];
+      console.log('Data fetching completed successfully. Processing assignments...');
+
+      // Get assignment evaluations separately for the assignments we found
+      const assignmentIds = (assignmentsData.data || []).map(a => a.id);
+      let evaluationsData = { data: [], error: null };
       
-      // Get assignment evaluations separately
-      const { data: evaluationsData } = await supabase
-        .from('assignment_evaluations')
-        .select('*')
-        .in('assignment_id', assignments.map(a => a.id))
-        .eq('student_id', studentId);
-      
-      const evaluations = evaluationsData || [];
-      
-      const processedAssignments = assignments.map(assignment => {
-        let evaluation = evaluations.find(e => e.assignment_id === assignment.id) || null;
-        
+      if (assignmentIds.length > 0) {
+        evaluationsData = await supabase
+          .from('assignment_evaluations')
+          .select('*')
+          .in('assignment_id', assignmentIds)
+          .eq('student_id', studentId);
+      }
+
+      console.log('Evaluations data:', evaluationsData);
+
+      // Process assignments data with evaluations
+      const processedAssignments = (assignmentsData.data || []).map(assignment => {
+        console.log(`Processing assignment: ${assignment.title}`);
+        const evaluation = (evaluationsData.data || []).find(e => e.assignment_id === assignment.id);
         return {
           ...assignment,
-          evaluation_status: evaluation?.evaluation_status || 'pending',
+          evaluation_status: evaluation?.evaluation_status || 'not_evaluated',
+          teacher_feedback: evaluation?.teacher_feedback || null,
           evaluation_score: evaluation?.evaluation_score || null,
-          teacher_feedback: evaluation?.teacher_feedback || '',
-          evaluated_at: evaluation?.evaluated_at || null,
           completion_date: evaluation?.completion_date || null
         };
       });
-      
+
+      console.log(`Processed ${processedAssignments.length} assignments`);
+
+      // Calculate assignment statistics
       const assignmentStats = {
         total: processedAssignments.length,
         completed: processedAssignments.filter(a => a.evaluation_status === 'completed').length,
-        pending: processedAssignments.filter(a => a.evaluation_status === 'not_completed' || a.evaluation_status === 'pending').length,
+        pending: processedAssignments.filter(a => a.evaluation_status === 'pending' || a.evaluation_status === 'not_evaluated').length,
         score_average: processedAssignments.length ? 
           processedAssignments
             .filter(a => a.evaluation_score !== null && a.evaluation_score !== undefined)
             .reduce((sum, a, _, filteredArray) => {
               return filteredArray.length > 0 ? sum + (a.evaluation_score || 0) : 0;
-            }, 0) / Math.max(processedAssignments.filter(a => a.evaluation_score !== null && a.evaluation_score !== undefined).length, 1) : 0,
-        assignments_list: processedAssignments.slice(0, 5)
+            }, 0) / Math.max(processedAssignments.filter(a => a.evaluation_score !== null && a.evaluation_score !== undefined).length, 1) : 0
       };
 
       // Process attendance data
@@ -359,6 +365,49 @@ export default function StudentReport() {
       const mediaFiles = (mediaData.data || [])
         .map(m => m.media)
         .filter(Boolean);
+
+      console.log('Checking all data fetching results...');
+      
+      // Check for any errors in the data fetching
+      if (studentData.error) {
+        console.error('Student data error:', studentData.error);
+        throw new Error(`خطأ في بيانات الطالب: ${studentData.error.message}`);
+      }
+      
+      if (assignmentsData.error) {
+        console.error('Assignments data error:', assignmentsData.error);
+        throw new Error(`خطأ في بيانات الواجبات: ${assignmentsData.error.message}`);
+      }
+      
+      if (attendanceData.error) {
+        console.error('Attendance data error:', attendanceData.error);
+        throw new Error(`خطأ في بيانات الحضور: ${attendanceData.error.message}`);
+      }
+      
+      if (rewardsData.error) {
+        console.error('Rewards data error:', rewardsData.error);
+        throw new Error(`خطأ في بيانات المكافآت: ${rewardsData.error.message}`);
+      }
+      
+      if (notesData.error) {
+        console.error('Notes data error:', notesData.error);
+        throw new Error(`خطأ في بيانات الملاحظات: ${notesData.error.message}`);
+      }
+      
+      if (healthData.error) {
+        console.error('Health data error:', healthData.error);
+        throw new Error(`خطأ في بيانات الصحة: ${healthData.error.message}`);
+      }
+      
+      if (mediaData.error) {
+        console.error('Media data error:', mediaData.error);
+        throw new Error(`خطأ في بيانات الوسائط: ${mediaData.error.message}`);
+      }
+      
+      if (skillsData.error) {
+        console.error('Skills data error:', skillsData.error);
+        throw new Error(`خطأ في بيانات المهارات: ${skillsData.error.message}`);
+      }
 
       // Check if student data exists
       if (!studentData.data) {
