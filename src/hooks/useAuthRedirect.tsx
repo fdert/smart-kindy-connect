@@ -26,47 +26,45 @@ export const useAuthRedirect = () => {
       return;
     }
 
-    // توجيه المستخدم حسب دوره - تم إصلاح المنطق
+    // توجيه المستخدم حسب دوره - فقط من الصفحات العامة
     const currentPath = window.location.pathname;
-    let targetPath = '/dashboard';
-
-    console.log('=== AUTH REDIRECT DEBUG ===');
-    console.log('User ID:', user.id);
-    console.log('User Role:', role);
-    console.log('Current Path:', currentPath);
-
-    switch (role) {
-      case 'super_admin':
-        targetPath = '/super-admin';
-        break;
-      case 'admin':
-        targetPath = '/dashboard';
-        break;
-      case 'teacher':
-        targetPath = '/teacher-dashboard';
-        break;
-      case 'guardian':
-        targetPath = '/dashboard';
-        break;
-      default:
-        targetPath = '/dashboard';
-    }
-
-    console.log('Target Path:', targetPath);
-
-    // إذا كان المستخدم في الصفحة الخاطئة، وجه إلى الصفحة الصحيحة
     const publicPaths = ['/auth', '/', '/tour', '/demo', '/register', '/pricing'];
     const isOnPublicPath = publicPaths.includes(currentPath) || 
                           currentPath.startsWith('/survey/') || 
                           currentPath.startsWith('/permission/') || 
                           currentPath.startsWith('/student-');
+    
+    // توجيه المستخدم فقط إذا كان في صفحة عامة
+    if (isOnPublicPath) {
+      let targetPath = '/dashboard';
+      
+      console.log('=== AUTH REDIRECT DEBUG ===');
+      console.log('User ID:', user.id);
+      console.log('User Role:', role);
+      console.log('Current Path:', currentPath);
 
-    // إذا كان المستخدم في صفحة عامة أو الصفحة الحالية لا تطابق الهدف
-    if (isOnPublicPath || currentPath !== targetPath) {
+      switch (role) {
+        case 'super_admin':
+          targetPath = '/super-admin';
+          break;
+        case 'admin':
+          targetPath = '/dashboard';
+          break;
+        case 'teacher':
+          targetPath = '/teacher-dashboard';
+          break;
+        case 'guardian':
+          targetPath = '/dashboard';
+          break;
+        default:
+          targetPath = '/dashboard';
+      }
+
+      console.log('Target Path:', targetPath);
       console.log(`Redirecting ${role} user from ${currentPath} to ${targetPath}`);
       navigate(targetPath, { replace: true });
     } else {
-      console.log('User is already on correct path:', currentPath);
+      console.log('User is on protected path, allowing access:', currentPath);
     }
 
   }, [user, role, authLoading, roleLoading, navigate]);
