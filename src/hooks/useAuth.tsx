@@ -43,12 +43,29 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (session?.user && event === 'SIGNED_IN') {
           setTimeout(async () => {
             try {
-              const { data: existingUser } = await supabase
+              console.log('=== AUTH STATE CHANGE: SIGNED_IN ===');
+              console.log('User ID:', session.user.id);
+              console.log('User email:', session.user.email);
+              
+              const { data: existingUser, error: fetchError } = await supabase
                 .from('users')
-                .select('id, role')
+                .select('id, role, is_active, tenant_id')
                 .eq('id', session.user.id)
                 .maybeSingle();
 
+              console.log('Existing user data:', existingUser);
+              console.log('Fetch error:', fetchError);
+
+              if (existingUser && existingUser.is_active) {
+                // المستخدم موجود ونشط - لا حاجة لأي تغيير
+                console.log('User exists and is active, role:', existingUser.role);
+                return;
+              }
+              
+              if (!existingUser) {
+                // إنشاء ملف تعريف جديد بدور افتراضي
+                console.log('Creating new user profile');
+                
                 // تحديد دور المستخدم
                 const isAdmin = session.user.email === 'admin@smartkindy.com';
                 let userRole: 'super_admin' | 'admin' | 'guardian' = 'guardian';
@@ -69,33 +86,37 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                   }
                 }
 
-                if (!existingUser) {
-                  // إنشاء ملف تعريف جديد
-                  const { error } = await supabase
-                    .from('users')
-                    .insert([
-                      {
-                        id: session.user.id,
-                        email: session.user.email!,
-                        full_name: session.user.user_metadata?.full_name || '',
-                        role: userRole
-                      }
-                    ]);
+                const { error: insertError } = await supabase
+                  .from('users')
+                  .insert([
+                    {
+                      id: session.user.id,
+                      email: session.user.email!,
+                      full_name: session.user.user_metadata?.full_name || '',
+                      role: userRole,
+                      is_active: true
+                    }
+                  ]);
 
-                  if (error) {
-                    console.error('Error creating user profile:', error);
-                  }
-                } else if (existingUser.role !== userRole) {
-                  // تحديث دور المستخدم إذا تغير
-                  const { error } = await supabase
-                    .from('users')
-                    .update({ role: userRole })
-                    .eq('id', session.user.id);
-
-                  if (error) {
-                    console.error('Error updating user role:', error);
-                  }
+                if (insertError) {
+                  console.error('Error creating user profile:', insertError);
+                } else {
+                  console.log('User profile created successfully with role:', userRole);
                 }
+              } else if (!existingUser.is_active) {
+                // تفعيل المستخدم إذا كان غير نشط
+                console.log('Activating inactive user');
+                const { error: updateError } = await supabase
+                  .from('users')
+                  .update({ is_active: true })
+                  .eq('id', session.user.id);
+
+                if (updateError) {
+                  console.error('Error activating user:', updateError);
+                } else {
+                  console.log('User activated successfully');
+                }
+              }
             } catch (error) {
               console.error('Error handling user profile:', error);
             }

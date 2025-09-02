@@ -123,20 +123,9 @@ const Auth = () => {
     const { error } = await signIn(signInForm.email, signInForm.password);
     
     if (!error) {
-      // التحقق من الحاجة لإعادة تعيين كلمة المرور
-      const { data: tenant } = await supabase
-        .from('tenants')
-        .select('password_reset_required, temp_password')
-        .eq('owner_email', signInForm.email)
-        .eq('password_reset_required', true)
-        .single();
-
-      if (tenant) {
-        setTempPassword(tenant.temp_password);
-        setShowPasswordReset(true);
-      } else {
-        navigate('/dashboard');
-      }
+      console.log('=== SIGN IN SUCCESSFUL ===');
+      console.log('User signed in, checking role...');
+      // لا نحتاج للتوجيه هنا لأن useAuthRedirect سيتولى ذلك
     }
     
     setLoading(false);

@@ -2910,6 +2910,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_dashboard_redirect: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
       get_user_tenant_id: {
         Args: Record<PropertyKey, never>
         Returns: string

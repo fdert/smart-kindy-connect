@@ -11,9 +11,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/hooks/useTenant';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/hooks/useLanguage';
 import { ImageUpload } from '@/components/ImageUpload';
 import { Plus, Search, Users, Calendar, Edit, Trash2, Send, FileText, Share, ExternalLink } from 'lucide-react';
 import ExcelImport from '@/components/ExcelImport';
+import { PageHeader } from '@/components/PageHeader';
 
 interface Student {
   id: string;
@@ -48,6 +50,7 @@ const Students = () => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const { tenant } = useTenant();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const [formData, setFormData] = useState({
     student_id: '',
@@ -352,14 +355,11 @@ const Students = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-              <Users className="h-8 w-8 text-primary" />
-              إدارة الطلاب
-            </h1>
-            <p className="text-gray-600 mt-1">إدارة معلومات الطلاب والفصول</p>
-          </div>
+        <PageHeader 
+          title={t('nav.students')}
+          subtitle="إدارة معلومات الطلاب والفصول"
+          showBack={false}
+        >
           <div className="flex gap-2">
             <ExcelImport onImportComplete={loadStudents} />
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -579,7 +579,7 @@ const Students = () => {
               مشاركة رابط التسجيل
             </Button>
           </div>
-        </div>
+        </PageHeader>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">

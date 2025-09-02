@@ -19,28 +19,31 @@ export const useUserRole = () => {
       }
 
       try {
-        // إضافة timestamp لتجنب التخزين المؤقت
-        const timestamp = new Date().getTime();
+        console.log('=== FETCHING USER ROLE ===');
+        console.log('User ID:', user.id);
+        console.log('User email:', user.email);
+        
         const { data, error } = await supabase
           .from('users')
-          .select('role, updated_at')
+          .select('role, is_active, updated_at')
           .eq('id', user.id)
+          .eq('is_active', true)
           .single();
 
         if (error) {
           console.error('Error fetching user role:', error);
           setRole(null);
-        } else {
-          const userRole = data?.role || null;
-          console.log('User role fetched:', userRole, 'for user:', user.id, 'at:', timestamp);
-          console.log('User last updated:', data?.updated_at);
-          setRole(userRole);
+        } else if (data) {
+          const userRole = data.role || null;
+          console.log('=== USER ROLE FETCHED ===');
+          console.log('Role:', userRole);
+          console.log('Is Active:', data.is_active);
+          console.log('Last Updated:', data.updated_at);
           
-          // إذا كان الدور "teacher" أو "admin"، أعد تحديد الصفحة لتطبيق التوجيه الجديد
-          if (userRole === 'teacher' && window.location.pathname === '/dashboard') {
-            console.log('Redirecting teacher to teacher dashboard...');
-            window.location.href = '/teacher-dashboard';
-          }
+          setRole(userRole);
+        } else {
+          console.log('No user data found');
+          setRole(null);
         }
       } catch (error) {
         console.error('Error fetching user role:', error);
@@ -51,11 +54,6 @@ export const useUserRole = () => {
     };
 
     getUserRole();
-    
-    // إعادة التحقق كل 3 ثوان للتأكد من التحديث السريع
-    const interval = setInterval(getUserRole, 3000);
-    
-    return () => clearInterval(interval);
   }, [user]);
 
   return { role, loading };

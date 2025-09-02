@@ -6,8 +6,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { TenantProvider } from "@/hooks/useTenant";
 import { LanguageProvider } from "@/hooks/useLanguage";
+import { Layout } from "@/components/Layout";
 import { useAuth } from "@/hooks/useAuth";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import Index from "./pages/Index";
 import Tour from "./pages/Tour";
 import Demo from "./pages/Demo";
@@ -48,9 +49,9 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// مكون حماية المسارات
+// مكون حماية المسارات المحسن
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, role, loading } = useAuthRedirect();
   
   if (loading) {
     return (
@@ -63,19 +64,22 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  if (!user) {
+  if (!user || !role) {
     return <Navigate to="/auth" replace />;
   }
   
-  return <>{children}</>;
+  return (
+    <Layout>
+      {children}
+    </Layout>
+  );
 };
 
 // مكون إعادة توجيه للمستخدمين المسجلين
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading: authLoading } = useAuth();
-  const { role, loading } = useUserRole();
+  const { user, role, loading } = useAuthRedirect();
   
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -86,18 +90,10 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
   
+  // إذا كان المستخدم مسجلاً الدخول ولديه دور، فلا حاجة لعرض الصفحات العامة
+  // لأن useAuthRedirect سيتولى إعادة التوجيه
   if (user && role) {
-    // توجيه المستخدمين حسب أدوارهم
-    switch (role) {
-      case 'super_admin':
-        return <Navigate to="/super-admin" replace />;
-      case 'teacher':
-        return <Navigate to="/teacher-dashboard" replace />; // توجيه المعلمين إلى لوحة التحكم المخصصة
-      case 'admin':
-        return <Navigate to="/dashboard" replace />;
-      default:
-        return <Navigate to="/dashboard" replace />;
-    }
+    return null; // useAuthRedirect سيتولى التوجيه
   }
   
   return <>{children}</>;
@@ -105,132 +101,52 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 
 const AppRoutes = () => (
   <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/tour" element={<Tour />} />
-        <Route path="/demo" element={<Demo />} />
-        <Route path="/register" element={<TenantRegistration />} />
-        <Route path="/pricing" element={<Pricing />} />
-        <Route path="/survey/:surveyId" element={<PublicSurvey />} />
-        <Route path="/permission/:id" element={<PublicPermission />} />
-        <Route path="/student-report/:studentId" element={<StudentReport />} />
-        <Route path="/student-assignments/:studentId" element={<StudentAssignments />} />
-        <Route path="/student-attendance/:studentId" element={<StudentAttendance />} />
-        <Route path="/student-rewards/:studentId" element={<StudentRewards />} />
-        <Route path="/student-media/:studentId" element={<StudentMedia />} />
-        <Route path="/student-notes-detail/:studentId" element={<StudentNotesDetail />} />
-    <Route path="/super-admin" element={
-      <ProtectedRoute>
-        <SuperAdmin />
-      </ProtectedRoute>
-    } />
+    {/* الصفحات العامة */}
+    <Route path="/" element={<Layout showNavigation={false}><Index /></Layout>} />
+    <Route path="/tour" element={<Layout showNavigation={false}><Tour /></Layout>} />
+    <Route path="/demo" element={<Layout showNavigation={false}><Demo /></Layout>} />
+    <Route path="/register" element={<Layout showNavigation={false}><TenantRegistration /></Layout>} />
+    <Route path="/pricing" element={<Layout showNavigation={false}><Pricing /></Layout>} />
+    <Route path="/survey/:surveyId" element={<Layout showNavigation={false}><PublicSurvey /></Layout>} />
+    <Route path="/permission/:id" element={<Layout showNavigation={false}><PublicPermission /></Layout>} />
+    <Route path="/student-report/:studentId" element={<Layout showNavigation={false}><StudentReport /></Layout>} />
+    <Route path="/student-assignments/:studentId" element={<Layout showNavigation={false}><StudentAssignments /></Layout>} />
+    <Route path="/student-attendance/:studentId" element={<Layout showNavigation={false}><StudentAttendance /></Layout>} />
+    <Route path="/student-rewards/:studentId" element={<Layout showNavigation={false}><StudentRewards /></Layout>} />
+    <Route path="/student-media/:studentId" element={<Layout showNavigation={false}><StudentMedia /></Layout>} />
+    <Route path="/student-notes-detail/:studentId" element={<Layout showNavigation={false}><StudentNotesDetail /></Layout>} />
+    <Route path="/reward-card" element={<Layout showNavigation={false}><SharedRewardCard /></Layout>} />
     <Route path="/auth" element={
       <PublicRoute>
-        <Auth />
+        <Layout showNavigation={false}><Auth /></Layout>
       </PublicRoute>
     } />
-    <Route path="/teacher-dashboard" element={
-      <ProtectedRoute>
-        <TeacherDashboard />
-      </ProtectedRoute>
-    } />
-    <Route path="/dashboard" element={
-      <ProtectedRoute>
-        <Dashboard />
-      </ProtectedRoute>
-    } />
-    <Route path="/students" element={
-      <ProtectedRoute>
-        <Students />
-      </ProtectedRoute>
-    } />
-    <Route path="/teachers" element={
-      <ProtectedRoute>
-        <Teachers />
-      </ProtectedRoute>
-    } />
-    <Route path="/attendance" element={
-      <ProtectedRoute>
-        <Attendance />
-      </ProtectedRoute>
-    } />
-    <Route path="/assignments" element={
-      <ProtectedRoute>
-        <Assignments />
-      </ProtectedRoute>
-    } />
-    <Route path="/student-notes" element={
-      <ProtectedRoute>
-        <StudentNotes />
-      </ProtectedRoute>
-    } />
-    <Route path="/rewards" element={
-      <ProtectedRoute>
-        <Rewards />
-      </ProtectedRoute>
-    } />
-    <Route path="/classes" element={
-      <ProtectedRoute>
-        <Classes />
-      </ProtectedRoute>
-    } />
-    <Route path="/media" element={
-      <ProtectedRoute>
-        <Media />
-      </ProtectedRoute>
-    } />
-    <Route path="/guardians" element={
-      <ProtectedRoute>
-        <Guardians />
-      </ProtectedRoute>
-    } />
-    <Route path="/reports" element={
-      <ProtectedRoute>
-        <Reports />
-      </ProtectedRoute>
-    } />
-    <Route path="/settings" element={
-      <ProtectedRoute>
-        <Settings />
-      </ProtectedRoute>
-    } />
-    <Route path="/financial-system" element={
-      <ProtectedRoute>
-        <FinancialSystem />
-      </ProtectedRoute>
-    } />
-    <Route path="/financial-reports" element={
-      <ProtectedRoute>
-        <FinancialReports />
-      </ProtectedRoute>
-    } />
-    <Route path="/permissions" element={
-      <ProtectedRoute>
-        <Permissions />
-      </ProtectedRoute>
-    } />
-    <Route path="/surveys" element={
-      <ProtectedRoute>
-        <Surveys />
-      </ProtectedRoute>
-    } />
-    <Route path="/virtual-classes" element={
-      <ProtectedRoute>
-        <VirtualClasses />
-      </ProtectedRoute>
-    } />
-    <Route path="/plans-management" element={
-      <ProtectedRoute>
-        <PlansManagement />
-      </ProtectedRoute>
-    } />
-    <Route path="/cms-management" element={
-      <ProtectedRoute>
-        <CMSManagement />
-      </ProtectedRoute>
-    } />
-    <Route path="/reward-card" element={<SharedRewardCard />} />
-    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-    <Route path="*" element={<NotFound />} />
+    
+    {/* الصفحات المحمية */}
+    <Route path="/super-admin" element={<ProtectedRoute><SuperAdmin /></ProtectedRoute>} />
+    <Route path="/teacher-dashboard" element={<ProtectedRoute><TeacherDashboard /></ProtectedRoute>} />
+    <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+    <Route path="/students" element={<ProtectedRoute><Students /></ProtectedRoute>} />
+    <Route path="/teachers" element={<ProtectedRoute><Teachers /></ProtectedRoute>} />
+    <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
+    <Route path="/assignments" element={<ProtectedRoute><Assignments /></ProtectedRoute>} />
+    <Route path="/student-notes" element={<ProtectedRoute><StudentNotes /></ProtectedRoute>} />
+    <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
+    <Route path="/classes" element={<ProtectedRoute><Classes /></ProtectedRoute>} />
+    <Route path="/media" element={<ProtectedRoute><Media /></ProtectedRoute>} />
+    <Route path="/guardians" element={<ProtectedRoute><Guardians /></ProtectedRoute>} />
+    <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+    <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+    <Route path="/financial-system" element={<ProtectedRoute><FinancialSystem /></ProtectedRoute>} />
+    <Route path="/financial-reports" element={<ProtectedRoute><FinancialReports /></ProtectedRoute>} />
+    <Route path="/permissions" element={<ProtectedRoute><Permissions /></ProtectedRoute>} />
+    <Route path="/surveys" element={<ProtectedRoute><Surveys /></ProtectedRoute>} />
+    <Route path="/virtual-classes" element={<ProtectedRoute><VirtualClasses /></ProtectedRoute>} />
+    <Route path="/plans-management" element={<ProtectedRoute><PlansManagement /></ProtectedRoute>} />
+    <Route path="/cms-management" element={<ProtectedRoute><CMSManagement /></ProtectedRoute>} />
+    
+    {/* صفحة 404 */}
+    <Route path="*" element={<Layout showNavigation={false}><NotFound /></Layout>} />
   </Routes>
 );
 
