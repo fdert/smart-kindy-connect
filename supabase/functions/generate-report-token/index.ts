@@ -77,7 +77,11 @@ serve(async (req) => {
     }
 
     // إنشاء hash للتوكن
-    const tokenHash = crypto.randomUUID();
+    const encoder = new TextEncoder();
+    const data = encoder.encode(crypto.randomUUID() + Date.now() + Math.random());
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const tokenHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000); // 72 ساعة
 
     // إدراج التوكن في قاعدة البيانات
