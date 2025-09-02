@@ -42,10 +42,14 @@ export default function StudentRewards() {
   };
 
   const loadData = async () => {
-    console.log('loadData called with studentId:', studentId);
+    console.log('=== loadData called ===');
+    console.log('studentId:', studentId);
+    console.log('Current URL:', window.location.href);
+    console.log('Search params:', searchParams.toString());
     
     if (!studentId) {
-      console.log('No studentId provided');
+      console.log('No studentId provided - returning');
+      setLoading(false);
       return;
     }
 
@@ -61,7 +65,7 @@ export default function StudentRewards() {
       return;
     }
 
-    console.log('Starting to load rewards data for studentId:', studentId);
+    console.log('Starting to load rewards data...');
     setLoading(true);
     
     try {
