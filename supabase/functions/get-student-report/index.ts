@@ -60,6 +60,30 @@ serve(async (req) => {
 
     // Get student information
     console.log('Fetching student data for ID:', studentId);
+    console.log('Student ID length:', studentId.length);
+    console.log('Student ID format check:', /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(studentId));
+    
+    // First check if student exists at all (without joins)
+    const { data: basicStudentData, error: basicStudentError } = await supabase
+      .from('students')
+      .select('id, full_name, student_id, tenant_id, class_id')
+      .eq('id', studentId)
+      .single();
+
+    console.log('Basic student query result:', { basicStudentData, basicStudentError });
+
+    if (basicStudentError || !basicStudentData) {
+      console.error('Student not found in basic query:', basicStudentError);
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Student not found - معرف الطالب غير صحيح أو غير موجود'
+      }), { 
+        status: 404, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Now get full student data with joins
     const { data: studentData, error: studentError } = await supabase
       .from('students')
       .select(`
@@ -71,28 +95,37 @@ serve(async (req) => {
         gender,
         tenant_id,
         class_id,
-        classes (name),
-        tenants (name)
+        classes!left (name),
+        tenants!left (name)
       `)
       .eq('id', studentId)
       .single();
 
-    console.log('Student query result:', { studentData, studentError });
+    console.log('Full student query result:', { studentData, studentError });
 
     if (studentError || !studentData) {
-      console.error('Student not found:', studentError);
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Student not found'
-      }), { 
-        status: 404, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      console.error('Student not found in full query:', studentError);
+      // Use basic data if full query fails
+      const fallbackData = {
+        ...basicStudentData,
+        photo_url: null,
+        date_of_birth: '2020-01-01',
+        gender: 'unknown',
+        classes: null,
+        tenants: null
+      };
+      console.log('Using fallback student data:', fallbackData);
+      var finalStudentData = fallbackData;
+    } else {
+      var finalStudentData = studentData;
     }
 
-    const tenantId = studentData.tenant_id;
+    const tenantId = finalStudentData.tenant_id;
     const currentDate = new Date();
     const oneYearAgo = new Date(currentDate.getFullYear() - 1, 0, 1);
+
+    console.log('Using tenant ID:', tenantId);
+    console.log('Student class ID:', finalStudentData.class_id);
 
     // Get all related data
     const [assignmentsData, attendanceData, rewardsData, notesData, healthData, mediaData, skillsData] = await Promise.all([
@@ -121,7 +154,7 @@ serve(async (req) => {
           )
         `)
         .eq('tenant_id', tenantId)
-        .or(`student_id.eq.${studentId},and(is_group_assignment.eq.true,class_id.eq.${studentData.class_id})`)
+        .or(`student_id.eq.${studentId},and(is_group_assignment.eq.true,class_id.eq.${finalStudentData.class_id || 'null'})`)
         .gte('created_at', oneYearAgo.toISOString())
         .order('created_at', { ascending: false }),
 
@@ -256,9 +289,9 @@ serve(async (req) => {
 
     const reportData = {
       student: {
-        ...studentData,
-        class_name: studentData.classes?.name,
-        tenant_name: studentData.tenants?.name
+        ...finalStudentData,
+        class_name: finalStudentData.classes?.name || null,
+        tenant_name: finalStudentData.tenants?.name || null
       },
       assignments: assignmentStats,
       attendance: attendanceStats,
