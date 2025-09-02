@@ -176,13 +176,14 @@ export default function StudentRewards() {
   };
 
   useEffect(() => {
-    console.log('StudentRewards component mounted');
+    console.log('=== StudentRewards useEffect triggered ===');
     console.log('Student ID from params:', studentId);
     console.log('Search params:', searchParams.toString());
     console.log('Tenant:', tenant);
     
     if (!studentId) {
-      console.log('No studentId provided');
+      console.log('No studentId provided - setting loading to false');
+      setLoading(false);
       return;
     }
     
@@ -193,16 +194,26 @@ export default function StudentRewards() {
       // For guardian access, we only need studentId
       console.log('Loading data for guardian access');
       loadData();
-    } else {
+    } else if (tenant?.id) {
       // For regular access, we need both tenant and studentId
-      if (tenant && studentId) {
-        console.log('Loading data for authenticated access');
-        loadData();
-      } else {
-        console.log('Waiting for tenant or studentId', { tenant: !!tenant, studentId: !!studentId });
-      }
+      console.log('Loading data for authenticated access');
+      loadData();
+    } else {
+      console.log('Waiting for tenant to load...', { tenant: !!tenant, tenantId: tenant?.id });
+      // Don't set loading to false here, keep waiting for tenant
     }
-  }, [studentId, searchParams.get('guardian'), tenant?.id]);
+  }, [studentId, tenant?.id]);
+
+  // Separate useEffect for guardian parameter changes
+  useEffect(() => {
+    const isGuardianAccess = searchParams.get('guardian') === 'true';
+    console.log('Guardian parameter changed:', isGuardianAccess);
+    
+    if (studentId && isGuardianAccess) {
+      console.log('Reloading data due to guardian parameter change');
+      loadData();
+    }
+  }, [searchParams.get('guardian')]);
 
   const getRewardTypeColor = (type: string) => {
     switch (type) {
