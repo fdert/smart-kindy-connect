@@ -195,6 +195,12 @@ const translations = {
     'dashboard.attendance_rate': 'معدل الحضور',
     'dashboard.recent_activities': 'الأنشطة الأخيرة',
     'dashboard.quick_actions': 'إجراءات سريعة',
+    'dashboard.today_attendance': 'الحضور اليوم',
+    'dashboard.weekly_rewards': 'النجوم الأسبوعية',
+    'dashboard.this_week': 'هذا الأسبوع',
+    'dashboard.start_now': 'ابدأ الآن',
+    'dashboard.view_media': 'مشاهدة الصور والأنشطة',
+    'dashboard.view_assignments': 'عرض معلومات وواجبات أطفالي',
   },
   en: {
     // Navigation
@@ -381,6 +387,12 @@ const translations = {
     'dashboard.attendance_rate': 'Attendance Rate',
     'dashboard.recent_activities': 'Recent Activities',
     'dashboard.quick_actions': 'Quick Actions',
+    'dashboard.today_attendance': 'Today\'s Attendance',
+    'dashboard.weekly_rewards': 'Weekly Stars',
+    'dashboard.this_week': 'This Week',
+    'dashboard.start_now': 'Start Now',
+    'dashboard.view_media': 'View Photos & Activities',
+    'dashboard.view_assignments': 'View Children Information & Assignments',
   }
 };
 
