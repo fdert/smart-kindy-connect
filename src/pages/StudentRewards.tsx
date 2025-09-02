@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
 import { Star, Award, Trophy, ArrowLeft } from 'lucide-react';
@@ -37,6 +38,7 @@ export default function StudentRewards() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   // Get date filters from URL params
   const fromParam = searchParams.get('from');
@@ -75,8 +77,9 @@ export default function StudentRewards() {
       const isGuardianAccess = searchParams.get('guardian') === 'true';
       console.log('Guardian access:', isGuardianAccess);
 
-      // Direct API call to edge function
+      // Direct API call to edge function with mobile optimization
       console.log('Calling edge function directly...');
+      console.log('Device type:', isMobile ? 'Mobile' : 'Desktop');
       
       const functionUrl = `https://ytjodudlnfamvnescumu.supabase.co/functions/v1/get-student-rewards`;
       
@@ -90,12 +93,19 @@ export default function StudentRewards() {
       console.log('Request URL:', functionUrl);
       console.log('Request body:', requestBody);
       
+      // Enhanced fetch with mobile-friendly options
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'User-Agent': isMobile ? 'mobile-app' : 'desktop-app',
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
+        credentials: 'omit', // Better for mobile
+        cache: 'no-cache',
+        mode: 'cors'
       });
 
       console.log('Fetch response status:', response.status);
@@ -191,10 +201,10 @@ export default function StudentRewards() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center px-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">جاري تحميل البيانات...</p>
+          <p className="text-muted-foreground text-sm md:text-base">جاري تحميل البيانات...</p>
         </div>
       </div>
     );
@@ -202,16 +212,16 @@ export default function StudentRewards() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-6">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">خطأ في التحميل</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center px-4">
+        <div className="text-center max-w-md mx-auto p-4 md:p-6">
+          <div className="text-red-500 text-4xl md:text-6xl mb-4">⚠️</div>
+          <h2 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">خطأ في التحميل</h2>
+          <p className="text-sm md:text-base text-gray-600 mb-4">{error}</p>
           <div className="space-y-2">
-            <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
+            <Button onClick={() => window.location.reload()} variant="outline" className="w-full text-sm md:text-base">
               إعادة المحاولة
             </Button>
-            <Button onClick={() => window.history.back()} variant="ghost" className="w-full">
+            <Button onClick={() => window.history.back()} variant="ghost" className="w-full text-sm md:text-base">
               العودة
             </Button>
           </div>
@@ -221,10 +231,10 @@ export default function StudentRewards() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4 md:p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
           <Button
             variant="outline"
             onClick={() => {
@@ -232,100 +242,101 @@ export default function StudentRewards() {
               const guardianParam = isGuardianAccess ? '?guardian=true' : '';
               navigate(`/student-report/${studentId}${guardianParam}`);
             }}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 text-sm md:text-base"
+            size={isMobile ? "sm" : "default"}
           >
             <ArrowLeft className="h-4 w-4" />
             العودة للتقرير
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+          <div className="flex-1">
+            <h1 className="text-xl md:text-3xl font-bold text-gray-900 leading-tight">
               مكافآت الطالب: {studentInfo?.full_name || 'غير متوفر'}
             </h1>
-            <p className="text-gray-600">
+            <p className="text-sm md:text-base text-gray-600 mt-1">
               الفترة: {format(dateRange.from, 'dd MMM yyyy', { locale: ar })} - {format(dateRange.to, 'dd MMM yyyy', { locale: ar })}
             </p>
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
           <Card className="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm opacity-90">إجمالي المكافآت</p>
-                  <p className="text-3xl font-bold">{rewards.length}</p>
+                  <p className="text-xs md:text-sm opacity-90">إجمالي المكافآت</p>
+                  <p className="text-2xl md:text-3xl font-bold">{rewards.length}</p>
                 </div>
-                <Award className="h-8 w-8 opacity-80" />
+                <Award className="h-6 w-6 md:h-8 md:w-8 opacity-80" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm opacity-90">إجمالي النقاط</p>
-                  <p className="text-3xl font-bold">{totalPoints}</p>
+                  <p className="text-xs md:text-sm opacity-90">إجمالي النقاط</p>
+                  <p className="text-2xl md:text-3xl font-bold">{totalPoints}</p>
                 </div>
-                <Star className="h-8 w-8 opacity-80" />
+                <Star className="h-6 w-6 md:h-8 md:w-8 opacity-80" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-pink-500 to-pink-600 text-white">
-            <CardContent className="p-6">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm opacity-90">متوسط النقاط</p>
-                  <p className="text-3xl font-bold">
+                  <p className="text-xs md:text-sm opacity-90">متوسط النقاط</p>
+                  <p className="text-2xl md:text-3xl font-bold">
                     {rewards.length > 0 ? (totalPoints / rewards.length).toFixed(1) : '0'}
                   </p>
                 </div>
-                <Trophy className="h-8 w-8 opacity-80" />
+                <Trophy className="h-6 w-6 md:h-8 md:w-8 opacity-80" />
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Rewards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {rewards.length === 0 ? (
             <div className="col-span-full">
               <Card className="bg-white/90 backdrop-blur-sm">
-                <CardContent className="p-12 text-center">
-                  <Trophy className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-600 mb-2">لا توجد مكافآت</h3>
-                  <p className="text-gray-500">لم يتم منح أي مكافآت للطالب في هذه الفترة</p>
+                <CardContent className="p-8 md:p-12 text-center">
+                  <Trophy className="h-12 w-12 md:h-16 md:w-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg md:text-xl font-semibold text-gray-600 mb-2">لا توجد مكافآت</h3>
+                  <p className="text-sm md:text-base text-gray-500">لم يتم منح أي مكافآت للطالب في هذه الفترة</p>
                 </CardContent>
               </Card>
             </div>
           ) : (
             rewards.map((reward) => (
               <Card key={reward.id} className="bg-white/90 backdrop-blur-sm hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${getRewardTypeColor(reward.type)}`}></div>
-                      <Badge variant="outline">
+                <CardHeader className="pb-3 md:pb-4">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <div className={`w-2 h-2 md:w-3 md:h-3 rounded-full ${getRewardTypeColor(reward.type)}`}></div>
+                      <Badge variant="outline" className="text-xs">
                         {getRewardTypeText(reward.type)}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-1 text-yellow-500">
-                      <Star className="h-4 w-4 fill-current" />
-                      <span className="font-bold">{reward.points}</span>
+                      <Star className="h-3 w-3 md:h-4 md:w-4 fill-current" />
+                      <span className="font-bold text-sm md:text-base">{reward.points}</span>
                     </div>
                   </div>
-                  <CardTitle className="text-lg">{reward.title}</CardTitle>
+                  <CardTitle className="text-base md:text-lg leading-tight">{reward.title}</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-0">
                   {reward.description && (
-                    <p className="text-gray-600 mb-4">{reward.description}</p>
+                    <p className="text-sm md:text-base text-gray-600 mb-3 md:mb-4">{reward.description}</p>
                   )}
                   {reward.notes && (
-                    <div className="bg-blue-50 p-3 rounded-lg mb-4">
-                      <p className="text-sm font-medium text-blue-800 mb-1">ملاحظات:</p>
-                      <p className="text-blue-700 text-sm">{reward.notes}</p>
+                    <div className="bg-blue-50 p-2 md:p-3 rounded-lg mb-3 md:mb-4">
+                      <p className="text-xs md:text-sm font-medium text-blue-800 mb-1">ملاحظات:</p>
+                      <p className="text-blue-700 text-xs md:text-sm">{reward.notes}</p>
                     </div>
                   )}
                   <div className="flex justify-between items-center text-xs text-gray-500">
