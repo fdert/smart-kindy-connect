@@ -58,16 +58,43 @@ serve(async (req) => {
       }
     );
 
-    // إنشاء توكن جديد
-    const { data: tokenData, error: tokenError } = await supabaseAdmin
-      .rpc('generate_report_token', {
-        p_student_id: studentId,
-        p_report_type: reportType,
-        p_guardian_access: guardianAccess
+    // أولاً، احصل على بيانات الطالب لأخذ tenant_id
+    const { data: studentData, error: studentError } = await supabaseAdmin
+      .from('students')
+      .select('tenant_id')
+      .eq('id', studentId)
+      .single();
+
+    if (studentError || !studentData) {
+      console.error('Error fetching student data:', studentError);
+      return new Response(
+        JSON.stringify({ error: 'Student not found or invalid' }),
+        { 
+          status: 404, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // إنشاء hash للتوكن
+    const tokenHash = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000); // 72 ساعة
+
+    // إدراج التوكن في قاعدة البيانات
+    const { error: insertError } = await supabaseAdmin
+      .from('report_tokens')
+      .insert({
+        token_hash: tokenHash,
+        student_id: studentId,
+        tenant_id: studentData.tenant_id,
+        report_type: reportType,
+        guardian_access: guardianAccess,
+        expires_at: expiresAt.toISOString(),
+        is_used: false
       });
 
-    if (tokenError) {
-      console.error('Error generating token:', tokenError);
+    if (insertError) {
+      console.error('Error inserting token:', insertError);
       return new Response(
         JSON.stringify({ error: 'Failed to generate token' }),
         { 
@@ -81,15 +108,15 @@ serve(async (req) => {
 
     // إنشاء رابط التقرير المحلي
     const baseUrl = req.headers.get('origin') || 'https://yourapp.com';
-    const reportUrl = `${baseUrl}/${reportType}/${studentId}?token=${tokenData}&guardian=${guardianAccess}`;
+    const reportUrl = `${baseUrl}/${reportType}/${studentId}?token=${tokenHash}&guardian=${guardianAccess}`;
 
     return new Response(
       JSON.stringify({
         success: true,
         data: {
-          token: tokenData,
+          token: tokenHash,
           reportUrl: reportUrl,
-          expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString() // 72 ساعة
+          expiresAt: expiresAt.toISOString()
         }
       }),
       {
