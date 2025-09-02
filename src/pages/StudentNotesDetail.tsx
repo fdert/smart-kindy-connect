@@ -3,12 +3,10 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useTenant } from '@/hooks/useTenant';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import { BookOpen, Heart, Users, Brain, Stethoscope, ArrowLeft, FileText } from 'lucide-react';
+import { BookOpen, Heart, Users, Brain, Stethoscope, ArrowLeft, FileText, Star, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface NoteData {
@@ -23,15 +21,41 @@ interface NoteData {
   teacher_id: string;
   ai_analysis: string | null;
   ai_suggestions: string | null;
+  is_private: boolean;
+  guardian_notified: boolean;
+  notified_at: string | null;
+}
+
+interface SkillData {
+  id: string;
+  skill_name: string;
+  skill_category: string;
+  level: number;
+  assessment_date: string;
+  notes: string | null;
+  assessed_by: string;
+  created_at: string;
+}
+
+interface StudentData {
+  id: string;
+  full_name: string;
+  student_id: string;
+  photo_url: string | null;
+  date_of_birth: string | null;
+  gender: string | null;
+  class_name?: string;
+  tenant_name?: string;
 }
 
 export default function StudentNotesDetail() {
   const { studentId } = useParams();
   const [searchParams] = useSearchParams();
   const [notes, setNotes] = useState<NoteData[]>([]);
-  const [studentInfo, setStudentInfo] = useState<any>(null);
+  const [developmentSkills, setDevelopmentSkills] = useState<SkillData[]>([]);
+  const [studentInfo, setStudentInfo] = useState<StudentData | null>(null);
   const [loading, setLoading] = useState(true);
-  const { tenant } = useTenant();
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -43,120 +67,128 @@ export default function StudentNotesDetail() {
     to: toParam ? new Date(toParam) : new Date()
   };
 
-  useEffect(() => {
-    // Check if this is guardian access or regular authenticated access
-    const isGuardianAccess = searchParams.get('guardian') === 'true';
+  const loadNotesData = async () => {
+    console.log('=== loadNotesData START ===');
+    console.log('Current URL:', window.location.href);
+    console.log('StudentId param:', studentId);
+    console.log('Guardian param:', searchParams.get('guardian'));
+    console.log('Date range:', { from: dateRange.from.toISOString(), to: dateRange.to.toISOString() });
     
-    if (isGuardianAccess) {
-      // For guardian access, we only need studentId
-      if (studentId) {
-        loadData();
-      }
-    } else {
-      // For regular access, we need both tenant and studentId
-      if (tenant && studentId) {
-        loadData();
-      }
-    }
-  }, [tenant, studentId, searchParams]);
-
-  const loadData = async () => {
     if (!studentId) {
-      console.error('No studentId provided');
+      console.log('No studentId provided');
+      setError('معرف الطالب غير متوفر');
+      setLoading(false);
       return;
     }
 
-    // تحقق من صحة UUID
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(studentId)) {
-      console.error('Invalid studentId format:', studentId);
-      toast({
-        title: "خطأ في الرابط",
-        description: "معرف الطالب غير صحيح",
-        variant: "destructive"
-      });
+    // Simple UUID validation
+    if (studentId.length !== 36 || !studentId.includes('-')) {
+      console.log('Invalid studentId format:', studentId);
+      setError('معرف الطالب غير صحيح');
       setLoading(false);
       return;
     }
 
     setLoading(true);
+    setError(null);
+
     try {
-      // Check if this is a guardian access (public access)
       const isGuardianAccess = searchParams.get('guardian') === 'true';
-      let tenantId: string;
+      console.log('Guardian access:', isGuardianAccess);
 
-      if (isGuardianAccess) {
-        // For guardian access, we don't need tenant verification
-        console.log('Guardian access mode - loading notes for student:', studentId);
-        
-        // Load student basic info without tenant restriction for guardian access
-        const { data: studentData, error: studentError } = await supabase
-          .from('students')
-          .select(`
-            id,
-            full_name,
-            student_id,
-            photo_url,
-            tenant_id,
-            classes (name)
-          `)
-          .eq('id', studentId)
-          .single();
+      // Direct API call to edge function
+      console.log('Calling get-student-notes edge function...');
+      
+      const functionUrl = `https://ytjodudlnfamvnescumu.supabase.co/functions/v1/get-student-notes`;
+      
+      const requestBody = {
+        studentId: studentId,
+        guardian: isGuardianAccess,
+        from: dateRange.from.toISOString(),
+        to: dateRange.to.toISOString()
+      };
+      
+      console.log('Request URL:', functionUrl);
+      console.log('Request body:', requestBody);
+      
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
 
-        if (studentError) {
-          console.error('Student data error:', studentError);
-          throw new Error('لم يتم العثور على بيانات الطالب');
-        }
+      console.log('Fetch response status:', response.status);
+      console.log('Fetch response ok:', response.ok);
 
-        setStudentInfo(studentData);
-        tenantId = studentData.tenant_id;
-        
-      } else {
-        // Regular authenticated access - require tenant
-        if (!tenant?.id) {
-          throw new Error('معرف الروضة غير صحيح');
-        }
-
-        // Load student info with tenant verification
-        const { data: studentData, error: studentError } = await supabase
-          .from('students')
-          .select('full_name, student_id, photo_url, classes(name)')
-          .eq('id', studentId)
-          .eq('tenant_id', tenant.id)
-          .maybeSingle();
-
-        if (studentError) throw studentError;
-        setStudentInfo(studentData);
-        tenantId = tenant.id;
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Fetch error response:', response.status, errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
 
-      // Load notes with guardian access filter (only non-private notes)
-      const { data: notesData, error: notesError } = await supabase
-        .from('student_notes')
-        .select('*')
-        .eq('student_id', studentId)
-        .eq('tenant_id', tenantId)
-        .eq('is_private', isGuardianAccess ? false : undefined) // Filter private notes for guardian access
-        .gte('created_at', dateRange.from.toISOString())
-        .lte('created_at', dateRange.to.toISOString())
-        .order('created_at', { ascending: false });
+      const data = await response.json();
+      console.log('Raw response data:', data);
 
-      if (notesError) {
-        throw notesError;
+      if (!data || !data.success) {
+        console.error('Edge function returned error:', data);
+        throw new Error(data?.error || 'فشل في تحميل البيانات');
       }
 
+      const { student, notes: notesData, development_skills: skillsData, metadata } = data.data;
+      
+      console.log('Data received:', {
+        studentName: student?.full_name,
+        notesCount: notesData?.length || 0,
+        skillsCount: skillsData?.length || 0,
+        totalNotesEver: metadata?.totalNotesCount || 0,
+        dateRangeNotesCount: metadata?.dateRangeNotesCount || 0
+      });
+
+      if (!student) {
+        throw new Error('لم يتم العثور على بيانات الطالب');
+      }
+
+      setStudentInfo(student);
       setNotes(notesData || []);
+      setDevelopmentSkills(skillsData || []);
 
-    } catch (error: any) {
+      console.log('=== Data loading completed successfully ===');
+      console.log('Final state - Student:', student.full_name, 'Notes:', notesData?.length || 0, 'Skills:', skillsData?.length || 0);
+
+    } catch (err: any) {
+      console.error('=== Error in loadNotesData ===', err);
+      const errorMessage = err.message || 'حدث خطأ غير متوقع';
+      setError(errorMessage);
       toast({
-        title: "خطأ في تحميل البيانات",
-        description: error.message,
+        title: "خطأ في التحميل",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
       setLoading(false);
+      console.log('=== loadNotesData END ===');
     }
   };
+
+  useEffect(() => {
+    console.log('=== useEffect triggered ===');
+    const isGuardianAccess = searchParams.get('guardian') === 'true';
+    
+    if (!studentId) {
+      console.log('No studentId, stopping');
+      setError('معرف الطالب مفقود');
+      setLoading(false);
+      return;
+    }
+
+    console.log('Loading notes data for studentId:', studentId);
+    console.log('Guardian access:', isGuardianAccess);
+    
+    loadNotesData();
+    
+  }, [studentId, searchParams.get('guardian')]);
 
   const getNoteTypeIcon = (type: string) => {
     switch (type) {
@@ -220,6 +252,26 @@ export default function StudentNotesDetail() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">جاري تحميل البيانات...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">خطأ في التحميل</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <div className="space-y-2">
+            <Button onClick={() => window.location.reload()} variant="outline" className="w-full">
+              إعادة المحاولة
+            </Button>
+            <Button onClick={() => window.history.back()} variant="ghost" className="w-full">
+              العودة
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -292,17 +344,69 @@ export default function StudentNotesDetail() {
         </div>
 
         {/* Notes by Category */}
-        {notes.length === 0 ? (
+        {notes.length === 0 && developmentSkills.length === 0 ? (
           <Card className="bg-white/90 backdrop-blur-sm">
             <CardContent className="p-12 text-center">
               <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-600 mb-2">لا توجد ملاحظات</h3>
-              <p className="text-gray-500">لم يتم تسجيل أي ملاحظات للطالب في هذه الفترة</p>
+              <h3 className="text-xl font-semibold text-gray-600 mb-2">لا توجد ملاحظات أو مهارات</h3>
+              <p className="text-gray-500">لم يتم تسجيل أي ملاحظات أو مهارات تطوير للطالب في هذه الفترة</p>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-8">
-            {Object.entries(groupedNotes).map(([noteType, typeNotes]) => (
+            {/* Development Skills Section */}
+            {developmentSkills.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-3">
+                  <TrendingUp className="h-6 w-6 text-green-600" />
+                  مهارات التطوير
+                  <Badge className="bg-green-100 text-green-800">
+                    {developmentSkills.length}
+                  </Badge>
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                  {developmentSkills.map((skill) => (
+                    <Card key={skill.id} className="bg-white/90 backdrop-blur-sm">
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="flex items-center gap-2">
+                            <TrendingUp className="h-5 w-5 text-green-600" />
+                            {skill.skill_name}
+                          </CardTitle>
+                          <Badge variant="outline" className="bg-purple-50 text-purple-700">
+                            {skill.skill_category}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center gap-1 mb-3">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`h-5 w-5 ${
+                                star <= skill.level
+                                  ? 'text-yellow-400 fill-current'
+                                  : 'text-gray-300'
+                              }`}
+                            />
+                          ))}
+                          <span className="ml-2 text-sm font-medium">{skill.level}/5</span>
+                        </div>
+                        {skill.notes && (
+                          <p className="text-gray-600 mb-3 text-sm">{skill.notes}</p>
+                        )}
+                        <div className="text-xs text-gray-500">
+                          تاريخ التقييم: {format(new Date(skill.assessment_date), 'dd MMM yyyy', { locale: ar })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Notes Section */}
+            {notes.length > 0 && Object.entries(groupedNotes).map(([noteType, typeNotes]) => (
               <div key={noteType}>
                 <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-3">
                   {getNoteTypeIcon(noteType)}
