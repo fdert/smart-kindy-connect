@@ -2936,7 +2936,12 @@ export type Database = {
       }
       validate_report_token: {
         Args: { p_token_hash: string }
-        Returns: Json
+        Returns: {
+          guardian_access: boolean
+          report_type: string
+          student_id: string
+          tenant_id: string
+        }[]
       }
     }
     Enums: {
