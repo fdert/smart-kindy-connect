@@ -169,22 +169,20 @@ export default function StudentRewards() {
 
   const getRewardTypeColor = (type: string) => {
     switch (type) {
-      case 'academic': return 'bg-blue-500';
-      case 'behavioral': return 'bg-green-500';
-      case 'participation': return 'bg-purple-500';
-      case 'creativity': return 'bg-pink-500';
-      case 'leadership': return 'bg-yellow-500';
+      case 'star': return 'bg-yellow-500';
+      case 'badge': return 'bg-green-500';
+      case 'certificate': return 'bg-purple-500';
+      case 'achievement': return 'bg-pink-500';
       default: return 'bg-gray-500';
     }
   };
 
   const getRewardTypeText = (type: string) => {
     switch (type) {
-      case 'academic': return 'أكاديمية';
-      case 'behavioral': return 'سلوكية';
-      case 'participation': return 'مشاركة';
-      case 'creativity': return 'إبداع';
-      case 'leadership': return 'قيادة';
+      case 'star': return 'نجمة';
+      case 'badge': return 'شارة';
+      case 'certificate': return 'شهادة';
+      case 'achievement': return 'إنجاز';
       default: return 'عامة';
     }
   };
