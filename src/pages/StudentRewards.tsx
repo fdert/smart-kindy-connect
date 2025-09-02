@@ -43,20 +43,28 @@ export default function StudentRewards() {
   };
 
   const loadData = async () => {
+    console.log('=== loadData START ===');
+    
     if (!studentId) {
+      console.log('No studentId, aborting');
       setError('معرف الطالب مطلوب');
       setLoading(false);
       return;
     }
 
     try {
+      console.log('Setting loading to true');
       setLoading(true);
       setError(null);
       
       const isGuardianAccess = searchParams.get('guardian') === 'true';
+      console.log('Guardian access:', isGuardianAccess);
       
       if (isGuardianAccess) {
+        console.log('=== GUARDIAN ACCESS PATH ===');
+        
         // For guardian access, get student data first
+        console.log('Fetching student data for guardian...');
         const { data: studentData, error: studentError } = await supabase
           .from('students')
           .select(`
@@ -69,13 +77,25 @@ export default function StudentRewards() {
           .eq('id', studentId)
           .single();
         
+        console.log('Student query result:', { studentData, studentError });
+        
         if (studentError) {
+          console.error('Student query failed:', studentError);
           throw new Error('لم يتم العثور على بيانات الطالب');
         }
         
+        if (!studentData) {
+          console.error('No student data returned');
+          throw new Error('لم يتم العثور على بيانات الطالب');
+        }
+        
+        console.log('Student data loaded successfully:', studentData);
         setStudentInfo(studentData);
 
         // Load rewards using student's tenant_id
+        console.log('Loading rewards for guardian access...');
+        console.log('Date range:', { from: dateRange.from, to: dateRange.to });
+        
         const { data: rewardsData, error: rewardsError } = await supabase
           .from('rewards')
           .select('*')
@@ -85,19 +105,29 @@ export default function StudentRewards() {
           .lte('awarded_at', dateRange.to.toISOString())
           .order('awarded_at', { ascending: false });
         
+        console.log('Rewards query result:', { rewardsData, rewardsError });
+        
         if (rewardsError) {
+          console.error('Rewards query failed:', rewardsError);
           throw new Error('فشل في تحميل الجوائز');
         }
         
+        console.log('Rewards loaded successfully:', rewardsData?.length || 0, 'items');
         setRewards(rewardsData || []);
 
       } else {
+        console.log('=== AUTHENTICATED ACCESS PATH ===');
+        
         // For authenticated access
         if (!tenant?.id) {
+          console.error('No tenant ID available');
           throw new Error('يرجى تسجيل الدخول');
         }
 
+        console.log('Using tenant ID:', tenant.id);
+
         // Load student info with tenant verification  
+        console.log('Fetching student data for authenticated user...');
         const { data: studentData, error: studentError } = await supabase
           .from('students')
           .select('full_name, student_id, photo_url, classes(name)')
@@ -105,13 +135,18 @@ export default function StudentRewards() {
           .eq('tenant_id', tenant.id)
           .single();
         
+        console.log('Authenticated student query result:', { studentData, studentError });
+        
         if (studentError) {
+          console.error('Authenticated student query failed:', studentError);
           throw new Error('لم يتم العثور على بيانات الطالب');
         }
         
+        console.log('Authenticated student data loaded:', studentData);
         setStudentInfo(studentData);
 
         // Load rewards
+        console.log('Loading rewards for authenticated user...');
         const { data: rewardsData, error: rewardsError } = await supabase
           .from('rewards')
           .select('*')
@@ -121,38 +156,79 @@ export default function StudentRewards() {
           .lte('awarded_at', dateRange.to.toISOString())
           .order('awarded_at', { ascending: false });
         
+        console.log('Authenticated rewards query result:', { rewardsData, rewardsError });
+        
         if (rewardsError) {
+          console.error('Authenticated rewards query failed:', rewardsError);
           throw new Error('فشل في تحميل الجوائز');
         }
         
+        console.log('Authenticated rewards loaded:', rewardsData?.length || 0, 'items');
         setRewards(rewardsData || []);
       }
 
+      console.log('=== loadData SUCCESS ===');
+
     } catch (err: any) {
-      console.error('Error loading data:', err);
-      setError(err.message || 'حدث خطأ في تحميل البيانات');
+      console.error('=== loadData ERROR ===');
+      console.error('Error:', err);
+      const errorMessage = err.message || 'حدث خطأ في تحميل البيانات';
+      console.error('Setting error message:', errorMessage);
+      setError(errorMessage);
       toast({
         title: "خطأ في التحميل",
-        description: err.message || 'حدث خطأ في تحميل البيانات',
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
+      console.log('=== loadData FINALLY - setting loading to false ===');
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const isGuardianAccess = searchParams.get('guardian') === 'true';
+    console.log('=== StudentRewards Mount ===');
+    console.log('URL:', window.location.href);
+    console.log('StudentId:', studentId);
+    console.log('Guardian param:', searchParams.get('guardian'));
+    console.log('From param:', searchParams.get('from'));
+    console.log('To param:', searchParams.get('to'));
     
-    if (studentId && (isGuardianAccess || tenant?.id)) {
+    const isGuardianAccess = searchParams.get('guardian') === 'true';
+    console.log('Is Guardian Access:', isGuardianAccess);
+    
+    if (!studentId) {
+      console.log('Missing studentId, setting error');
+      setError('معرف الطالب مفقود من الرابط');
+      setLoading(false);
+      return;
+    }
+    
+    // Check if studentId is valid UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(studentId)) {
+      console.log('Invalid studentId format');
+      setError('معرف الطالب غير صحيح');
+      setLoading(false);
+      return;
+    }
+    
+    if (isGuardianAccess) {
+      console.log('Loading data immediately for guardian');
       loadData();
-    } else if (!isGuardianAccess && !tenant?.id) {
-      // Wait a bit for tenant to load
+    } else if (tenant?.id) {
+      console.log('Loading data for authenticated user');
+      loadData();
+    } else {
+      console.log('Waiting for tenant...');
       const timeout = setTimeout(() => {
+        console.log('Timeout - checking tenant again');
         if (!tenant?.id) {
+          console.log('No tenant after timeout, setting error');
           setError('فشل في تحميل معلومات الحساب');
           setLoading(false);
         } else {
+          console.log('Tenant loaded after timeout, loading data');
           loadData();
         }
       }, 3000);
