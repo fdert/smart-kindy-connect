@@ -29,6 +29,7 @@ export default function StudentRewards() {
   const [rewards, setRewards] = useState<RewardData[]>([]);
   const [studentInfo, setStudentInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { tenant } = useTenant();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -37,45 +38,25 @@ export default function StudentRewards() {
   const fromParam = searchParams.get('from');
   const toParam = searchParams.get('to');
   const dateRange = {
-    from: fromParam ? new Date(fromParam) : new Date(new Date().getFullYear() - 1, 0, 1), // بداية السنة الماضية
+    from: fromParam ? new Date(fromParam) : new Date(new Date().getFullYear() - 1, 0, 1),
     to: toParam ? new Date(toParam) : new Date()
   };
 
   const loadData = async () => {
-    console.log('=== loadData called ===');
-    console.log('studentId:', studentId);
-    console.log('Current URL:', window.location.href);
-    console.log('Search params:', searchParams.toString());
-    
     if (!studentId) {
-      console.log('No studentId provided - returning');
+      setError('معرف الطالب مطلوب');
       setLoading(false);
       return;
     }
 
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(studentId)) {
-      console.log('Invalid studentId format:', studentId);
-      toast({
-        title: "خطأ في الرابط",
-        description: "معرف الطالب غير صحيح",
-        variant: "destructive"
-      });
-      setLoading(false);
-      return;
-    }
-
-    console.log('Starting to load rewards data...');
-    setLoading(true);
-    
     try {
-      const isGuardianAccess = searchParams.get('guardian') === 'true';
-      console.log('Guardian access mode:', isGuardianAccess);
-      let tenantId: string;
+      setLoading(true);
+      setError(null);
       
-      if (isGuardianAccess || !tenant?.id) {
-        console.log('Loading student data for guardian access...');
-        // For guardian access, get student data without tenant restriction
+      const isGuardianAccess = searchParams.get('guardian') === 'true';
+      
+      if (isGuardianAccess) {
+        // For guardian access, get student data first
         const { data: studentData, error: studentError } = await supabase
           .from('students')
           .select(`
@@ -86,72 +67,48 @@ export default function StudentRewards() {
             classes (name)
           `)
           .eq('id', studentId)
-          .maybeSingle();
-        
-        console.log('Student data query result:', { studentData, studentError });
+          .single();
         
         if (studentError) {
-          console.error('Student query error:', studentError);
-          throw new Error(`خطأ في قاعدة البيانات: ${studentError.message}`);
-        }
-        if (!studentData) {
-          console.error('No student data found');
           throw new Error('لم يتم العثور على بيانات الطالب');
         }
         
         setStudentInfo(studentData);
-        tenantId = studentData.tenant_id;
-        console.log('Using tenant ID from student data:', tenantId);
 
         // Load rewards using student's tenant_id
-        console.log('Loading rewards with params:', {
-          studentId,
-          tenantId,
-          dateRange: {
-            from: dateRange.from.toISOString(),
-            to: dateRange.to.toISOString()
-          }
-        });
-        
         const { data: rewardsData, error: rewardsError } = await supabase
           .from('rewards')
           .select('*')
           .eq('student_id', studentId)
-          .eq('tenant_id', tenantId)
+          .eq('tenant_id', studentData.tenant_id)
           .gte('awarded_at', dateRange.from.toISOString())
           .lte('awarded_at', dateRange.to.toISOString())
           .order('awarded_at', { ascending: false });
         
-        console.log('Rewards query result:', { rewardsData, rewardsError });
-        
         if (rewardsError) {
-          console.error('Rewards query error:', rewardsError);
-          throw new Error(`خطأ في تحميل الجوائز: ${rewardsError.message}`);
+          throw new Error('فشل في تحميل الجوائز');
         }
-        console.log('Successfully loaded rewards:', rewardsData?.length || 0, 'rewards found');
+        
         setRewards(rewardsData || []);
 
       } else {
-        console.log('Loading data for authenticated user...');
-        
+        // For authenticated access
+        if (!tenant?.id) {
+          throw new Error('يرجى تسجيل الدخول');
+        }
+
         // Load student info with tenant verification  
         const { data: studentData, error: studentError } = await supabase
           .from('students')
           .select('full_name, student_id, photo_url, classes(name)')
           .eq('id', studentId)
           .eq('tenant_id', tenant.id)
-          .maybeSingle();
-        
-        console.log('Authenticated student query result:', { studentData, studentError });
+          .single();
         
         if (studentError) {
-          console.error('Authenticated student query error:', studentError);
-          throw new Error(`خطأ في قاعدة البيانات: ${studentError.message}`);
-        }
-        if (!studentData) {
-          console.error('Student not found for tenant');
           throw new Error('لم يتم العثور على بيانات الطالب');
         }
+        
         setStudentInfo(studentData);
 
         // Load rewards
@@ -164,88 +121,45 @@ export default function StudentRewards() {
           .lte('awarded_at', dateRange.to.toISOString())
           .order('awarded_at', { ascending: false });
         
-        console.log('Authenticated rewards query result:', { rewardsData, rewardsError });
-        
         if (rewardsError) {
-          console.error('Authenticated rewards query error:', rewardsError);
-          throw new Error(`خطأ في تحميل الجوائز: ${rewardsError.message}`);
+          throw new Error('فشل في تحميل الجوائز');
         }
-        console.log('Successfully loaded rewards for authenticated user:', rewardsData?.length || 0, 'rewards found');
+        
         setRewards(rewardsData || []);
       }
 
-      console.log('=== Data loading completed successfully ===');
-
-    } catch (error: any) {
-      console.error('=== Error in loadData ===');
-      console.error('Error object:', error);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-      
+    } catch (err: any) {
+      console.error('Error loading data:', err);
+      setError(err.message || 'حدث خطأ في تحميل البيانات');
       toast({
-        title: "خطأ في تحميل البيانات",
-        description: error.message || 'حدث خطأ غير متوقع',
+        title: "خطأ في التحميل",
+        description: err.message || 'حدث خطأ في تحميل البيانات',
         variant: "destructive",
       });
-      
-      // Don't leave loading state on error
-      setRewards([]);
-      setStudentInfo(null);
     } finally {
-      console.log('=== Setting loading to false ===');
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    console.log('=== StudentRewards useEffect triggered ===');
-    console.log('Student ID from params:', studentId);
-    console.log('Search params:', searchParams.toString());
-    console.log('Current URL:', window.location.href);
-    console.log('Tenant:', tenant);
-    
-    if (!studentId) {
-      console.log('No studentId provided - setting loading to false');
-      setLoading(false);
-      return;
-    }
-    
     const isGuardianAccess = searchParams.get('guardian') === 'true';
-    console.log('Is guardian access:', isGuardianAccess);
     
-    // For guardian access, load immediately without waiting for tenant
-    if (isGuardianAccess) {
-      console.log('Loading data immediately for guardian access');
+    if (studentId && (isGuardianAccess || tenant?.id)) {
       loadData();
-      return;
-    }
-    
-    // For regular access, wait for tenant
-    if (tenant?.id) {
-      console.log('Loading data for authenticated access');
-      loadData();
-    } else {
-      console.log('Waiting for tenant to load...', { tenant: !!tenant, tenantId: tenant?.id });
-      // Set a timeout to prevent infinite loading
+    } else if (!isGuardianAccess && !tenant?.id) {
+      // Wait a bit for tenant to load
       const timeout = setTimeout(() => {
-        console.log('Timeout reached - trying to load data anyway');
-        loadData();
+        if (!tenant?.id) {
+          setError('فشل في تحميل معلومات الحساب');
+          setLoading(false);
+        } else {
+          loadData();
+        }
       }, 3000);
       
       return () => clearTimeout(timeout);
     }
-  }, [studentId, tenant?.id]);
-
-  // Separate useEffect for guardian parameter changes
-  useEffect(() => {
-    const isGuardianAccess = searchParams.get('guardian') === 'true';
-    console.log('Guardian parameter effect:', isGuardianAccess);
-    
-    if (studentId && isGuardianAccess && !loading) {
-      console.log('Reloading data due to guardian parameter change');
-      loadData();
-    }
-  }, [searchParams.get('guardian')]);
+  }, [studentId, tenant?.id, searchParams.get('guardian')]);
 
   const getRewardTypeColor = (type: string) => {
     switch (type) {
@@ -277,6 +191,21 @@ export default function StudentRewards() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">جاري تحميل البيانات...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">خطأ في التحميل</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()} variant="outline">
+            إعادة المحاولة
+          </Button>
         </div>
       </div>
     );
