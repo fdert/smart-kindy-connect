@@ -67,9 +67,9 @@ const Navigation = () => {
   // Navigation items for different roles
   const superAdminNavigation = [
     { name: t('nav.dashboard'), href: '/dashboard', icon: Settings },
-    { name: 'إدارة النظام', href: '/super-admin', icon: Shield },
-    { name: 'إدارة الخطط', href: '/plans-management', icon: Building },
-    { name: 'إدارة المحتوى', href: '/cms-management', icon: FileText },
+    { name: t('superadmin.tenants_management'), href: '/super-admin', icon: Shield },
+    { name: t('superadmin.system_settings'), href: '/plans-management', icon: Building },
+    { name: t('superadmin.system_settings'), href: '/cms-management', icon: FileText },
   ];
 
   const adminNavigation = [
@@ -87,18 +87,18 @@ const Navigation = () => {
   ];
 
   const teacherNavigation = [
-    { name: t('nav.dashboard'), href: '/dashboard', icon: Settings },
+    { name: t('nav.dashboard'), href: '/teacher-dashboard', icon: Settings },
     { name: t('nav.classes'), href: '/classes', icon: BookOpen },
     { name: t('nav.attendance'), href: '/attendance', icon: Calendar },
-    { name: 'الواجبات', href: '/assignments', icon: PenTool },
-    { name: 'ملاحظات الطلاب', href: '/student-notes', icon: ClipboardList },
+    { name: t('teacher.recent_assignments'), href: '/assignments', icon: PenTool },
+    { name: t('teacher.student_notes'), href: '/student-notes', icon: ClipboardList },
     { name: t('nav.rewards'), href: '/rewards', icon: Star },
     { name: t('nav.media'), href: '/media', icon: Image },
   ];
 
   const guardianNavigation = [
     { name: t('nav.dashboard'), href: '/dashboard', icon: Settings },
-    { name: 'أطفالي', href: '/students', icon: Baby },
+    { name: t('nav.students'), href: '/students', icon: Baby },
     { name: t('nav.media'), href: '/media', icon: Image },
   ];
 

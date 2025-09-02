@@ -65,6 +65,7 @@ interface TenantSubscription {
 
 const SuperAdmin = () => {
   const { user, signOut } = useAuth();
+  const { t } = useLanguage();
   const { toast } = useToast();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [subscriptions, setSubscriptions] = useState<TenantSubscription[]>([]);
@@ -127,7 +128,7 @@ const SuperAdmin = () => {
 
     } catch (error: any) {
       toast({
-        title: "خطأ",
+        title: t('common.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -150,8 +151,8 @@ const SuperAdmin = () => {
       if (error) throw error;
 
       toast({
-        title: approve ? "تم الاعتماد" : "تم الرفض",
-        description: approve ? "تم اعتماد الحضانة بنجاح" : "تم رفض طلب التسجيل",
+        title: approve ? t('superadmin.approved') : t('superadmin.cancelled'),
+        description: approve ? t('superadmin.approve') + ' ' + t('common.success') : t('superadmin.reject') + ' ' + t('common.success'),
       });
 
       loadData();
@@ -295,7 +296,7 @@ const SuperAdmin = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-reverse space-x-4">
-              <h1 className="text-xl font-bold text-gray-900">SmartKindy - لوحة الإدارة العامة</h1>
+              <h1 className="text-xl font-bold text-gray-900">{t('superadmin.title')}</h1>
             </div>
             <div className="flex items-center space-x-reverse space-x-4">
               <Avatar className="h-8 w-8">
@@ -303,7 +304,7 @@ const SuperAdmin = () => {
                   SA
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm font-medium text-gray-700">مدير عام</span>
+              <span className="text-sm font-medium text-gray-700">{t('superadmin.admin')}</span>
               <Button
                 variant="ghost"
                 size="sm"
@@ -320,54 +321,54 @@ const SuperAdmin = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* الإحصائيات */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">إجمالي الحضانات</CardTitle>
-              <Building className="h-4 w-4 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalTenants}</div>
-            </CardContent>
-          </Card>
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('superadmin.total_tenants')}</CardTitle>
+                <Building className="h-4 w-4 text-blue-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalTenants}</div>
+              </CardContent>
+            </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">طلبات الانتظار</CardTitle>
-              <Clock className="h-4 w-4 text-yellow-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.pendingTenants}</div>
-            </CardContent>
-          </Card>
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('superadmin.pending_requests')}</CardTitle>
+                <Clock className="h-4 w-4 text-yellow-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.pendingTenants}</div>
+              </CardContent>
+            </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">الاشتراكات النشطة</CardTitle>
-              <TrendingUp className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.activeSubscriptions}</div>
-            </CardContent>
-          </Card>
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('superadmin.active_subscriptions')}</CardTitle>
+                <TrendingUp className="h-4 w-4 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.activeSubscriptions}</div>
+              </CardContent>
+            </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">الإيرادات الشهرية</CardTitle>
-              <DollarSign className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.monthlyRevenue.toFixed(2)} ر.س</div>
-            </CardContent>
-          </Card>
+            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{t('superadmin.monthly_revenue')}</CardTitle>
+                <DollarSign className="h-4 w-4 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.monthlyRevenue.toFixed(2)} {t('common.currency') || 'ر.س'}</div>
+              </CardContent>
+            </Card>
         </div>
 
         {/* التبويبات */}
         <Tabs defaultValue="tenants" className="space-y-4">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="tenants">الحضانات</TabsTrigger>
-            <TabsTrigger value="subscriptions">الاشتراكات</TabsTrigger>
-            <TabsTrigger value="payments">المدفوعات</TabsTrigger>
-            <TabsTrigger value="settings">الإعدادات</TabsTrigger>
+            <TabsTrigger value="tenants">{t('superadmin.tenants_management')}</TabsTrigger>
+            <TabsTrigger value="subscriptions">{t('superadmin.subscriptions_management')}</TabsTrigger>
+            <TabsTrigger value="payments">{t('superadmin.payments_reports')}</TabsTrigger>
+            <TabsTrigger value="settings">{t('superadmin.system_settings')}</TabsTrigger>
           </TabsList>
 
           {/* تبويب الحضانات */}

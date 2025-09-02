@@ -61,6 +61,8 @@ const translations = {
     'common.score': 'النتيجة',
     'common.level': 'المستوى',
     'common.grade': 'الدرجة',
+    'common.currency': 'ر.س',
+    'common.view_all': 'عرض الكل',
     
     // Student Reports
     'report.student_rewards': 'مكافآت الطالب',
@@ -253,6 +255,8 @@ const translations = {
     'common.score': 'Score',
     'common.level': 'Level',
     'common.grade': 'Grade',
+    'common.currency': 'SAR',
+    'common.view_all': 'View All',
     
     // Student Reports
     'report.student_rewards': 'Student Rewards',
