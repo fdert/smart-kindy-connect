@@ -49,6 +49,9 @@ export default function StudentRewards() {
 
   const loadRewardsData = async () => {
     console.log('=== loadRewardsData START ===');
+    console.log('Current URL:', window.location.href);
+    console.log('StudentId param:', studentId);
+    console.log('Guardian param:', searchParams.get('guardian'));
     
     if (!studentId) {
       console.log('No studentId provided');
@@ -59,7 +62,7 @@ export default function StudentRewards() {
 
     // Simple UUID validation
     if (studentId.length !== 36 || !studentId.includes('-')) {
-      console.log('Invalid studentId format');
+      console.log('Invalid studentId format:', studentId);
       setError('معرف الطالب غير صحيح');
       setLoading(false);
       return;
@@ -72,62 +75,52 @@ export default function StudentRewards() {
       const isGuardianAccess = searchParams.get('guardian') === 'true';
       console.log('Guardian access:', isGuardianAccess);
 
-      // Direct database query without edge function
-      console.log('Fetching student data directly...');
+      // Use edge function that bypasses RLS
+      console.log('Calling edge function...');
       
-      const { data: studentData, error: studentError } = await supabase
-        .from('students')
-        .select(`
-          id,
-          full_name,
-          student_id,
-          photo_url,
-          tenant_id,
-          classes (name)
-        `)
-        .eq('id', studentId)
-        .maybeSingle();
-
-      console.log('Student query result:', { studentData, studentError });
-
-      if (studentError) {
-        console.error('Student query error:', studentError);
-        throw new Error(`خطأ في جلب بيانات الطالب: ${studentError.message}`);
-      }
-
-      if (!studentData) {
-        throw new Error('لم يتم العثور على الطالب');
-      }
-
-      // Get rewards data
-      console.log('Fetching rewards data...');
-      const { data: rewardsData, error: rewardsError } = await supabase
-        .from('rewards')
-        .select('*')
-        .eq('student_id', studentId)
-        .gte('awarded_at', dateRange.from.toISOString())
-        .lte('awarded_at', dateRange.to.toISOString())
-        .order('awarded_at', { ascending: false });
-
-      console.log('Rewards query result:', { rewardsData, rewardsError });
-
-      if (rewardsError) {
-        console.error('Rewards query error:', rewardsError);
-        // Don't fail completely for rewards error, just use empty array
-      }
-
-      const student = {
-        ...studentData,
-        class_name: studentData.classes?.name
+      const requestBody = {
+        studentId: studentId,
+        guardian: isGuardianAccess,
+        from: dateRange.from.toISOString(),
+        to: dateRange.to.toISOString()
       };
       
-      console.log('Data loaded successfully:', {
-        studentName: student.full_name,
-        rewardsCount: rewardsData?.length || 0
+      console.log('Request body:', requestBody);
+      
+      const { data: response, error: functionError } = await supabase.functions.invoke('get-student-rewards', {
+        body: requestBody
       });
 
+      console.log('Edge function response:', { response, functionError });
+
+      if (functionError) {
+        console.error('Edge function error:', functionError);
+        throw new Error(`خطأ في الاتصال بالخادم: ${functionError.message}`);
+      }
+
+      if (!response) {
+        console.error('No response from edge function');
+        throw new Error('لم يتم الحصول على استجابة من الخادم');
+      }
+
+      if (!response.success) {
+        console.error('Edge function returned error:', response);
+        throw new Error(response.error || 'فشل في تحميل البيانات');
+      }
+
+      const { student, rewards } = response.data;
+      
+      console.log('Data received:', {
+        studentName: student?.full_name,
+        rewardsCount: rewards?.length || 0
+      });
+
+      if (!student) {
+        throw new Error('لم يتم العثور على بيانات الطالب');
+      }
+
       setStudentInfo(student);
-      setRewards(rewardsData || []);
+      setRewards(rewards || []);
 
       console.log('=== Data loading completed successfully ===');
 

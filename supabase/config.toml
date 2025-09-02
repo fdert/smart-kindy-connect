@@ -12,6 +12,9 @@ verify_jwt = false
 [functions.get-student-report]
 verify_jwt = false
 
+[functions.get-student-rewards]
+verify_jwt = false
+
 [functions.whatsapp-outbound]
 verify_jwt = true
 
