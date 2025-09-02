@@ -99,26 +99,31 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// مكون صفحة عامة
+const PublicPageRoute = ({ children }: { children: React.ReactNode }) => (
+  <Layout showNavigation={false}>{children}</Layout>
+);
+
 const AppRoutes = () => (
   <Routes>
     {/* الصفحات العامة */}
-    <Route path="/" element={<Layout showNavigation={false}><Index /></Layout>} />
-    <Route path="/tour" element={<Layout showNavigation={false}><Tour /></Layout>} />
-    <Route path="/demo" element={<Layout showNavigation={false}><Demo /></Layout>} />
-    <Route path="/register" element={<Layout showNavigation={false}><TenantRegistration /></Layout>} />
-    <Route path="/pricing" element={<Layout showNavigation={false}><Pricing /></Layout>} />
-    <Route path="/survey/:surveyId" element={<Layout showNavigation={false}><PublicSurvey /></Layout>} />
-    <Route path="/permission/:id" element={<Layout showNavigation={false}><PublicPermission /></Layout>} />
-    <Route path="/student-report/:studentId" element={<Layout showNavigation={false}><StudentReport /></Layout>} />
-    <Route path="/student-assignments/:studentId" element={<Layout showNavigation={false}><StudentAssignments /></Layout>} />
-    <Route path="/student-attendance/:studentId" element={<Layout showNavigation={false}><StudentAttendance /></Layout>} />
-    <Route path="/student-rewards/:studentId" element={<Layout showNavigation={false}><StudentRewards /></Layout>} />
-    <Route path="/student-media/:studentId" element={<Layout showNavigation={false}><StudentMedia /></Layout>} />
-    <Route path="/student-notes-detail/:studentId" element={<Layout showNavigation={false}><StudentNotesDetail /></Layout>} />
-    <Route path="/reward-card" element={<Layout showNavigation={false}><SharedRewardCard /></Layout>} />
+    <Route path="/" element={<PublicPageRoute><Index /></PublicPageRoute>} />
+    <Route path="/tour" element={<PublicPageRoute><Tour /></PublicPageRoute>} />
+    <Route path="/demo" element={<PublicPageRoute><Demo /></PublicPageRoute>} />
+    <Route path="/register" element={<PublicPageRoute><TenantRegistration /></PublicPageRoute>} />
+    <Route path="/pricing" element={<PublicPageRoute><Pricing /></PublicPageRoute>} />
+    <Route path="/survey/:surveyId" element={<PublicPageRoute><PublicSurvey /></PublicPageRoute>} />
+    <Route path="/permission/:id" element={<PublicPageRoute><PublicPermission /></PublicPageRoute>} />
+    <Route path="/student-report/:studentId" element={<PublicPageRoute><StudentReport /></PublicPageRoute>} />
+    <Route path="/student-assignments/:studentId" element={<PublicPageRoute><StudentAssignments /></PublicPageRoute>} />
+    <Route path="/student-attendance/:studentId" element={<PublicPageRoute><StudentAttendance /></PublicPageRoute>} />
+    <Route path="/student-rewards/:studentId" element={<PublicPageRoute><StudentRewards /></PublicPageRoute>} />
+    <Route path="/student-media/:studentId" element={<PublicPageRoute><StudentMedia /></PublicPageRoute>} />
+    <Route path="/student-notes-detail/:studentId" element={<PublicPageRoute><StudentNotesDetail /></PublicPageRoute>} />
+    <Route path="/reward-card" element={<PublicPageRoute><SharedRewardCard /></PublicPageRoute>} />
     <Route path="/auth" element={
       <PublicRoute>
-        <Layout showNavigation={false}><Auth /></Layout>
+        <PublicPageRoute><Auth /></PublicPageRoute>
       </PublicRoute>
     } />
     
@@ -146,7 +151,7 @@ const AppRoutes = () => (
     <Route path="/cms-management" element={<ProtectedRoute><CMSManagement /></ProtectedRoute>} />
     
     {/* صفحة 404 */}
-    <Route path="*" element={<Layout showNavigation={false}><NotFound /></Layout>} />
+    <Route path="*" element={<PublicPageRoute><NotFound /></PublicPageRoute>} />
   </Routes>
 );
 
