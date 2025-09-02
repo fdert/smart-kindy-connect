@@ -8,8 +8,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/hooks/useLanguage';
 import { format } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
-import { Star, Award, Trophy, ArrowLeft, Globe } from 'lucide-react';
-import { LanguageSwitcher } from '@/components/ui/language-switcher';
+import { Star, Award, Trophy } from 'lucide-react';
+import { PageHeader } from '@/components/PageHeader';
 
 interface RewardData {
   id: string;
@@ -237,32 +237,11 @@ export default function StudentRewards() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-4 md:p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                const isGuardianAccess = searchParams.get('guardian') === 'true';
-                const guardianParam = isGuardianAccess ? '?guardian=true' : '';
-                navigate(`/student-report/${studentId}${guardianParam}`);
-              }}
-              className="flex items-center gap-2 text-sm md:text-base"
-              size={isMobile ? "sm" : "default"}
-            >
-              <ArrowLeft className="h-4 w-4" />
-              {t('report.back_to_report')}
-            </Button>
-            <LanguageSwitcher />
-          </div>
-          <div className="flex-1">
-            <h1 className="text-xl md:text-3xl font-bold text-gray-900 leading-tight">
-              {t('report.student_rewards')}: {studentInfo?.full_name || 'غير متوفر'}
-            </h1>
-            <p className="text-sm md:text-base text-gray-600 mt-1">
-              {t('report.period')}: {format(dateRange.from, 'dd MMM yyyy', { locale: language === 'ar' ? ar : enUS })} - {format(dateRange.to, 'dd MMM yyyy', { locale: language === 'ar' ? ar : enUS })}
-            </p>
-          </div>
-        </div>
+        <PageHeader 
+          title={`${t('report.student_rewards')}: ${studentInfo?.full_name || 'غير متوفر'}`}
+          subtitle={`${t('report.period')}: ${format(dateRange.from, 'dd MMM yyyy', { locale: language === 'ar' ? ar : enUS })} - ${format(dateRange.to, 'dd MMM yyyy', { locale: language === 'ar' ? ar : enUS })}`}
+          backTo={`/student-report/${studentId}${searchParams.get('guardian') === 'true' ? '?guardian=true' : ''}`}
+        />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">

@@ -7,9 +7,9 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { ar, enUS } from 'date-fns/locale';
-import { BookOpen, Heart, Users, Brain, Stethoscope, ArrowLeft, FileText, Star, TrendingUp } from 'lucide-react';
+import { BookOpen, Heart, Users, Brain, Stethoscope, FileText, Star, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { LanguageSwitcher } from '@/components/ui/language-switcher';
+import { PageHeader } from '@/components/PageHeader';
 
 interface NoteData {
   id: string;
@@ -284,31 +284,11 @@ export default function StudentNotesDetail() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                const isGuardianAccess = searchParams.get('guardian') === 'true';
-                const guardianParam = isGuardianAccess ? '?guardian=true' : '';
-                navigate(`/student-report/${studentId}${guardianParam}`);
-              }}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              {t('report.back_to_report')}
-            </Button>
-            <LanguageSwitcher />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              {t('report.student_notes')}: {studentInfo?.full_name}
-            </h1>
-            <p className="text-gray-600">
-              {t('report.period')}: {format(dateRange.from, 'dd MMM yyyy', { locale: language === 'ar' ? ar : enUS })} - {format(dateRange.to, 'dd MMM yyyy', { locale: language === 'ar' ? ar : enUS })}
-            </p>
-          </div>
-        </div>
+        <PageHeader 
+          title={`${t('report.student_notes')}: ${studentInfo?.full_name}`}
+          subtitle={`${t('report.period')}: ${format(dateRange.from, 'dd MMM yyyy', { locale: language === 'ar' ? ar : enUS })} - ${format(dateRange.to, 'dd MMM yyyy', { locale: language === 'ar' ? ar : enUS })}`}
+          backTo={`/student-report/${studentId}${searchParams.get('guardian') === 'true' ? '?guardian=true' : ''}`}
+        />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">

@@ -1500,6 +1500,45 @@ export type Database = {
         }
         Relationships: []
       }
+      report_tokens: {
+        Row: {
+          accessed_count: number
+          created_at: string
+          expires_at: string
+          guardian_access: boolean
+          id: string
+          last_accessed_at: string | null
+          report_type: string
+          student_id: string
+          tenant_id: string
+          token_hash: string
+        }
+        Insert: {
+          accessed_count?: number
+          created_at?: string
+          expires_at: string
+          guardian_access?: boolean
+          id?: string
+          last_accessed_at?: string | null
+          report_type: string
+          student_id: string
+          tenant_id: string
+          token_hash: string
+        }
+        Update: {
+          accessed_count?: number
+          created_at?: string
+          expires_at?: string
+          guardian_access?: boolean
+          id?: string
+          last_accessed_at?: string | null
+          report_type?: string
+          student_id?: string
+          tenant_id?: string
+          token_hash?: string
+        }
+        Relationships: []
+      }
       reports: {
         Row: {
           class_id: string | null
@@ -1655,6 +1694,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      shared_report_settings: {
+        Row: {
+          base_url: string | null
+          created_at: string
+          expiry_hours: number
+          id: string
+          is_active: boolean
+          report_type: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          base_url?: string | null
+          created_at?: string
+          expiry_hours?: number
+          id?: string
+          is_active?: boolean
+          report_type: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          base_url?: string | null
+          created_at?: string
+          expiry_hours?: number
+          id?: string
+          is_active?: boolean
+          report_type?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       site_settings: {
         Row: {
@@ -2813,8 +2885,21 @@ export type Database = {
           user_active: boolean
         }[]
       }
+      cleanup_expired_tokens: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       generate_invoice_number: {
         Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_report_token: {
+        Args: {
+          p_guardian_access?: boolean
+          p_report_type: string
+          p_student_id: string
+          p_tenant_id?: string
+        }
         Returns: string
       }
       get_current_user_role: {
@@ -2844,6 +2929,10 @@ export type Database = {
       update_overdue_fees: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      validate_report_token: {
+        Args: { p_token_hash: string }
+        Returns: Json
       }
     }
     Enums: {
