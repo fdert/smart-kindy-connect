@@ -1172,8 +1172,14 @@ export type Database = {
       }
       notification_reminders: {
         Row: {
+          assignment_due_date: string | null
           assignment_id: string | null
+          assignment_priority: string | null
+          assignment_title: string | null
+          assignment_type: string | null
           created_at: string
+          evaluation_score: number | null
+          evaluation_status: string | null
           id: string
           message_content: string | null
           reminder_type: string
@@ -1181,11 +1187,18 @@ export type Database = {
           sent_at: string | null
           status: string | null
           student_id: string
+          teacher_feedback: string | null
           tenant_id: string
         }
         Insert: {
+          assignment_due_date?: string | null
           assignment_id?: string | null
+          assignment_priority?: string | null
+          assignment_title?: string | null
+          assignment_type?: string | null
           created_at?: string
+          evaluation_score?: number | null
+          evaluation_status?: string | null
           id?: string
           message_content?: string | null
           reminder_type: string
@@ -1193,11 +1206,18 @@ export type Database = {
           sent_at?: string | null
           status?: string | null
           student_id: string
+          teacher_feedback?: string | null
           tenant_id: string
         }
         Update: {
+          assignment_due_date?: string | null
           assignment_id?: string | null
+          assignment_priority?: string | null
+          assignment_title?: string | null
+          assignment_type?: string | null
           created_at?: string
+          evaluation_score?: number | null
+          evaluation_status?: string | null
           id?: string
           message_content?: string | null
           reminder_type?: string
@@ -1205,6 +1225,7 @@ export type Database = {
           sent_at?: string | null
           status?: string | null
           student_id?: string
+          teacher_feedback?: string | null
           tenant_id?: string
         }
         Relationships: []
