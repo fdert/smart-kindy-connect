@@ -45,6 +45,7 @@ import StudentAttendance from "./pages/StudentAttendance";
 import StudentRewards from "./pages/StudentRewards";
 import StudentMedia from "./pages/StudentMedia";
 import StudentNotesDetail from "./pages/StudentNotesDetail";
+import AIAssistant from "./pages/AIAssistant";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -136,6 +137,7 @@ const AppRoutes = () => (
     <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
     <Route path="/assignments" element={<ProtectedRoute><Assignments /></ProtectedRoute>} />
     <Route path="/student-notes" element={<ProtectedRoute><StudentNotes /></ProtectedRoute>} />
+    <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistant /></ProtectedRoute>} />
     <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
     <Route path="/classes" element={<ProtectedRoute><Classes /></ProtectedRoute>} />
     <Route path="/media" element={<ProtectedRoute><Media /></ProtectedRoute>} />

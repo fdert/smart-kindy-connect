@@ -24,7 +24,8 @@ import {
   PenTool,
   ClipboardList,
   GraduationCap,
-  DollarSign
+  DollarSign,
+  Brain
 } from 'lucide-react';
 
 const smartKindyLogo = "/lovable-uploads/46a447fc-00fa-49c5-b6ae-3f7b46fc4691.png";
@@ -81,6 +82,7 @@ const Navigation = () => {
     { name: t('nav.rewards'), href: '/rewards', icon: Star },
     { name: t('nav.media'), href: '/media', icon: Image },
     { name: t('nav.guardians'), href: '/guardians', icon: UserCheck },
+    { name: 'المساعد الذكي', href: '/ai-assistant', icon: Brain },
     { name: t('nav.financial'), href: '/financial-system', icon: DollarSign },
     { name: t('nav.reports'), href: '/reports', icon: FileText },
     { name: t('nav.settings'), href: '/settings', icon: Settings },
@@ -92,6 +94,7 @@ const Navigation = () => {
     { name: t('nav.attendance'), href: '/attendance', icon: Calendar },
     { name: t('teacher.recent_assignments'), href: '/assignments', icon: PenTool },
     { name: t('teacher.student_notes'), href: '/student-notes', icon: ClipboardList },
+    { name: 'المساعد الذكي', href: '/ai-assistant', icon: Brain },
     { name: t('nav.rewards'), href: '/rewards', icon: Star },
     { name: t('nav.media'), href: '/media', icon: Image },
   ];
