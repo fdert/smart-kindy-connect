@@ -10,6 +10,14 @@ const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY')
 console.log('DeepSeek API Key status:', deepseekApiKey ? 'configured ✅' : 'not configured ❌')
 console.log('Function updated at:', new Date().toISOString())
 
+// Debug: Check all available environment variables
+console.log('=== ALL ENVIRONMENT VARIABLES ===')
+for (const [key, value] of Object.entries(Deno.env.toObject())) {
+  if (key.includes('DEEPSEEK') || key.includes('API')) {
+    console.log(`${key}: ${value ? 'SET' : 'NOT SET'}`)
+  }
+}
+
 interface AnalyzeNoteRequest {
   noteContent: string;
   noteType: string;
