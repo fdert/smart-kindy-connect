@@ -25,8 +25,12 @@ interface GenerateAssignmentRequest {
 
 // تحليل الملاحظات باستخدام DeepSeek API
 async function analyzeNote(content: string, type: string, studentAge?: number): Promise<{ analysis: string; suggestions: string }> {
+  console.log('=== ANALYZE NOTE FUNCTION CALLED ===');
+  console.log('DeepSeek API key exists:', !!deepseekApiKey);
+  console.log('DeepSeek API key length:', deepseekApiKey ? deepseekApiKey.length : 0);
+  
   if (!deepseekApiKey) {
-    console.error('DeepSeek API key not configured');
+    console.error('DeepSeek API key not configured - returning error');
     return { 
       analysis: 'خطأ: مفتاح DeepSeek API غير مُعد', 
       suggestions: 'يرجى إعداد مفتاح API للحصول على التحليل الذكي' 
@@ -107,8 +111,12 @@ async function analyzeNote(content: string, type: string, studentAge?: number): 
 
 // إنتاج الواجبات باستخدام DeepSeek API
 async function generateAssignment(subject: string, grade: string, topic: string, difficulty: string): Promise<string> {
+  console.log('=== GENERATE ASSIGNMENT FUNCTION CALLED ===');
+  console.log('DeepSeek API key exists:', !!deepseekApiKey);
+  console.log('DeepSeek API key length:', deepseekApiKey ? deepseekApiKey.length : 0);
+  
   if (!deepseekApiKey) {
-    console.error('DeepSeek API key not configured');
+    console.error('DeepSeek API key not configured - returning error');
     return 'خطأ: مفتاح DeepSeek API غير مُعد. يرجى إعداد المفتاح للحصول على الواجبات الذكية.';
   }
 

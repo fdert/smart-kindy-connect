@@ -35,8 +35,12 @@ async function analyzeStudentNote(
   context?: string
 ): Promise<{ analysis: string; suggestions: string; recommendations: string }> {
   
+  console.log('=== ANALYZE STUDENT NOTE FUNCTION CALLED ===');
+  console.log('DeepSeek API key exists:', !!deepseekApiKey);
+  console.log('DeepSeek API key length:', deepseekApiKey ? deepseekApiKey.length : 0);
+  
   if (!deepseekApiKey) {
-    console.error('DeepSeek API key not configured');
+    console.error('DeepSeek API key not configured - returning error');
     return { 
       analysis: 'خطأ: مفتاح DeepSeek API غير مُعد', 
       suggestions: 'يرجى إعداد مفتاح API للحصول على التحليل الذكي',
