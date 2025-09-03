@@ -82,6 +82,11 @@ const DeepSeekAIAssistant: React.FC = () => {
 
     setIsAnalyzing(true);
     try {
+      console.log('=== CALLING ASSIGNMENTS-AI FUNCTION ===');
+      console.log('Action: analyze_note');
+      console.log('Note content:', noteContent.trim());
+      console.log('Note type:', noteType);
+      
       const { data, error } = await supabase.functions.invoke('assignments-ai', {
         body: {
           action: 'analyze_note',
@@ -92,6 +97,10 @@ const DeepSeekAIAssistant: React.FC = () => {
           context: noteContext.trim() || undefined
         }
       });
+
+      console.log('=== RESPONSE FROM ASSIGNMENTS-AI ===');
+      console.log('Data:', data);
+      console.log('Error:', error);
 
       if (error) throw error;
 
@@ -117,6 +126,12 @@ const DeepSeekAIAssistant: React.FC = () => {
 
     setIsGenerating(true);
     try {
+      console.log('=== CALLING ASSIGNMENTS-AI FUNCTION ===');
+      console.log('Action: generate_assignment');
+      console.log('Subject:', subject);
+      console.log('Grade:', grade);
+      console.log('Topic:', topic.trim());
+      
       const { data, error } = await supabase.functions.invoke('assignments-ai', {
         body: {
           action: 'generate_assignment',
@@ -126,6 +141,10 @@ const DeepSeekAIAssistant: React.FC = () => {
           difficulty
         }
       });
+
+      console.log('=== RESPONSE FROM ASSIGNMENTS-AI ===');
+      console.log('Data:', data);
+      console.log('Error:', error);
 
       if (error) throw error;
 
