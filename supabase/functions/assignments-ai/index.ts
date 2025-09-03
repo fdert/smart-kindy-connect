@@ -6,17 +6,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Get API key from environment
 const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY')
-console.log('DeepSeek API Key status:', deepseekApiKey ? 'configured ✅' : 'not configured ❌')
-console.log('Function updated at:', new Date().toISOString())
-
-// Debug: Check all available environment variables
-console.log('=== ALL ENVIRONMENT VARIABLES ===')
-for (const [key, value] of Object.entries(Deno.env.toObject())) {
-  if (key.includes('DEEPSEEK') || key.includes('API')) {
-    console.log(`${key}: ${value ? 'SET' : 'NOT SET'}`)
-  }
-}
+console.log('🔍 DeepSeek API Key check:', deepseekApiKey ? '✅ Found' : '❌ Not found')
+console.log('🚀 Function initialized at:', new Date().toISOString())
 
 interface AnalyzeNoteRequest {
   noteContent: string;
@@ -33,17 +26,17 @@ interface GenerateAssignmentRequest {
 
 // تحليل الملاحظات باستخدام DeepSeek API
 async function analyzeNote(content: string, type: string, studentAge?: number): Promise<{ analysis: string; suggestions: string }> {
-  console.log('=== ANALYZE NOTE FUNCTION CALLED ===');
-  console.log('DeepSeek API key exists:', !!deepseekApiKey);
-  console.log('DeepSeek API key length:', deepseekApiKey ? deepseekApiKey.length : 0);
+  console.log('📝 Analyze note called for type:', type);
   
   if (!deepseekApiKey) {
-    console.error('DeepSeek API key not configured - returning error');
+    console.error('❌ DeepSeek API key not available');
     return { 
       analysis: 'خطأ: مفتاح DeepSeek API غير مُعد', 
       suggestions: 'يرجى إعداد مفتاح API للحصول على التحليل الذكي' 
     };
   }
+
+  console.log('✅ API key available, making request to DeepSeek');
 
   const ageGroup = studentAge ? (studentAge <= 4 ? 'صغير (3-4 سنوات)' : studentAge <= 5 ? 'متوسط (4-5 سنوات)' : 'كبير (5-6 سنوات)') : 'متوسط (4-5 سنوات)';
   
@@ -51,7 +44,8 @@ async function analyzeNote(content: string, type: string, studentAge?: number): 
     'academic': 'أكاديمية',
     'behavioral': 'سلوكية', 
     'social': 'اجتماعية',
-    'health': 'صحية'
+    'health': 'صحية',
+    'emotional': 'عاطفية'
   }[type] || type;
 
   const prompt = `أنت مختص في تربية الطفل ومناهج رياض الأطفال السعودية. قم بتحليل هذه الملاحظة ${typeText} لطفل في المرحلة العمرية ${ageGroup}:
@@ -69,6 +63,7 @@ async function analyzeNote(content: string, type: string, studentAge?: number): 
 الاقتراحات: [اقتراحات عملية ومرقمة]`;
 
   try {
+    console.log('🌐 Making API call to DeepSeek...');
     const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
@@ -92,11 +87,17 @@ async function analyzeNote(content: string, type: string, studentAge?: number): 
       }),
     });
 
+    console.log('📊 DeepSeek API response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`DeepSeek API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('❌ DeepSeek API error:', response.status, errorText);
+      throw new Error(`DeepSeek API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('✅ DeepSeek API success');
+    
     const aiResponse = data.choices[0]?.message?.content || '';
     
     // استخراج التحليل والاقتراحات من الرد
@@ -109,7 +110,7 @@ async function analyzeNote(content: string, type: string, studentAge?: number): 
     };
     
   } catch (error) {
-    console.error('Error calling DeepSeek API:', error);
+    console.error('💥 Error calling DeepSeek API:', error);
     return {
       analysis: 'حدث خطأ في تحليل الملاحظة. يرجى المحاولة مرة أخرى.',
       suggestions: 'يرجى مراجعة المختص التربوي في الحضانة للحصول على التوجيه المناسب.'
@@ -119,14 +120,14 @@ async function analyzeNote(content: string, type: string, studentAge?: number): 
 
 // إنتاج الواجبات باستخدام DeepSeek API
 async function generateAssignment(subject: string, grade: string, topic: string, difficulty: string): Promise<string> {
-  console.log('=== GENERATE ASSIGNMENT FUNCTION CALLED ===');
-  console.log('DeepSeek API key exists:', !!deepseekApiKey);
-  console.log('DeepSeek API key length:', deepseekApiKey ? deepseekApiKey.length : 0);
+  console.log('📚 Generate assignment called for subject:', subject);
   
   if (!deepseekApiKey) {
-    console.error('DeepSeek API key not configured - returning error');
+    console.error('❌ DeepSeek API key not available');
     return 'خطأ: مفتاح DeepSeek API غير مُعد. يرجى إعداد المفتاح للحصول على الواجبات الذكية.';
   }
+
+  console.log('✅ API key available, making request to DeepSeek');
 
   const gradeLevel = grade.includes('تمهيدي') || grade.includes('روضة') ? 
                     (grade.includes('أول') || grade.includes('صغير') ? 'الروضة الصغيرة (3-4 سنوات)' : 
@@ -163,6 +164,7 @@ async function generateAssignment(subject: string, grade: string, topic: string,
 - المدة الزمنية المقترحة`;
 
   try {
+    console.log('🌐 Making API call to DeepSeek...');
     const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
@@ -186,11 +188,17 @@ async function generateAssignment(subject: string, grade: string, topic: string,
       }),
     });
 
+    console.log('📊 DeepSeek API response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`DeepSeek API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('❌ DeepSeek API error:', response.status, errorText);
+      throw new Error(`DeepSeek API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('✅ DeepSeek API success');
+    
     const assignment = data.choices[0]?.message?.content || '';
     
     if (assignment.trim()) {
@@ -216,7 +224,7 @@ async function generateAssignment(subject: string, grade: string, topic: string,
     }
     
   } catch (error) {
-    console.error('Error calling DeepSeek API:', error);
+    console.error('💥 Error calling DeepSeek API:', error);
     return `خطأ في إنتاج الواجب: ${error.message}
 
 واجب ${subject} - ${topic} (نسخة احتياطية)
@@ -235,6 +243,8 @@ async function generateAssignment(subject: string, grade: string, topic: string,
 }
 
 serve(async (req) => {
+  console.log('🔄 Request received:', req.method, req.url);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -242,6 +252,7 @@ serve(async (req) => {
 
   try {
     const { action, ...requestData } = await req.json();
+    console.log('📝 Action requested:', action);
 
     switch (action) {
       case 'analyze_note': {
@@ -254,7 +265,7 @@ serve(async (req) => {
           );
         }
 
-        console.log('Analyzing note with DeepSeek:', { noteType, studentAge });
+        console.log('🔍 Analyzing note:', { noteType, studentAge });
         
         const result = await analyzeNote(noteContent, noteType, studentAge);
         
@@ -277,7 +288,7 @@ serve(async (req) => {
           );
         }
 
-        console.log('Generating assignment with DeepSeek:', { subject, grade, topic, difficulty });
+        console.log('📚 Generating assignment:', { subject, grade, topic, difficulty });
         
         const assignment = await generateAssignment(subject, grade, topic, difficulty);
         
@@ -298,7 +309,7 @@ serve(async (req) => {
     }
 
   } catch (error) {
-    console.error('Error in assignments-ai function:', error);
+    console.error('💥 Error in assignments-ai function:', error);
     return new Response(
       JSON.stringify({ 
         error: 'حدث خطأ في معالجة الطلب', 
