@@ -171,7 +171,19 @@ async function processNotifications(supabase: any, notifications: any[]) {
           const guardian = link.guardians;
           if (guardian && guardian.whatsapp_number) {
             try {
-              // Create simple message like attendance notifications
+              // Get assignment details from database for complete message
+              const { data: assignment, error: assignmentError } = await supabase
+                .from('assignments')
+                .select('title, assignment_type, priority, description, due_date, classes(name)')
+                .eq('id', notification.assignment_id)
+                .single();
+
+              if (assignmentError) {
+                console.error('Error fetching assignment details:', assignmentError);
+                continue;
+              }
+
+              // Format message based on type
               let simpleMessage;
               
               if (notification.reminder_type === 'assignment_evaluation') {
@@ -179,7 +191,7 @@ async function processNotifications(supabase: any, notifications: any[]) {
                 simpleMessage = `📝 تقييم الواجب
 
 الطالب: ${student.full_name} (${student.student_id})
-الواجب: ${notification.assignment_title || 'الواجب'}
+الواجب: ${notification.assignment_title || assignment?.title || 'الواجب'}
 الحالة: ${notification.evaluation_status === 'completed' ? 'مكتمل ✅' : 'غير مكتمل ❌'}
 ${notification.evaluation_score ? `النتيجة: ${notification.evaluation_score}` : ''}
 ${notification.teacher_feedback ? `ملاحظات المعلمة: ${notification.teacher_feedback}` : ''}
@@ -190,19 +202,38 @@ ${notification.teacher_feedback ? `ملاحظات المعلمة: ${notification
                 simpleMessage = `⏰ تذكير واجب
 
 الطالب: ${student.full_name} (${student.student_id})
-الواجب: ${notification.assignment_title || 'الواجب'}
+الواجب: ${notification.assignment_title || assignment?.title || 'الواجب'}
 موعد التسليم: غداً
 
 من: ${tenant.name}`;
               } else {
-                // Simple assignment notification
-                simpleMessage = `📚 واجب جديد
+                // Complete assignment notification with all details
+                const assignmentTypeAr = assignment?.assignment_type === 'homework' ? 'واجب منزلي' :
+                                       assignment?.assignment_type === 'task' ? 'مهمة' :
+                                       assignment?.assignment_type === 'project' ? 'مشروع' :
+                                       assignment?.assignment_type === 'activity' ? 'نشاط' :
+                                       'واجب منزلي';
+                
+                const priorityAr = assignment?.priority === 'high' ? 'عالية' :
+                                 assignment?.priority === 'medium' ? 'متوسطة' :
+                                 assignment?.priority === 'low' ? 'منخفضة' :
+                                 'متوسطة';
 
+                const dueDate = assignment?.due_date ? new Date(assignment.due_date).toLocaleDateString('ar-SA') : 'غير محدد';
+                
+                simpleMessage = `📚 واجب جديد
 الطالب: ${student.full_name} (${student.student_id})
-العنوان: ${notification.assignment_title || 'الواجب'}
-النوع: ${notification.assignment_type || 'واجب منزلي'}
-الأولوية: ${notification.assignment_priority || 'متوسطة'}
-موعد التسليم: ${notification.assignment_due_date || 'غير محدد'}
+
+العنوان: ${assignment?.title || 'الواجب'}
+النوع: ${assignmentTypeAr}
+الأولوية: ${priorityAr}
+الفصل: ${assignment?.classes?.name || 'غير محدد'}
+موعد التسليم: ${dueDate}
+
+الوصف:
+${assignment?.description || 'لا يوجد وصف إضافي'}
+
+يرجى متابعة طفلكم لإنجاز الواجب في الموعد المحدد.
 
 من: ${tenant.name}`;
               }
