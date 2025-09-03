@@ -54,19 +54,23 @@
     },
     {
       "parameters": {
-        "url": "https://ytjodudlnfamvnescumu.supabase.co/functions/v1/whatsapp-mock",
+        "url": "https://graph.facebook.com/v17.0/YOUR_PHONE_NUMBER_ID/messages",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Content-Type",
               "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_WHATSAPP_ACCESS_TOKEN"
             }
           ]
         },
         "sendBody": true,
         "bodyContentType": "json",
-        "jsonBody": "={{ $json }}",
+        "jsonBody": "={{ {\n          \"messaging_product\": \"whatsapp\",\n          \"to\": $json.to,\n          \"type\": \"text\",\n          \"text\": {\n            \"body\": $json.message\n          }\n        } }}",
         "options": {}
       },
       "id": "send-to-whatsapp",
