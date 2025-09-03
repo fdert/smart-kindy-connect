@@ -171,16 +171,40 @@ async function processNotifications(supabase: any, notifications: any[]) {
           const guardian = link.guardians;
           if (guardian && guardian.whatsapp_number) {
             try {
-              // For evaluation notifications, use the message as is (it already has formatting)
-              let fullMessage;
+              // Create simple message like attendance notifications
+              let simpleMessage;
+              
               if (notification.reminder_type === 'assignment_evaluation') {
-                fullMessage = notification.message_content;
-              } else {
-                // For other notifications, add tenant signature
-                fullMessage = `${notification.message_content}
+                // Simple evaluation message
+                simpleMessage = `📝 تقييم الواجب
 
-من: ${tenant.name}
-الطالب: ${student.full_name} (${student.student_id})`;
+الطالب: ${student.full_name} (${student.student_id})
+الواجب: ${notification.assignment_title || 'الواجب'}
+الحالة: ${notification.evaluation_status === 'completed' ? 'مكتمل ✅' : 'غير مكتمل ❌'}
+${notification.evaluation_score ? `النتيجة: ${notification.evaluation_score}` : ''}
+${notification.teacher_feedback ? `ملاحظات المعلمة: ${notification.teacher_feedback}` : ''}
+
+من: ${tenant.name}`;
+              } else if (notification.reminder_type === 'assignment_reminder') {
+                // Simple reminder message
+                simpleMessage = `⏰ تذكير واجب
+
+الطالب: ${student.full_name} (${student.student_id})
+الواجب: ${notification.assignment_title || 'الواجب'}
+موعد التسليم: غداً
+
+من: ${tenant.name}`;
+              } else {
+                // Simple assignment notification
+                simpleMessage = `📚 واجب جديد
+
+الطالب: ${student.full_name} (${student.student_id})
+العنوان: ${notification.assignment_title || 'الواجب'}
+النوع: ${notification.assignment_type || 'واجب منزلي'}
+الأولوية: ${notification.assignment_priority || 'متوسطة'}
+موعد التسليم: ${notification.assignment_due_date || 'غير محدد'}
+
+من: ${tenant.name}`;
               }
 
               // Call WhatsApp outbound function
@@ -188,7 +212,7 @@ async function processNotifications(supabase: any, notifications: any[]) {
                 body: {
                   tenantId: notification.tenant_id,
                   to: guardian.whatsapp_number,
-                  message: fullMessage,
+                  message: simpleMessage,
                   context: {
                     type: notification.reminder_type,
                     studentId: notification.student_id,
