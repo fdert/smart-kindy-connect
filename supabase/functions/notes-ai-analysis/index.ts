@@ -7,6 +7,7 @@ const corsHeaders = {
 }
 
 const deepseekApiKey = Deno.env.get('DEEPSEEK_API_KEY')
+console.log('DeepSeek API Key status:', deepseekApiKey ? 'configured' : 'not configured')
 
 interface NoteAnalysisRequest {
   noteContent: string;
