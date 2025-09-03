@@ -183,6 +183,39 @@ export default function StudentNotes() {
 
       console.log('Note created successfully:', newNote);
 
+      // Analyze note with AI
+      try {
+        console.log('Analyzing note with AI...');
+        const student = students.find(s => s.id === formData.student_id);
+        const { data: aiAnalysis, error: aiError } = await supabase.functions.invoke('notes-ai-analysis', {
+          body: {
+            action: 'analyze_note',
+            content: formData.content,
+            type: formData.note_type,
+            studentAge: 5, // افتراض عمر الطلاب في التمهيدي
+            studentName: student?.full_name || 'طالب',
+            context: formData.title
+          }
+        });
+
+        if (!aiError && aiAnalysis) {
+          console.log('AI analysis successful:', aiAnalysis);
+          // Update the note with AI analysis
+          await supabase
+            .from('student_notes')
+            .update({
+              ai_analysis: aiAnalysis.analysis,
+              ai_suggestions: aiAnalysis.suggestions
+            })
+            .eq('id', newNote.id);
+        } else {
+          console.log('AI analysis failed:', aiError);
+        }
+      } catch (aiError) {
+        console.log('Failed to analyze note with AI:', aiError);
+        // Don't fail the whole operation if AI analysis fails
+      }
+
       // Send WhatsApp notifications immediately (optional)
       try {
         console.log('Triggering WhatsApp notifications...');

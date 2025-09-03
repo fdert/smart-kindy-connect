@@ -536,12 +536,15 @@ export default function Assignments() {
                 </div>
                 <div>
                   <Label htmlFor="ai-grade">الصف</Label>
-                  <Input
-                    id="ai-grade"
-                    value={aiForm.grade}
-                    onChange={(e) => setAiForm(prev => ({ ...prev, grade: e.target.value }))}
-                    placeholder="مثال: الصف السادس"
-                  />
+                  <Select onValueChange={(value) => setAiForm(prev => ({ ...prev, grade: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="اختر الصف" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="تمهيدي 1">تمهيدي 1</SelectItem>
+                      <SelectItem value="تمهيدي 2">تمهيدي 2</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label htmlFor="ai-topic">الموضوع</Label>
