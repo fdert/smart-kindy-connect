@@ -166,23 +166,23 @@ async function processNotifications(supabase: any, notifications: any[]) {
           continue;
         }
 
+        // Get assignment details from database for complete message
+        const { data: assignment, error: assignmentError } = await supabase
+          .from('assignments')
+          .select('title, assignment_type, priority, description, due_date, classes(name)')
+          .eq('id', notification.assignment_id)
+          .single();
+
+        if (assignmentError) {
+          console.error('Error fetching assignment details:', assignmentError);
+          continue;
+        }
+
         // Send WhatsApp notifications to each guardian
         for (const link of guardianLinks || []) {
           const guardian = link.guardians;
           if (guardian && guardian.whatsapp_number) {
             try {
-              // Get assignment details from database for complete message
-              const { data: assignment, error: assignmentError } = await supabase
-                .from('assignments')
-                .select('title, assignment_type, priority, description, due_date, classes(name)')
-                .eq('id', notification.assignment_id)
-                .single();
-
-              if (assignmentError) {
-                console.error('Error fetching assignment details:', assignmentError);
-                continue;
-              }
-
               // Format message based on type
               let simpleMessage;
               
@@ -191,7 +191,7 @@ async function processNotifications(supabase: any, notifications: any[]) {
                 simpleMessage = `📝 تقييم الواجب
 
 الطالب: ${student.full_name} (${student.student_id})
-الواجب: ${notification.assignment_title || assignment?.title || 'الواجب'}
+الواجب: ${assignment?.title || 'الواجب'}
 الحالة: ${notification.evaluation_status === 'completed' ? 'مكتمل ✅' : 'غير مكتمل ❌'}
 ${notification.evaluation_score ? `النتيجة: ${notification.evaluation_score}` : ''}
 ${notification.teacher_feedback ? `ملاحظات المعلمة: ${notification.teacher_feedback}` : ''}
@@ -202,12 +202,12 @@ ${notification.teacher_feedback ? `ملاحظات المعلمة: ${notification
                 simpleMessage = `⏰ تذكير واجب
 
 الطالب: ${student.full_name} (${student.student_id})
-الواجب: ${notification.assignment_title || assignment?.title || 'الواجب'}
+الواجب: ${assignment?.title || 'الواجب'}
 موعد التسليم: غداً
 
 من: ${tenant.name}`;
               } else {
-                // Complete assignment notification with all details
+                // Complete assignment notification with all details - EXACTLY as user requested
                 const assignmentTypeAr = assignment?.assignment_type === 'homework' ? 'واجب منزلي' :
                                        assignment?.assignment_type === 'task' ? 'مهمة' :
                                        assignment?.assignment_type === 'project' ? 'مشروع' :
@@ -219,7 +219,12 @@ ${notification.teacher_feedback ? `ملاحظات المعلمة: ${notification
                                  assignment?.priority === 'low' ? 'منخفضة' :
                                  'متوسطة';
 
-                const dueDate = assignment?.due_date ? new Date(assignment.due_date).toLocaleDateString('ar-SA') : 'غير محدد';
+                const dueDate = assignment?.due_date ? 
+                  new Date(assignment.due_date).toLocaleDateString('ar-SA', {
+                    day: '2-digit',
+                    month: '2-digit', 
+                    year: 'numeric'
+                  }).replace(/\//g, '/') : 'غير محدد';
                 
                 simpleMessage = `📚 واجب جديد
 الطالب: ${student.full_name} (${student.student_id})
