@@ -379,6 +379,10 @@ export default function Assignments() {
     }
 
     try {
+      console.log('=== CALLING ASSIGNMENTS-AI FUNCTION ===');
+      console.log('Action: generate_assignment');
+      console.log('AI Form:', aiForm);
+
       const { data, error } = await supabase.functions.invoke('assignments-ai', {
         body: {
           action: 'generate_assignment',
@@ -386,28 +390,36 @@ export default function Assignments() {
         }
       });
 
+      console.log('=== RESPONSE FROM ASSIGNMENTS-AI ===');
+      console.log('Data:', data);
+      console.log('Error:', error);
+
       if (error) throw error;
 
-      setFormData(prev => ({
-        ...prev,
-        title: `واجب في ${aiForm.subject} - ${aiForm.topic}`,
-        description: data.assignment,
-        subject: aiForm.subject,
-        assignment_type: aiForm.difficulty === 'hard' ? 'project' : 'homework'
-      }));
+      if (data?.success && data?.data?.assignment) {
+        setFormData(prev => ({
+          ...prev,
+          title: `واجب في ${aiForm.subject} - ${aiForm.topic}`,
+          description: data.data.assignment,
+          subject: aiForm.subject,
+          assignment_type: aiForm.difficulty === 'hard' ? 'project' : 'homework'
+        }));
 
-      setIsAIDialogOpen(false);
-      setIsCreateDialogOpen(true);
+        setIsAIDialogOpen(false);
+        setIsCreateDialogOpen(true);
 
-      toast({
-        title: "تم بنجاح",
-        description: "تم توليد الواجب بالذكاء الاصطناعي"
-      });
+        toast({
+          title: "تم بنجاح",
+          description: "تم توليد الواجب بالذكاء الاصطناعي"
+        });
+      } else {
+        throw new Error(data?.error || 'فشل في توليد الواجب');
+      }
     } catch (error) {
       console.error('Error generating AI assignment:', error);
       toast({
         title: "خطأ",
-        description: "فشل في توليد الواجب",
+        description: "فشل في توليد الواجب: " + error.message,
         variant: "destructive"
       });
     }
