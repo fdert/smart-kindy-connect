@@ -335,19 +335,92 @@ export default function Assignments() {
 
       if (error) throw error;
 
-      // Send WhatsApp notifications immediately for each assignment
-      try {
-        for (const assignment of newAssignments || []) {
-          await supabase.functions.invoke('assignment-notifications', {
-            body: {
-              processImmediate: true,
-              assignmentId: assignment.id
-            }
+      // Create notification reminders for each assignment
+      const notificationsToCreate = [];
+      
+      for (const assignment of newAssignments || []) {
+        // Get students for this assignment
+        let studentsToNotify = [];
+        
+        if (assignment.student_id) {
+          // Individual assignment - single student
+          studentsToNotify = [assignment.student_id];
+        } else if (assignment.class_id) {
+          // Class assignment - get all students in the class
+          const { data: classStudents } = await supabase
+            .from('students')
+            .select('id')
+            .eq('class_id', assignment.class_id)
+            .eq('tenant_id', tenant.id);
+          
+          studentsToNotify = classStudents?.map(s => s.id) || [];
+        }
+
+        // Get class name for the message
+        let className = 'غير محدد';
+        if (assignment.class_id) {
+          const { data: classData } = await supabase
+            .from('classes')
+            .select('name')
+            .eq('id', assignment.class_id)
+            .single();
+          className = classData?.name || 'غير محدد';
+        }
+
+        // Create notification for each student
+        for (const studentId of studentsToNotify) {
+          const assignmentTypeArabic = assignment.assignment_type === 'homework' ? 'واجب منزلي' :
+                                     assignment.assignment_type === 'project' ? 'مشروع' :
+                                     assignment.assignment_type === 'exam' ? 'اختبار' : 'مهمة';
+
+          const priorityArabic = assignment.priority === 'high' ? 'عالية' :
+                               assignment.priority === 'medium' ? 'متوسطة' : 'منخفضة';
+
+          const message = `📚 واجب جديد
+
+العنوان: ${assignment.title}
+النوع: ${assignmentTypeArabic}
+الأولوية: ${priorityArabic}
+الفصل: ${className}
+موعد التسليم: ${format(new Date(assignment.due_date), 'dd/MM/yyyy')}
+
+الوصف: ${assignment.description || 'لا يوجد وصف'}
+
+يرجى متابعة طفلكم لإنجاز الواجب في الموعد المحدد.`;
+
+          notificationsToCreate.push({
+            tenant_id: tenant.id,
+            student_id: studentId,
+            assignment_id: assignment.id,
+            reminder_type: 'assignment_notification',
+            message_content: message,
+            scheduled_date: new Date().toISOString().split('T')[0],
+            status: 'pending'
           });
         }
-      } catch (notificationError) {
-        console.error('Error sending notifications:', notificationError);
-        // Don't fail the assignment creation if notifications fail
+      }
+
+      // Insert notification reminders
+      if (notificationsToCreate.length > 0) {
+        const { error: notificationError } = await supabase
+          .from('notification_reminders')
+          .insert(notificationsToCreate);
+
+        if (notificationError) {
+          console.error('Error creating notification reminders:', notificationError);
+        }
+
+        // Send WhatsApp notifications immediately
+        try {
+          await supabase.functions.invoke('assignment-notifications', {
+            body: {
+              processImmediate: true
+            }
+          });
+        } catch (notificationError) {
+          console.error('Error sending notifications:', notificationError);
+          // Don't fail the assignment creation if notifications fail
+        }
       }
 
       toast({
