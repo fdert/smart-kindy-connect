@@ -169,13 +169,27 @@ async function processNotifications(supabase: any, notifications: any[]) {
         // Get assignment details from database for complete message
         const { data: assignment, error: assignmentError } = await supabase
           .from('assignments')
-          .select('title, assignment_type, priority, description, due_date, classes(name)')
+          .select('title, assignment_type, priority, description, due_date, class_id')
           .eq('id', notification.assignment_id)
           .single();
 
         if (assignmentError) {
           console.error('Error fetching assignment details:', assignmentError);
           continue;
+        }
+
+        // Get class information if exists
+        let className = 'غير محدد';
+        if (assignment?.class_id) {
+          const { data: classData } = await supabase
+            .from('classes')
+            .select('name')
+            .eq('id', assignment.class_id)
+            .single();
+          
+          if (classData) {
+            className = classData.name;
+          }
         }
 
         // Send WhatsApp notifications to each guardian
@@ -232,7 +246,7 @@ ${notification.teacher_feedback ? `ملاحظات المعلمة: ${notification
 العنوان: ${assignment?.title || 'الواجب'}
 النوع: ${assignmentTypeAr}
 الأولوية: ${priorityAr}
-الفصل: ${assignment?.classes?.name || 'غير محدد'}
+الفصل: ${className}
 موعد التسليم: ${dueDate}
 
 الوصف:
