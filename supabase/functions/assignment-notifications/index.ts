@@ -202,7 +202,7 @@ async function processNotifications(supabase: any, notifications: any[]) {
                 .from('tenant_settings')
                 .select('value')
                 .eq('tenant_id', notification.tenant_id)
-                .eq('key', 'whatsapp_webhook_url')
+                .eq('key', 'wa_webhook_url')
                 .single();
 
               if (!whatsappSettings?.value) {
