@@ -240,22 +240,6 @@ async function processNotifications(supabase: any, notifications: any[]) {
           const guardian = link.guardians;
           if (guardian && guardian.whatsapp_number) {
             try {
-              // Get WhatsApp settings for this tenant
-              const { data: whatsappSettings } = await supabase
-                .from('tenant_settings')
-                .select('value')
-                .eq('tenant_id', notification.tenant_id)
-                .eq('key', 'wa_webhook_url')
-                .single();
-
-              if (!whatsappSettings?.value) {
-                console.log(`No WhatsApp webhook configured for tenant ${notification.tenant_id}`);
-                errorCount++;
-                continue;
-              }
-
-              const webhookUrl = whatsappSettings.value;
-              
               // Format message based on type
               let simpleMessage;
               
@@ -319,62 +303,33 @@ ${assignment?.description || 'لا يوجد وصف إضافي'}
 🏫 من: ${tenant.name}`;
               }
               
-              // Send message directly to N8N webhook
-              const webhookPayload = {
+              // Send message using whatsapp-outbound function (same as regular assignments)
+              const messagePayload = {
+                tenantId: notification.tenant_id,
                 to: guardian.whatsapp_number,
                 message: simpleMessage,
-                tenantId: notification.tenant_id,
-                timestamp: new Date().toISOString(),
                 contextType: notification.reminder_type,
-                context: {
-                  type: notification.reminder_type,
-                  studentId: notification.student_id,
-                  assignmentId: notification.assignment_id,
-                  guardianId: guardian.id
-                }
+                contextId: notification.assignment_id,
+                studentId: notification.student_id
               };
 
-              console.log(`Sending WhatsApp message to webhook: ${webhookUrl}`);
-              console.log(`Message payload:`, webhookPayload);
+              console.log(`Sending WhatsApp message via whatsapp-outbound function`);
+              console.log(`Message payload:`, messagePayload);
 
-              const webhookResponse = await fetch(webhookUrl, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(webhookPayload)
+              // Use supabase functions invoke to call whatsapp-outbound
+              const { data: webhookResult, error: functionError } = await supabase.functions.invoke('whatsapp-outbound', {
+                body: messagePayload
               });
 
-              if (!webhookResponse.ok) {
-                throw new Error(`Webhook responded with status: ${webhookResponse.status}`);
+              if (functionError) {
+                throw new Error(`WhatsApp outbound function error: ${functionError.message}`);
               }
 
-              const webhookResult = await webhookResponse.json();
-              console.log(`Webhook response:`, webhookResult);
-
-              // Log the message to wa_messages table
-              const { error: insertError } = await supabase
-                .from('wa_messages')
-                .insert({
-                  tenant_id: notification.tenant_id,
-                  from_number: 'system', // Added missing from_number field
-                  to_number: guardian.whatsapp_number,
-                  message_text: simpleMessage,
-                  message_type: 'text',
-                  direction: 'outbound',
-                  status: 'sent',
-                  context_type: notification.reminder_type,
-                  sent_at: new Date().toISOString(),
-                  webhook_data: webhookResult
-                });
-
-              if (insertError) {
-                console.error('Error inserting wa_message:', insertError);
-              } else {
-                console.log('WhatsApp message logged successfully');
+              if (!webhookResult?.success) {
+                throw new Error(`WhatsApp outbound function failed: ${webhookResult?.error || 'Unknown error'}`);
               }
 
-              console.log(`Assignment notification sent successfully to ${guardian.full_name} (${guardian.whatsapp_number})`);
+              console.log(`Assignment notification sent successfully to ${guardian.full_name} (${guardian.whatsapp_number}) via whatsapp-outbound`);
               successCount++;
             } catch (error) {
               console.error(`Error sending to guardian ${guardian.id}:`, error);
