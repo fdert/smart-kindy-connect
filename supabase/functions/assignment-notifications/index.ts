@@ -244,7 +244,6 @@ async function processNotifications(supabase: any, notifications: any[]) {
               let simpleMessage;
               
               if (notification.reminder_type === 'assignment_evaluation') {
-                // Simple evaluation message
                 simpleMessage = `📝 تقييم الواجب
 
 الطالب: ${student.full_name} (${student.student_id})
@@ -255,7 +254,6 @@ ${notification.teacher_feedback ? `ملاحظات المعلمة: ${notification
 
 من: ${tenant.name}`;
               } else if (notification.reminder_type === 'assignment_reminder') {
-                // Simple reminder message
                 simpleMessage = `⏰ تذكير واجب
 
 الطالب: ${student.full_name} (${student.student_id})
