@@ -76,7 +76,7 @@ serve(async (req) => {
 
     console.log('Processing scheduled assignment notifications...');
 
-    // Get all pending notifications scheduled for today or earlier
+    // Get all pending notifications scheduled for today or earlier (avoid duplicates)
     const { data: notifications, error: notificationsError } = await supabase
       .from('notification_reminders')
       .select(`
@@ -84,7 +84,8 @@ serve(async (req) => {
       `)
       .eq('status', 'pending')
       .lte('scheduled_date', new Date().toISOString().split('T')[0])
-      .in('reminder_type', ['assignment_notification', 'assignment_reminder', 'assignment_evaluation']);
+      .in('reminder_type', ['assignment_notification', 'assignment_reminder', 'assignment_evaluation'])
+      .order('created_at', { ascending: true }); // Process oldest first to avoid duplicates
 
     if (notificationsError) {
       throw new Error(`Error fetching notifications: ${notificationsError.message}`);
@@ -123,7 +124,18 @@ async function processNotifications(supabase: any, notifications: any[]) {
   let errorCount = 0;
 
   if (notifications && notifications.length > 0) {
-    for (const notification of notifications) {
+    // Remove duplicates based on assignment_id + student_id + reminder_type
+    const uniqueNotifications = notifications.filter((notification, index, self) => 
+      index === self.findIndex(n => 
+        n.assignment_id === notification.assignment_id && 
+        n.student_id === notification.student_id && 
+        n.reminder_type === notification.reminder_type
+      )
+    );
+    
+    console.log(`Processing ${uniqueNotifications.length} unique notifications (filtered from ${notifications.length})`);
+    
+    for (const notification of uniqueNotifications) {
       try {
         // Get student information
         const { data: student, error: studentError } = await supabase
@@ -235,10 +247,11 @@ ${notification.teacher_feedback ? `ملاحظات المعلمة: ${notification
 
                 const dueDate = assignment?.due_date ? 
                   new Date(assignment.due_date).toLocaleDateString('ar-SA', {
+                    weekday: 'long',
                     day: '2-digit',
-                    month: '2-digit', 
+                    month: 'long', 
                     year: 'numeric'
-                  }).replace(/\//g, '/') : 'غير محدد';
+                  }) : 'غير محدد';
                 
                 simpleMessage = `🎓✨ واجب جديد ✨🎓
 ════════════════════════
