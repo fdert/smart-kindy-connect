@@ -357,6 +357,7 @@ ${assignment?.description || 'لا يوجد وصف إضافي'}
                 .from('wa_messages')
                 .insert({
                   tenant_id: notification.tenant_id,
+                  from_number: 'system', // Added missing from_number field
                   to_number: guardian.whatsapp_number,
                   message_text: simpleMessage,
                   message_type: 'text',
