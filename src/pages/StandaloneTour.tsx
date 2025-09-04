@@ -614,7 +614,7 @@ const StandaloneTour = () => {
           <div className="flex flex-col sm:flex-row justify-center items-center gap-8 text-gray-700">
             <div className="flex items-center gap-3">
               <Phone className="h-5 w-5 text-blue-500" />
-              <span className="font-medium">+966 53 598 3261</span>
+              <span className="font-medium" dir="ltr">+966 53 598 3261</span>
             </div>
             <div className="flex items-center gap-3">
               <MessageCircle className="h-5 w-5 text-green-500" />
