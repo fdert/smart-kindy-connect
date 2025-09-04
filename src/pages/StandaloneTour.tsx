@@ -468,7 +468,14 @@ const StandaloneTour = () => {
             onClick={currentStep === steps.length - 1 ? () => {
               const whatsappUrl = 'https://wa.me/966535983261?text=مرحباً، أريد معرفة المزيد عن نظام SmartKindy لإدارة الحضانات';
               console.log('Opening WhatsApp URL:', whatsappUrl);
-              window.open(whatsappUrl, '_blank');
+              // استخدام طريقة مختلفة لفتح الرابط
+              const link = document.createElement('a');
+              link.href = whatsappUrl;
+              link.target = '_blank';
+              link.rel = 'noopener noreferrer';
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
             } : nextStep}
             className="flex items-center gap-3 px-8 py-4 text-lg rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shadow-lg hover:shadow-xl transition-all duration-300"
             size="lg"
@@ -532,7 +539,13 @@ const StandaloneTour = () => {
                 onClick={() => {
                   const whatsappUrl = 'https://wa.me/966535983261?text=مرحباً، أود بدء التجربة المجانية لنظام SmartKindy لإدارة الحضانات';
                   console.log('Opening WhatsApp URL (Free Trial):', whatsappUrl);
-                  window.open(whatsappUrl, '_blank');
+                  const link = document.createElement('a');
+                  link.href = whatsappUrl;
+                  link.target = '_blank';
+                  link.rel = 'noopener noreferrer';
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
                 }}
               >
                 <MessageCircle className="h-5 w-5 ml-2" />
@@ -545,7 +558,13 @@ const StandaloneTour = () => {
                 onClick={() => {
                   const whatsappUrl = 'https://wa.me/966535983261?text=مرحباً، أريد معرفة المزيد عن نظام SmartKindy لإدارة الحضانات';
                   console.log('Opening WhatsApp URL (Contact):', whatsappUrl);
-                  window.open(whatsappUrl, '_blank');
+                  const link = document.createElement('a');
+                  link.href = whatsappUrl;
+                  link.target = '_blank';
+                  link.rel = 'noopener noreferrer';
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
                 }}
               >
                 <MessageCircle className="h-5 w-5 ml-2" />
