@@ -305,6 +305,8 @@ ${assignment?.description || 'لا يوجد وصف إضافي'}
 
         if (updateError) {
           console.error('Error updating notification status:', updateError);
+        } else {
+          console.log(`Notification ${notification.id} marked as sent successfully`);
         }
 
       } catch (error) {
