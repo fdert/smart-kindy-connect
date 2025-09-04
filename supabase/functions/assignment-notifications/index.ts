@@ -24,54 +24,97 @@ serve(async (req) => {
       // No body, proceed with scheduled processing
     }
 
-    if (requestBody?.processImmediate && requestBody?.evaluationNotification) {
-      console.log('Processing immediate evaluation notification...');
+    if (requestBody?.processImmediate) {
+      console.log('Processing immediate notifications...');
       
-      // Process immediate evaluation notification
-      const { assignmentId, studentId } = requestBody;
-      
-      if (!assignmentId || !studentId) {
-        throw new Error('Missing assignmentId or studentId for immediate processing');
-      }
+      // Check if it's evaluation notification processing
+      if (requestBody?.evaluationNotification) {
+        const { assignmentId, studentId } = requestBody;
+        
+        if (!assignmentId || !studentId) {
+          throw new Error('Missing assignmentId or studentId for immediate processing');
+        }
 
-      // Get the latest evaluation notification for this assignment and student
-      const { data: notifications, error: notificationsError } = await supabase
-        .from('notification_reminders')
-        .select('*')
-        .eq('assignment_id', assignmentId)
-        .eq('student_id', studentId)
-        .eq('reminder_type', 'assignment_evaluation')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: false })
-        .limit(1);
+        // Get the latest evaluation notification for this assignment and student
+        const { data: notifications, error: notificationsError } = await supabase
+          .from('notification_reminders')
+          .select('*')
+          .eq('assignment_id', assignmentId)
+          .eq('student_id', studentId)
+          .eq('reminder_type', 'assignment_evaluation')
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(1);
 
-      if (notificationsError) {
-        throw new Error(`Error fetching evaluation notifications: ${notificationsError.message}`);
-      }
+        if (notificationsError) {
+          throw new Error(`Error fetching evaluation notifications: ${notificationsError.message}`);
+        }
 
-      if (!notifications || notifications.length === 0) {
-        console.log('No pending evaluation notifications found');
+        if (!notifications || notifications.length === 0) {
+          console.log('No pending evaluation notifications found');
+          return new Response(JSON.stringify({
+            success: true,
+            message: 'No pending evaluation notifications found',
+            processed: 0
+          }), {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        // Process the notification immediately
+        await processNotifications(supabase, notifications);
+
         return new Response(JSON.stringify({
           success: true,
-          message: 'No pending evaluation notifications found',
+          message: 'Evaluation notification processed immediately',
+          processed: notifications.length
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
+      // Process all immediate pending notifications (for new assignments)
+      console.log('Processing all immediate pending notifications...');
+      
+      // Get all recent pending notifications (created in the last 5 minutes)
+      const { data: recentNotifications, error: recentError } = await supabase
+        .from('notification_reminders')
+        .select('*')
+        .eq('status', 'pending')
+        .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString())
+        .in('reminder_type', ['assignment_notification', 'assignment_reminder', 'assignment_evaluation']);
+
+      if (recentError) {
+        throw new Error(`Error fetching recent notifications: ${recentError.message}`);
+      }
+
+      console.log(`Found ${recentNotifications?.length || 0} recent pending notifications`);
+
+      if (recentNotifications && recentNotifications.length > 0) {
+        const result = await processNotifications(supabase, recentNotifications);
+        
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Immediate notifications processed successfully',
+          processed: recentNotifications.length,
+          successCount: result.successCount,
+          errorCount: result.errorCount
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } else {
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'No recent pending notifications found',
           processed: 0
         }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-
-      // Process the notification immediately
-      await processNotifications(supabase, notifications);
-
-      return new Response(JSON.stringify({
-        success: true,
-        message: 'Evaluation notification processed immediately',
-        processed: notifications.length
-      }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
     }
 
     console.log('Processing scheduled assignment notifications...');
