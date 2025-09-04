@@ -265,7 +265,7 @@ ${assignment?.description || 'لا يوجد وصف إضافي'}
 ════════════════════════`;
               }
 
-              // Call WhatsApp outbound function (same method as attendance notifications)
+              // Call WhatsApp outbound function (exact same method as attendance notifications)
               const { error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
                 body: {
                   tenantId: notification.tenant_id,
