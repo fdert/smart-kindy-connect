@@ -265,8 +265,8 @@ ${assignment?.description || 'لا يوجد وصف إضافي'}
 ════════════════════════`;
               }
 
-              // Call WhatsApp outbound function
-              const { data: whatsappData, error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
+              // Call WhatsApp outbound function (same method as attendance notifications)
+              const { error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
                 body: {
                   tenantId: notification.tenant_id,
                   to: guardian.whatsapp_number,
@@ -280,13 +280,11 @@ ${assignment?.description || 'لا يوجد وصف إضافي'}
                 }
               });
 
-              console.log(`WhatsApp outbound response:`, whatsappData);
-
               if (whatsappError) {
                 console.error(`WhatsApp send error for guardian ${guardian.id}:`, whatsappError);
                 errorCount++;
               } else {
-                console.log(`Notification sent successfully to ${guardian.full_name} (${guardian.whatsapp_number})`);
+                console.log(`Assignment notification sent successfully to ${guardian.full_name} (${guardian.whatsapp_number})`);
                 successCount++;
               }
             } catch (error) {
