@@ -310,7 +310,7 @@ ${assignment?.description || 'لا يوجد وصف إضافي'}
               console.log(`Webhook response:`, webhookResult);
 
               // Log the message to wa_messages table
-              await supabase
+              const { error: insertError } = await supabase
                 .from('wa_messages')
                 .insert({
                   tenant_id: notification.tenant_id,
@@ -323,6 +323,12 @@ ${assignment?.description || 'لا يوجد وصف إضافي'}
                   sent_at: new Date().toISOString(),
                   webhook_data: webhookResult
                 });
+
+              if (insertError) {
+                console.error('Error inserting wa_message:', insertError);
+              } else {
+                console.log('WhatsApp message logged successfully');
+              }
 
               console.log(`Assignment notification sent successfully to ${guardian.full_name} (${guardian.whatsapp_number})`);
               successCount++;
