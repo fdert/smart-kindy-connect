@@ -412,6 +412,9 @@ export default function Assignments() {
 
         // Send WhatsApp notifications immediately
         try {
+          // Wait a moment to ensure notification reminders are fully committed
+          await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+          
           await supabase.functions.invoke('assignment-notifications', {
             body: {
               processImmediate: true
