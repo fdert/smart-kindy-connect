@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { VisitorTracker } from "@/components/VisitorTracker";
 import { 
   ArrowRight, 
   ArrowLeft, 
@@ -25,7 +26,11 @@ import {
   Award,
   Phone,
   Mail,
-  MapPin
+  MapPin,
+  Smile,
+  Sparkles,
+  Baby,
+  Palette
 } from "lucide-react";
 
 // استيراد الصور التوضيحية
@@ -262,26 +267,50 @@ const StandaloneTour = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      {/* الشريط العلوي المستقل */}
-      <header className="bg-white/90 backdrop-blur-sm border-b border-gray-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-yellow-50 to-purple-50 relative overflow-hidden">
+      {/* تتبع الزوار */}
+      <VisitorTracker pageUrl="/standalone-tour" />
+      
+      {/* عناصر زخرفية للأطفال */}
+      <div className="absolute top-10 left-10 animate-bounce">
+        <div className="w-8 h-8 bg-yellow-300 rounded-full opacity-70"></div>
+      </div>
+      <div className="absolute top-20 right-20 animate-pulse">
+        <Star className="h-6 w-6 text-pink-400" />
+      </div>
+      <div className="absolute top-40 left-32 animate-bounce delay-1000">
+        <Heart className="h-5 w-5 text-red-400" />
+      </div>
+      <div className="absolute bottom-32 right-16 animate-pulse delay-500">
+        <Sparkles className="h-7 w-7 text-purple-400" />
+      </div>
+      <div className="absolute bottom-20 left-20 animate-bounce delay-700">
+        <div className="w-6 h-6 bg-green-300 rounded-full opacity-60"></div>
+      </div>
+      
+      {/* الشريط العلوي المطور للأطفال */}
+      <header className="bg-gradient-to-r from-pink-400 via-yellow-400 to-purple-400 shadow-lg relative">
+        <div className="absolute inset-0 bg-white/20 backdrop-blur-sm"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center space-x-reverse space-x-4">
-              <img 
-                src={smartKindyLogo} 
-                alt="SmartKindy Logo" 
-                className="h-12 w-12 object-contain drop-shadow-md"
-              />
+              <div className="relative">
+                <img 
+                  src={smartKindyLogo} 
+                  alt="SmartKindy Logo" 
+                  className="h-14 w-14 object-contain drop-shadow-lg rounded-full border-4 border-white/30"
+                />
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-300 rounded-full animate-pulse"></div>
+              </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">SmartKindy</h1>
-                <p className="text-sm text-gray-600">نظام إدارة الحضانات الذكي</p>
+                <h1 className="text-2xl font-bold text-white drop-shadow-md">🌟 SmartKindy</h1>
+                <p className="text-sm text-white/90 font-medium">✨ نظام إدارة الحضانات الذكي والممتع</p>
               </div>
             </div>
             <div className="flex items-center space-x-reverse space-x-4">
-              <Badge variant="secondary" className="px-4 py-2 text-sm">
-                <Globe className="h-4 w-4 ml-2" />
-                جولة تعريفية مجانية
+              <Badge className="px-4 py-2 text-sm bg-white/20 text-white border-white/30 backdrop-blur-sm">
+                <Baby className="h-4 w-4 ml-2" />
+                🎈 جولة تعريفية مجانية
               </Badge>
             </div>
           </div>
@@ -289,99 +318,135 @@ const StandaloneTour = () => {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-12">
-        {/* المقدمة والعنوان الرئيسي */}
-        <div className="text-center mb-16">
+        {/* المقدمة والعنوان الرئيسي المطور للأطفال */}
+        <div className="text-center mb-16 relative">
           <div className="flex justify-center mb-8">
             <div className="relative">
               <img 
                 src={smartKindyLogo} 
                 alt="SmartKindy" 
-                className="h-24 w-24 object-contain drop-shadow-xl"
+                className="h-28 w-28 object-contain drop-shadow-2xl rounded-full border-4 border-white/50"
               />
-              <div className="absolute -inset-4 bg-gradient-to-r from-blue-200 to-purple-200 rounded-full blur-xl opacity-30"></div>
+              <div className="absolute -inset-6 bg-gradient-to-r from-pink-300 via-yellow-300 to-purple-300 rounded-full blur-xl opacity-40 animate-pulse"></div>
+              <div className="absolute -top-2 -right-2">
+                <Sparkles className="h-8 w-8 text-yellow-400 animate-spin" />
+              </div>
+              <div className="absolute -bottom-2 -left-2">
+                <Heart className="h-6 w-6 text-pink-400 animate-bounce" />
+              </div>
             </div>
           </div>
-          <h1 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">
-            اكتشف مستقبل إدارة الحضانات
+          <h1 className="text-6xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent mb-6 leading-tight animate-pulse">
+            🚀 اكتشف مستقبل إدارة الحضانات الممتع! 
           </h1>
-          <p className="text-xl text-gray-700 mb-8 max-w-4xl mx-auto leading-relaxed">
-            SmartKindy هو النظام الأول في المملكة العربية السعودية الذي يجمع بين التقنية المتطورة والبساطة في الاستخدام 
-            لإدارة الحضانات والروضات بكفاءة عالية وأمان تام
+          <p className="text-2xl text-gray-700 mb-8 max-w-4xl mx-auto leading-relaxed font-medium">
+            🌈 SmartKindy هو النظام السحري الأول في المملكة العربية السعودية الذي يجمع بين التقنية المتطورة والمرح 
+            لإدارة الحضانات والروضات بكفاءة عالية وأمان تام مع لمسة من البهجة والإبداع! ✨
           </p>
-          <div className="flex justify-center space-x-reverse space-x-8 text-sm text-gray-600">
-            <div className="flex items-center">
-              <Shield className="h-5 w-5 text-green-500 ml-2" />
-              <span>آمان مضمون 100%</span>
+          <div className="flex justify-center space-x-reverse space-x-12 text-lg text-gray-600 mb-8">
+            <div className="flex items-center bg-white/60 px-6 py-3 rounded-full shadow-lg backdrop-blur-sm">
+              <Shield className="h-6 w-6 text-green-500 ml-3" />
+              <span className="font-bold">🛡️ آمان مضمون 100%</span>
             </div>
-            <div className="flex items-center">
-              <Zap className="h-5 w-5 text-yellow-500 ml-2" />
-              <span>سهل الاستخدام</span>
+            <div className="flex items-center bg-white/60 px-6 py-3 rounded-full shadow-lg backdrop-blur-sm">
+              <Smile className="h-6 w-6 text-yellow-500 ml-3" />
+              <span className="font-bold">😊 سهل ومُمتع</span>
             </div>
-            <div className="flex items-center">
-              <Award className="h-5 w-5 text-purple-500 ml-2" />
-              <span>جودة عالمية</span>
+            <div className="flex items-center bg-white/60 px-6 py-3 rounded-full shadow-lg backdrop-blur-sm">
+              <Award className="h-6 w-6 text-purple-500 ml-3" />
+              <span className="font-bold">🏆 جودة عالمية</span>
+            </div>
+          </div>
+          
+          {/* شعار مخصص للأطفال */}
+          <div className="bg-gradient-to-r from-pink-100 to-purple-100 rounded-3xl p-6 mx-auto max-w-2xl border-4 border-dashed border-pink-300">
+            <div className="flex items-center justify-center space-x-reverse space-x-4 text-2xl">
+              <Baby className="text-pink-500" />
+              <span className="font-bold text-purple-600">🎨 حيث يلتقي التعلم بالمرح والإبداع</span>
+              <Palette className="text-yellow-500" />
             </div>
           </div>
         </div>
 
-        {/* اختيار نوع المستخدم */}
+        {/* اختيار نوع المستخدم المطور */}
         <div className="flex justify-center mb-16">
-          <div className="flex space-x-reverse space-x-6 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-gray-100">
+          <div className="flex space-x-reverse space-x-6 bg-gradient-to-r from-white/80 to-white/60 backdrop-blur-lg rounded-3xl p-6 shadow-2xl border-4 border-white/30">
             <Button
               variant={selectedRole === 'admin' ? 'default' : 'ghost'}
               onClick={() => switchRole('admin')}
-              className="flex items-center gap-3 px-6 py-4 text-lg rounded-xl transition-all duration-300"
+              className={`flex items-center gap-3 px-8 py-6 text-xl rounded-2xl transition-all duration-500 font-bold ${
+                selectedRole === 'admin' 
+                  ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg scale-105 border-4 border-white/50' 
+                  : 'hover:bg-white/70 hover:scale-105 border-2 border-pink-200'
+              }`}
               size="lg"
             >
-              <Settings className="h-5 w-5" />
-              مدير الحضانة
+              <Settings className="h-6 w-6" />
+              👨‍💼 مدير الحضانة
             </Button>
             <Button
               variant={selectedRole === 'teacher' ? 'default' : 'ghost'}
               onClick={() => switchRole('teacher')}
-              className="flex items-center gap-3 px-6 py-4 text-lg rounded-xl transition-all duration-300"
+              className={`flex items-center gap-3 px-8 py-6 text-xl rounded-2xl transition-all duration-500 font-bold ${
+                selectedRole === 'teacher' 
+                  ? 'bg-gradient-to-r from-blue-500 to-green-500 text-white shadow-lg scale-105 border-4 border-white/50' 
+                  : 'hover:bg-white/70 hover:scale-105 border-2 border-blue-200'
+              }`}
               size="lg"
             >
-              <BookOpen className="h-5 w-5" />
-              المعلم
+              <BookOpen className="h-6 w-6" />
+              👩‍🏫 المعلمة
             </Button>
             <Button
               variant={selectedRole === 'parent' ? 'default' : 'ghost'}
               onClick={() => switchRole('parent')}
-              className="flex items-center gap-3 px-6 py-4 text-lg rounded-xl transition-all duration-300"
+              className={`flex items-center gap-3 px-8 py-6 text-xl rounded-2xl transition-all duration-500 font-bold ${
+                selectedRole === 'parent' 
+                  ? 'bg-gradient-to-r from-green-500 to-yellow-500 text-white shadow-lg scale-105 border-4 border-white/50' 
+                  : 'hover:bg-white/70 hover:scale-105 border-2 border-green-200'
+              }`}
               size="lg"
             >
-              <UserCheck className="h-5 w-5" />
-              ولي الأمر
+              <UserCheck className="h-6 w-6" />
+              👪 ولي الأمر
             </Button>
           </div>
         </div>
 
-        {/* مؤشر التقدم المحسن */}
+        {/* مؤشر التقدم المحسن والملون */}
         <div className="mb-12">
           <div className="flex justify-between items-center mb-6">
-            <div className="text-right">
-              <span className="text-lg font-semibold text-gray-800">
-                الخطوة {currentStep + 1} من {steps.length}
+            <div className="text-right bg-white/60 p-4 rounded-2xl backdrop-blur-sm border-2 border-pink-200">
+              <span className="text-2xl font-bold text-purple-600">
+                🎯 الخطوة {currentStep + 1} من {steps.length}
               </span>
-              <p className="text-sm text-gray-600 mt-1">
-                {selectedRole === 'admin' ? 'مميزات المدير' : 
-                 selectedRole === 'teacher' ? 'مميزات المعلم' : 'مميزات ولي الأمر'}
+              <p className="text-lg text-pink-600 mt-1 font-medium">
+                {selectedRole === 'admin' ? '👨‍💼 مميزات المدير الرائعة' : 
+                 selectedRole === 'teacher' ? '👩‍🏫 مميزات المعلمة المبدعة' : '👪 مميزات ولي الأمر المهتم'}
               </p>
             </div>
-            <div className="text-left">
-              <span className="text-lg font-semibold text-primary">
-                {Math.round(((currentStep + 1) / steps.length) * 100)}% مكتمل
+            <div className="text-left bg-white/60 p-4 rounded-2xl backdrop-blur-sm border-2 border-green-200">
+              <span className="text-2xl font-bold text-green-600">
+                🎉 {Math.round(((currentStep + 1) / steps.length) * 100)}% مكتمل
               </span>
-              <p className="text-sm text-gray-600 mt-1">من الجولة التعريفية</p>
+              <p className="text-lg text-blue-600 mt-1 font-medium">🚀 من الجولة التعريفية الممتعة</p>
             </div>
           </div>
           <div className="relative">
-            <div className="w-full bg-gray-200 rounded-full h-3 shadow-inner">
+            <div className="w-full bg-gradient-to-r from-pink-200 to-purple-200 rounded-full h-4 shadow-inner">
               <div 
-                className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-500 ease-out shadow-sm"
+                className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 h-4 rounded-full transition-all duration-1000 ease-out shadow-lg relative overflow-hidden"
                 style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-              ></div>
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
+              </div>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="flex space-x-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className="h-3 w-3 text-yellow-400 animate-twinkle" style={{ animationDelay: `${i * 200}ms` }} />
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -508,48 +573,61 @@ const StandaloneTour = () => {
           </Button>
         </div>
 
-        {/* المميزات الإضافية */}
+        {/* المميزات الإضافية المطورة */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-          <div className="text-center p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+          <div className="text-center p-8 bg-gradient-to-br from-green-50 to-blue-50 rounded-3xl shadow-xl border-4 border-green-200 hover:shadow-2xl transition-all duration-500 hover:scale-105 group">
             <div className="flex justify-center mb-6">
-              <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full">
-                <Shield className="h-8 w-8 text-blue-600" />
+              <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-r from-green-400 to-blue-400 rounded-full shadow-xl group-hover:animate-bounce">
+                <Shield className="h-10 w-10 text-white drop-shadow-lg" />
               </div>
             </div>
-            <h3 className="text-xl font-bold mb-3 text-gray-900">أمان متقدم</h3>
-            <p className="text-gray-600 leading-relaxed">حماية شاملة للبيانات مع تشفير متقدم وحفظ احتياطي آمن في السحابة</p>
+            <h3 className="text-2xl font-bold mb-4 text-green-600">🛡️ أمان متقدم وموثوق</h3>
+            <p className="text-gray-700 leading-relaxed font-medium">حماية شاملة للبيانات مع تشفير متقدم وحفظ احتياطي آمن في السحابة ✨</p>
           </div>
-          <div className="text-center p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+          
+          <div className="text-center p-8 bg-gradient-to-br from-pink-50 to-yellow-50 rounded-3xl shadow-xl border-4 border-pink-200 hover:shadow-2xl transition-all duration-500 hover:scale-105 group">
             <div className="flex justify-center mb-6">
-              <div className="flex items-center justify-center w-16 h-16 bg-green-100 rounded-full">
-                <Heart className="h-8 w-8 text-green-600" />
+              <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-r from-pink-400 to-yellow-400 rounded-full shadow-xl group-hover:animate-bounce">
+                <Heart className="h-10 w-10 text-white drop-shadow-lg" />
               </div>
             </div>
-            <h3 className="text-xl font-bold mb-3 text-gray-900">سهولة الاستخدام</h3>
-            <p className="text-gray-600 leading-relaxed">واجهة بديهية مصممة خصيصاً للبيئة العربية مع دعم فني متخصص</p>
+            <h3 className="text-2xl font-bold mb-4 text-pink-600">😊 سهولة ومتعة الاستخدام</h3>
+            <p className="text-gray-700 leading-relaxed font-medium">واجهة بديهية مصممة خصيصاً للبيئة العربية مع دعم فني متخصص ومُحب 💝</p>
           </div>
-          <div className="text-center p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+          
+          <div className="text-center p-8 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-3xl shadow-xl border-4 border-purple-200 hover:shadow-2xl transition-all duration-500 hover:scale-105 group">
             <div className="flex justify-center mb-6">
-              <div className="flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full">
-                <Smartphone className="h-8 w-8 text-purple-600" />
+              <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-r from-purple-400 to-indigo-400 rounded-full shadow-xl group-hover:animate-bounce">
+                <Smartphone className="h-10 w-10 text-white drop-shadow-lg" />
               </div>
             </div>
-            <h3 className="text-xl font-bold mb-3 text-gray-900">متوافق مع الجوال</h3>
-            <p className="text-gray-600 leading-relaxed">يعمل بسلاسة على جميع الأجهزة الذكية مع تطبيق جوال متخصص</p>
+            <h3 className="text-2xl font-bold mb-4 text-purple-600">📱 متوافق مع جميع الأجهزة</h3>
+            <p className="text-gray-700 leading-relaxed font-medium">يعمل بسلاسة على جميع الأجهزة الذكية مع تطبيق جوال متخصص وسريع 🚀</p>
           </div>
         </div>
 
-        {/* قسم التواصل والدعوة للعمل */}
-        <Card className="bg-gradient-to-r from-blue-500 to-purple-600 border-0 shadow-2xl text-white">
-          <CardContent className="text-center py-16">
-            <h2 className="text-4xl font-bold mb-6">جاهز لتحويل حضانتك؟</h2>
-            <p className="text-xl mb-8 opacity-95 max-w-3xl mx-auto leading-relaxed">
-              انضم إلى أكثر من 500 حضانة في المملكة تستخدم SmartKindy لإدارة عملياتها بكفاءة ونجاح
+        {/* قسم التواصل والدعوة للعمل المطور */}
+        <Card className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 border-0 shadow-2xl text-white relative overflow-hidden">
+          {/* عناصر زخرفية */}
+          <div className="absolute top-4 left-4">
+            <Star className="h-8 w-8 text-yellow-300 animate-spin" />
+          </div>
+          <div className="absolute top-8 right-8">
+            <Heart className="h-6 w-6 text-pink-300 animate-bounce" />
+          </div>
+          <div className="absolute bottom-4 left-8">
+            <Sparkles className="h-7 w-7 text-yellow-400 animate-pulse" />
+          </div>
+          
+          <CardContent className="text-center py-20 relative">
+            <h2 className="text-5xl font-bold mb-8 drop-shadow-lg">🚀 جاهز لتحويل حضانتك إلى عالم سحري؟</h2>
+            <p className="text-2xl mb-12 opacity-95 max-w-4xl mx-auto leading-relaxed font-medium drop-shadow-md">
+              🌟 انضم إلى أكثر من 500 حضانة في المملكة تستخدم SmartKindy لإدارة عملياتها بكفاءة ونجاح مع لمسة من السحر والإبداع! ✨
             </p>
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-8">
               <Button 
                 size="lg"
-                className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                className="bg-white text-purple-600 hover:bg-yellow-100 px-12 py-6 text-2xl rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-110 font-bold border-4 border-white/30"
                 onClick={() => {
                   const phoneNumber = '966535983261';
                   const message = 'مرحباً، أود بدء التجربة المجانية لنظام SmartKindy لإدارة الحضانات';
@@ -572,13 +650,13 @@ const StandaloneTour = () => {
                   }
                 }}
               >
-                <MessageCircle className="h-5 w-5 ml-2" />
-                ابدأ تجربتك المجانية الآن
+                <Sparkles className="h-6 w-6 ml-3 animate-spin" />
+                🎉 ابدأ تجربتك السحرية المجانية الآن
               </Button>
               <Button 
                 size="lg"
                 variant="outline"
-                className="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 text-lg rounded-xl transition-all duration-300"
+                className="border-4 border-white text-white hover:bg-white hover:text-purple-600 px-12 py-6 text-2xl rounded-3xl transition-all duration-500 hover:scale-110 font-bold backdrop-blur-sm"
                 onClick={() => {
                   const phoneNumber = '966535983261';
                   const message = 'مرحباً، أريد معرفة المزيد عن نظام SmartKindy لإدارة الحضانات';
@@ -601,47 +679,96 @@ const StandaloneTour = () => {
                   }
                 }}
               >
-                <MessageCircle className="h-5 w-5 ml-2" />
-                تواصل معنا الآن
+                <MessageCircle className="h-6 w-6 ml-3 animate-bounce" />
+                💬 تواصل معنا الآن
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* معلومات التواصل */}
-        <div className="text-center mt-12 p-8 bg-white/60 backdrop-blur-sm rounded-xl">
-          <h3 className="text-2xl font-bold text-gray-900 mb-6">تواصل معنا</h3>
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-8 text-gray-700">
-            <div className="flex items-center gap-3">
-              <Phone className="h-5 w-5 text-blue-500" />
-              <span className="font-medium" dir="ltr">+966 53 598 3261</span>
+        {/* معلومات التواصل المطورة */}
+        <div className="text-center mt-16 p-10 bg-gradient-to-r from-white/80 to-white/60 backdrop-blur-lg rounded-3xl shadow-2xl border-4 border-white/30 relative">
+          {/* عناصر زخرفية */}
+          <div className="absolute top-2 left-4">
+            <Star className="h-5 w-5 text-yellow-400 animate-bounce" />
+          </div>
+          <div className="absolute top-4 right-4">
+            <Heart className="h-4 w-4 text-pink-400 animate-pulse" />
+          </div>
+          
+          <h3 className="text-3xl font-bold text-purple-600 mb-8 flex items-center justify-center">
+            <Phone className="h-8 w-8 ml-3 text-blue-500" />
+            💬 تواصل معنا بسهولة
+          </h3>
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-12 text-gray-700">
+            <div className="flex items-center gap-4 bg-blue-50 px-8 py-4 rounded-2xl border-2 border-blue-200 hover:scale-105 transition-all duration-300">
+              <div className="flex items-center justify-center w-12 h-12 bg-blue-500 rounded-full">
+                <Phone className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <div className="font-bold text-blue-600 text-xl" dir="ltr">+966 53 598 3261</div>
+                <div className="text-sm text-blue-500">📞 اتصال مباشر</div>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <MessageCircle className="h-5 w-5 text-green-500" />
-              <span className="font-medium">واتساب متاح 24/7</span>
+            
+            <div className="flex items-center gap-4 bg-green-50 px-8 py-4 rounded-2xl border-2 border-green-200 hover:scale-105 transition-all duration-300">
+              <div className="flex items-center justify-center w-12 h-12 bg-green-500 rounded-full">
+                <MessageCircle className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <div className="font-bold text-green-600 text-xl">واتساب متاح 24/7</div>
+                <div className="text-sm text-green-500">💬 دردشة فورية</div>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Globe className="h-5 w-5 text-purple-500" />
-              <span className="font-medium">smartkindy.com</span>
+            
+            <div className="flex items-center gap-4 bg-purple-50 px-8 py-4 rounded-2xl border-2 border-purple-200 hover:scale-105 transition-all duration-300">
+              <div className="flex items-center justify-center w-12 h-12 bg-purple-500 rounded-full">
+                <Globe className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <div className="font-bold text-purple-600 text-xl">smartkindy.com</div>
+                <div className="text-sm text-purple-500">🌐 موقعنا الإلكتروني</div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Footer بسيط */}
-      <footer className="bg-gray-900 text-white py-8 mt-16">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="flex justify-center items-center space-x-reverse space-x-4 mb-4">
-            <img 
-              src={smartKindyLogo} 
-              alt="SmartKindy" 
-              className="h-8 w-8 object-contain"
-            />
-            <span className="text-lg font-bold">SmartKindy</span>
+      {/* Footer بسيط ومُلون */}
+      <footer className="bg-gradient-to-r from-purple-600 via-pink-500 to-blue-600 text-white py-12 mt-20 relative overflow-hidden">
+        {/* عناصر زخرفية في الفوتر */}
+        <div className="absolute top-4 left-8">
+          <Star className="h-6 w-6 text-yellow-300 animate-spin" />
+        </div>
+        <div className="absolute bottom-4 right-8">
+          <Heart className="h-5 w-5 text-pink-300 animate-bounce" />
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 text-center relative">
+          <div className="flex justify-center items-center space-x-reverse space-x-6 mb-6">
+            <div className="relative">
+              <img 
+                src={smartKindyLogo} 
+                alt="SmartKindy" 
+                className="h-12 w-12 object-contain rounded-full border-2 border-white/50"
+              />
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-300 rounded-full animate-pulse"></div>
+            </div>
+            <span className="text-2xl font-bold drop-shadow-lg">✨ SmartKindy</span>
           </div>
-          <p className="text-gray-400 text-sm">
-            © 2025 SmartKindy. جميع الحقوق محفوظة. نظام إدارة الحضانات الأول في المملكة العربية السعودية.
+          <p className="text-white/90 text-lg font-medium mb-4">
+            🌟 © 2025 SmartKindy. جميع الحقوق محفوظة. نظام إدارة الحضانات الأول والأكثر متعة في المملكة العربية السعودية. 🎈
           </p>
+          <div className="flex justify-center items-center space-x-reverse space-x-8 text-white/80">
+            <div className="flex items-center">
+              <Heart className="h-4 w-4 ml-2 animate-pulse" />
+              <span>صُنع بحب وإبداع</span>
+            </div>
+            <div className="flex items-center">
+              <Sparkles className="h-4 w-4 ml-2 animate-spin" />
+              <span>مستقبل التعليم الذكي</span>
+            </div>
+          </div>
         </div>
       </footer>
     </div>

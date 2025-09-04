@@ -46,7 +46,7 @@ import StudentRewards from "./pages/StudentRewards";
 import StudentMedia from "./pages/StudentMedia";
 import StudentNotesDetail from "./pages/StudentNotesDetail";
 import AIAssistant from "./pages/AIAssistant";
-import StandaloneTour from "./pages/StandaloneTour";
+import VisitorAnalytics from "./pages/VisitorAnalytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -111,7 +111,8 @@ const AppRoutes = () => (
     {/* الصفحات العامة */}
     <Route path="/" element={<PublicPageRoute><Index /></PublicPageRoute>} />
     <Route path="/tour" element={<PublicPageRoute><Tour /></PublicPageRoute>} />
-    <Route path="/standalone-tour" element={<StandaloneTour />} />
+    <Route path="/visitor-analytics" element={<ProtectedRoute><VisitorAnalytics /></ProtectedRoute>} />
+    <Route path="/standalone-tour" element={<PublicPageRoute><StandaloneTour /></PublicPageRoute>} />
     <Route path="/demo" element={<PublicPageRoute><Demo /></PublicPageRoute>} />
     <Route path="/register" element={<PublicPageRoute><TenantRegistration /></PublicPageRoute>} />
     <Route path="/pricing" element={<PublicPageRoute><Pricing /></PublicPageRoute>} />

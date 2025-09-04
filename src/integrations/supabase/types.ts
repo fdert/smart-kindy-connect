@@ -1230,6 +1230,51 @@ export type Database = {
         }
         Relationships: []
       }
+      page_visitors: {
+        Row: {
+          browser: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          device_type: string | null
+          id: string
+          os: string | null
+          page_url: string
+          referrer: string | null
+          user_agent: string | null
+          visit_date: string
+          visitor_ip: string | null
+        }
+        Insert: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          os?: string | null
+          page_url: string
+          referrer?: string | null
+          user_agent?: string | null
+          visit_date?: string
+          visitor_ip?: string | null
+        }
+        Update: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          os?: string | null
+          page_url?: string
+          referrer?: string | null
+          user_agent?: string | null
+          visit_date?: string
+          visitor_ip?: string | null
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -2950,6 +2995,20 @@ export type Database = {
       send_expiry_warnings: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      track_page_visit: {
+        Args: {
+          p_browser?: string
+          p_city?: string
+          p_country?: string
+          p_device_type?: string
+          p_os?: string
+          p_page_url: string
+          p_referrer?: string
+          p_user_agent?: string
+          p_visitor_ip?: string
+        }
+        Returns: string
       }
       update_overdue_fees: {
         Args: Record<PropertyKey, never>
