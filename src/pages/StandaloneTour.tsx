@@ -465,7 +465,11 @@ const StandaloneTour = () => {
           </div>
 
           <Button
-            onClick={currentStep === steps.length - 1 ? () => window.open('https://wa.me/966535983261?text=مرحباً، أريد معرفة المزيد عن نظام SmartKindy لإدارة الحضانات', '_blank') : nextStep}
+            onClick={currentStep === steps.length - 1 ? () => {
+              const whatsappUrl = 'https://wa.me/966535983261?text=مرحباً، أريد معرفة المزيد عن نظام SmartKindy لإدارة الحضانات';
+              console.log('Opening WhatsApp URL:', whatsappUrl);
+              window.open(whatsappUrl, '_blank');
+            } : nextStep}
             className="flex items-center gap-3 px-8 py-4 text-lg rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shadow-lg hover:shadow-xl transition-all duration-300"
             size="lg"
           >
@@ -525,7 +529,11 @@ const StandaloneTour = () => {
               <Button 
                 size="lg"
                 className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-                onClick={() => window.open('https://wa.me/966535983261?text=مرحباً، أود بدء التجربة المجانية لنظام SmartKindy لإدارة الحضانات', '_blank')}
+                onClick={() => {
+                  const whatsappUrl = 'https://wa.me/966535983261?text=مرحباً، أود بدء التجربة المجانية لنظام SmartKindy لإدارة الحضانات';
+                  console.log('Opening WhatsApp URL (Free Trial):', whatsappUrl);
+                  window.open(whatsappUrl, '_blank');
+                }}
               >
                 <MessageCircle className="h-5 w-5 ml-2" />
                 ابدأ تجربتك المجانية الآن
@@ -534,7 +542,11 @@ const StandaloneTour = () => {
                 size="lg"
                 variant="outline"
                 className="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 text-lg rounded-xl transition-all duration-300"
-                onClick={() => window.open('https://wa.me/966535983261?text=مرحباً، أريد معرفة المزيد عن نظام SmartKindy لإدارة الحضانات', '_blank')}
+                onClick={() => {
+                  const whatsappUrl = 'https://wa.me/966535983261?text=مرحباً، أريد معرفة المزيد عن نظام SmartKindy لإدارة الحضانات';
+                  console.log('Opening WhatsApp URL (Contact):', whatsappUrl);
+                  window.open(whatsappUrl, '_blank');
+                }}
               >
                 <MessageCircle className="h-5 w-5 ml-2" />
                 تواصل معنا الآن
