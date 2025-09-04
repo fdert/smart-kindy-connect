@@ -465,7 +465,7 @@ const StandaloneTour = () => {
           </div>
 
           <Button
-            onClick={currentStep === steps.length - 1 ? () => window.open('https://wa.me/966535983261', '_blank') : nextStep}
+            onClick={currentStep === steps.length - 1 ? () => window.open('https://wa.me/966535983261?text=مرحباً، أريد معرفة المزيد عن نظام SmartKindy لإدارة الحضانات', '_blank') : nextStep}
             className="flex items-center gap-3 px-8 py-4 text-lg rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shadow-lg hover:shadow-xl transition-all duration-300"
             size="lg"
           >
