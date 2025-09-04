@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import Index from "./pages/Index";
 import Tour from "./pages/Tour";
+import StandaloneTour from "./pages/StandaloneTour";
 import Demo from "./pages/Demo";
 import Auth from "./pages/Auth";
 import TeacherDashboard from "./pages/TeacherDashboard";
