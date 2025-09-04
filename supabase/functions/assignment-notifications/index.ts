@@ -197,6 +197,22 @@ async function processNotifications(supabase: any, notifications: any[]) {
           const guardian = link.guardians;
           if (guardian && guardian.whatsapp_number) {
             try {
+              // Get WhatsApp settings for this tenant
+              const { data: whatsappSettings } = await supabase
+                .from('tenant_settings')
+                .select('value')
+                .eq('tenant_id', notification.tenant_id)
+                .eq('key', 'whatsapp_webhook_url')
+                .single();
+
+              if (!whatsappSettings?.value) {
+                console.log(`No WhatsApp webhook configured for tenant ${notification.tenant_id}`);
+                errorCount++;
+                continue;
+              }
+
+              const webhookUrl = whatsappSettings.value;
+              
               // Format message based on type
               let simpleMessage;
               
@@ -221,7 +237,7 @@ ${notification.teacher_feedback ? `ملاحظات المعلمة: ${notification
 
 من: ${tenant.name}`;
               } else {
-                // Complete assignment notification with all details - EXACTLY as user requested
+                // Complete assignment notification with all details
                 const assignmentTypeAr = assignment?.assignment_type === 'homework' ? 'واجب منزلي' :
                                        assignment?.assignment_type === 'task' ? 'مهمة' :
                                        assignment?.assignment_type === 'project' ? 'مشروع' :
@@ -259,29 +275,57 @@ ${assignment?.description || 'لا يوجد وصف إضافي'}
 
 🏫 من: ${tenant.name}`;
               }
-
-              // Call WhatsApp outbound function (exact same method as attendance notifications)
-              const { error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
-                body: {
-                  tenantId: notification.tenant_id,
-                  to: guardian.whatsapp_number,
-                  message: simpleMessage,
-                  context: {
-                    type: notification.reminder_type,
-                    studentId: notification.student_id,
-                    assignmentId: notification.assignment_id,
-                    guardianId: guardian.id
-                  }
+              
+              // Send message directly to N8N webhook
+              const webhookPayload = {
+                to: guardian.whatsapp_number,
+                message: simpleMessage,
+                tenantId: notification.tenant_id,
+                timestamp: new Date().toISOString(),
+                contextType: notification.reminder_type,
+                context: {
+                  type: notification.reminder_type,
+                  studentId: notification.student_id,
+                  assignmentId: notification.assignment_id,
+                  guardianId: guardian.id
                 }
+              };
+
+              console.log(`Sending WhatsApp message to webhook: ${webhookUrl}`);
+              console.log(`Message payload:`, webhookPayload);
+
+              const webhookResponse = await fetch(webhookUrl, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(webhookPayload)
               });
 
-              if (whatsappError) {
-                console.error(`WhatsApp send error for guardian ${guardian.id}:`, whatsappError);
-                errorCount++;
-              } else {
-                console.log(`Assignment notification sent successfully to ${guardian.full_name} (${guardian.whatsapp_number})`);
-                successCount++;
+              if (!webhookResponse.ok) {
+                throw new Error(`Webhook responded with status: ${webhookResponse.status}`);
               }
+
+              const webhookResult = await webhookResponse.json();
+              console.log(`Webhook response:`, webhookResult);
+
+              // Log the message to wa_messages table
+              await supabase
+                .from('wa_messages')
+                .insert({
+                  tenant_id: notification.tenant_id,
+                  to_number: guardian.whatsapp_number,
+                  message_text: simpleMessage,
+                  message_type: 'text',
+                  direction: 'outbound',
+                  status: 'sent',
+                  context_type: notification.reminder_type,
+                  sent_at: new Date().toISOString(),
+                  webhook_data: webhookResult
+                });
+
+              console.log(`Assignment notification sent successfully to ${guardian.full_name} (${guardian.whatsapp_number})`);
+              successCount++;
             } catch (error) {
               console.error(`Error sending to guardian ${guardian.id}:`, error);
               errorCount++;
