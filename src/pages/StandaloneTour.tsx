@@ -466,16 +466,30 @@ const StandaloneTour = () => {
 
           <Button
             onClick={currentStep === steps.length - 1 ? () => {
-              const whatsappUrl = 'https://wa.me/966535983261?text=مرحباً، أريد معرفة المزيد عن نظام SmartKindy لإدارة الحضانات';
-              console.log('Opening WhatsApp URL:', whatsappUrl);
-              // استخدام طريقة مختلفة لفتح الرابط
-              const link = document.createElement('a');
-              link.href = whatsappUrl;
-              link.target = '_blank';
-              link.rel = 'noopener noreferrer';
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
+              const phoneNumber = '966535983261';
+              const message = 'مرحباً، أريد معرفة المزيد عن نظام SmartKindy لإدارة الحضانات';
+              
+              // محاولة فتح الواتساب بطرق متعددة
+              const tryOpenWhatsApp = () => {
+                // الطريقة الأولى: wa.me
+                const waUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                console.log('Trying wa.me:', waUrl);
+                
+                // محاولة فتح الرابط
+                const newWindow = window.open(waUrl, '_blank');
+                
+                // إذا فشل، اعرض رقم الهاتف للمستخدم
+                setTimeout(() => {
+                  if (!newWindow || newWindow.closed) {
+                    alert(`لم يتم فتح الواتساب تلقائياً.\nيمكنك التواصل معنا على:\n+${phoneNumber}\n\nأو ابحث عن: SmartKindy في الواتساب`);
+                  }
+                }, 1000);
+              };
+              
+              // تأكيد من المستخدم
+              if (confirm('هل تريد فتح الواتساب للتواصل معنا؟')) {
+                tryOpenWhatsApp();
+              }
             } : nextStep}
             className="flex items-center gap-3 px-8 py-4 text-lg rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shadow-lg hover:shadow-xl transition-all duration-300"
             size="lg"
@@ -537,15 +551,25 @@ const StandaloneTour = () => {
                 size="lg"
                 className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
                 onClick={() => {
-                  const whatsappUrl = 'https://wa.me/966535983261?text=مرحباً، أود بدء التجربة المجانية لنظام SmartKindy لإدارة الحضانات';
-                  console.log('Opening WhatsApp URL (Free Trial):', whatsappUrl);
-                  const link = document.createElement('a');
-                  link.href = whatsappUrl;
-                  link.target = '_blank';
-                  link.rel = 'noopener noreferrer';
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
+                  const phoneNumber = '966535983261';
+                  const message = 'مرحباً، أود بدء التجربة المجانية لنظام SmartKindy لإدارة الحضانات';
+                  
+                  const tryOpenWhatsApp = () => {
+                    const waUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                    console.log('Opening WhatsApp URL (Free Trial):', waUrl);
+                    
+                    const newWindow = window.open(waUrl, '_blank');
+                    
+                    setTimeout(() => {
+                      if (!newWindow || newWindow.closed) {
+                        alert(`لم يتم فتح الواتساب تلقائياً.\nيمكنك التواصل معنا على:\n+${phoneNumber}\n\nأو ابحث عن: SmartKindy في الواتساب`);
+                      }
+                    }, 1000);
+                  };
+                  
+                  if (confirm('هل تريد بدء التجربة المجانية؟')) {
+                    tryOpenWhatsApp();
+                  }
                 }}
               >
                 <MessageCircle className="h-5 w-5 ml-2" />
@@ -556,15 +580,25 @@ const StandaloneTour = () => {
                 variant="outline"
                 className="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 text-lg rounded-xl transition-all duration-300"
                 onClick={() => {
-                  const whatsappUrl = 'https://wa.me/966535983261?text=مرحباً، أريد معرفة المزيد عن نظام SmartKindy لإدارة الحضانات';
-                  console.log('Opening WhatsApp URL (Contact):', whatsappUrl);
-                  const link = document.createElement('a');
-                  link.href = whatsappUrl;
-                  link.target = '_blank';
-                  link.rel = 'noopener noreferrer';
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
+                  const phoneNumber = '966535983261';
+                  const message = 'مرحباً، أريد معرفة المزيد عن نظام SmartKindy لإدارة الحضانات';
+                  
+                  const tryOpenWhatsApp = () => {
+                    const waUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                    console.log('Opening WhatsApp URL (Contact):', waUrl);
+                    
+                    const newWindow = window.open(waUrl, '_blank');
+                    
+                    setTimeout(() => {
+                      if (!newWindow || newWindow.closed) {
+                        alert(`لم يتم فتح الواتساب تلقائياً.\nيمكنك التواصل معنا على:\n+${phoneNumber}\n\nأو ابحث عن: SmartKindy في الواتساب`);
+                      }
+                    }, 1000);
+                  };
+                  
+                  if (confirm('هل تريد التواصل معنا عبر الواتساب؟')) {
+                    tryOpenWhatsApp();
+                  }
                 }}
               >
                 <MessageCircle className="h-5 w-5 ml-2" />
