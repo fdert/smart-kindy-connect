@@ -283,24 +283,21 @@ ${notification.teacher_feedback ? `ملاحظات المعلمة: ${notification
                     year: 'numeric'
                   }).replace(/\//g, '/') : 'غير محدد';
                 
-                simpleMessage = `🎓 واجب جديد
+                simpleMessage = `📚 واجب جديد
+الطالب: ${student.full_name} (${student.student_id})
 
-👨‍🎓 الطالب: ${student.full_name} 
-🆔 رقم الطالب: ${student.student_id}
+العنوان: ${assignment?.title || 'الواجب'}
+النوع: ${assignmentTypeAr}
+الأولوية: ${priorityAr}
+الفصل: ${className}
+موعد التسليم: ${dueDate}
 
-📋 تفاصيل الواجب:
-📝 العنوان: ${assignment?.title || 'الواجب'}
-📂 النوع: ${assignmentTypeAr}
-⭐ الأولوية: ${priorityAr}
-🏫 الفصل: ${className}
-📅 موعد التسليم: ${dueDate}
-
-📖 محتوى الواجب:
+الوصف:
 ${assignment?.description || 'لا يوجد وصف إضافي'}
 
-🙏 يرجى متابعة طفلكم لإنجاز الواجب في الموعد المحدد.
+يرجى متابعة طفلكم لإنجاز الواجب في الموعد المحدد.
 
-🏫 من: ${tenant.name}`;
+من: ${tenant.name}`;
               }
               
               // Send message using whatsapp-outbound function (same as regular assignments)
