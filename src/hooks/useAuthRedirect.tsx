@@ -32,7 +32,11 @@ export const useAuthRedirect = () => {
     const isOnPublicPath = publicPaths.includes(currentPath) || 
                           currentPath.startsWith('/survey/') || 
                           currentPath.startsWith('/permission/') || 
-                          currentPath.startsWith('/student-');
+                          currentPath.startsWith('/student-report') ||
+                          currentPath.startsWith('/student-assignments') ||
+                          currentPath.startsWith('/student-attendance') ||
+                          currentPath.startsWith('/student-media') ||
+                          currentPath.startsWith('/student-rewards');
     
     // توجيه المستخدم فقط إذا كان في صفحة عامة
     if (isOnPublicPath) {
