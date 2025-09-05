@@ -198,14 +198,14 @@ export default function StudentNotes() {
           }
         });
 
-        if (!aiError && aiAnalysis) {
+        if (!aiError && aiAnalysis?.data) {
           console.log('AI analysis successful:', aiAnalysis);
           // Update the note with AI analysis
           await supabase
             .from('student_notes')
             .update({
-              ai_analysis: aiAnalysis.analysis,
-              ai_suggestions: aiAnalysis.suggestions
+              ai_analysis: aiAnalysis.data.analysis,
+              ai_suggestions: aiAnalysis.data.suggestions
             })
             .eq('id', newNote.id);
         } else {

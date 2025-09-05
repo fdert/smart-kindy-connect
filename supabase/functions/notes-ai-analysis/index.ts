@@ -246,11 +246,17 @@ serve(async (req) => {
 
     switch (action) {
       case 'analyze_note': {
-        const { noteContent, noteType, studentAge, studentName, context } = requestData as NoteAnalysisRequest;
+        // دعم كل من الأسماء القديمة والجديدة للمتغيرات
+        const noteContent = requestData.noteContent || requestData.content;
+        const noteType = requestData.noteType || requestData.type;
+        const { studentAge, studentName, context } = requestData;
+        
+        console.log('Received analyze_note request:', { noteContent, noteType, studentAge, studentName, context });
         
         if (!noteContent || !noteType) {
+          console.error('Missing required fields:', { noteContent: !!noteContent, noteType: !!noteType });
           return new Response(
-            JSON.stringify({ error: 'معطيات الملاحظة مطلوبة' }),
+            JSON.stringify({ error: 'معطيات الملاحظة مطلوبة (المحتوى والنوع)' }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
           );
         }
