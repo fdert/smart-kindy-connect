@@ -61,11 +61,13 @@ serve(async (req) => {
 
     if (noteId) {
       // Process specific note immediately
+      console.log(`Looking for note with ID: ${noteId} and tenant: ${tenantId}`);
+      
       const { data: noteData, error: noteError } = await supabase
         .from('student_notes')
         .select(`
           *,
-          students (
+          students!inner (
             id,
             full_name,
             student_id
@@ -75,15 +77,25 @@ serve(async (req) => {
         .eq('tenant_id', tenantId)
         .single();
 
-      if (noteError || !noteData) {
-        throw new Error('Note not found');
+      console.log('Note query result:', { noteData, noteError });
+
+      if (noteError) {
+        console.error('Database error finding note:', noteError);
+        throw new Error(`Note query failed: ${noteError.message}`);
+      }
+      
+      if (!noteData) {
+        console.error('No note found with the provided ID');
+        throw new Error('Note not found in database');
       }
 
+      console.log('Found note for student:', noteData.students?.full_name);
+
       // Get guardians for this student
-      const { data: guardians, error: guardiansError } = await supabase
+      const { data: guardianLinks, error: guardiansError } = await supabase
         .from('guardian_student_links')
         .select(`
-          guardians (
+          guardians!inner (
             id,
             full_name,
             whatsapp_number,
@@ -92,6 +104,8 @@ serve(async (req) => {
         `)
         .eq('student_id', noteData.student_id)
         .eq('tenant_id', tenantId);
+
+      console.log('Guardians query result:', { guardianLinks, guardiansError });
 
       if (guardiansError) {
         console.error('Error getting guardians:', guardiansError);
@@ -105,11 +119,16 @@ serve(async (req) => {
         .eq('id', tenantId)
         .single();
 
-      if (guardians && guardians.length > 0) {
-        for (const guardianLink of guardians) {
+      console.log('Found tenant:', tenantData?.name);
+
+      if (guardianLinks && guardianLinks.length > 0) {
+        console.log(`Found ${guardianLinks.length} guardian(s) for student`);
+        
+        for (const guardianLink of guardianLinks) {
           const guardian = guardianLink.guardians;
           if (guardian && (guardian.whatsapp_number || guardian.phone)) {
             const phone = guardian.whatsapp_number || guardian.phone;
+            console.log(`Preparing to send message to guardian: ${guardian.full_name} at ${phone}`);
             
             // Prepare notification message
             const message = `📝 ملاحظة جديدة عن طفلكم
@@ -133,7 +152,7 @@ ${noteData.follow_up_required ? '⚠️ تتطلب هذه الملاحظة مت�
 
             // Send WhatsApp message
             try {
-              await supabase.functions.invoke('whatsapp-outbound', {
+              const { data: whatsappResult, error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
                 body: {
                   tenantId: tenantId,
                   to: phone,
@@ -143,13 +162,21 @@ ${noteData.follow_up_required ? '⚠️ تتطلب هذه الملاحظة مت�
                 }
               });
 
-              console.log(`Notification sent to guardian: ${phone}`);
+              if (whatsappError) {
+                console.error('WhatsApp function returned error:', whatsappError);
+              } else {
+                console.log(`Notification sent successfully to guardian: ${phone}`, whatsappResult);
+              }
             } catch (whatsappError) {
               console.error('Failed to send WhatsApp message:', whatsappError);
               // Don't fail the whole operation
             }
+          } else {
+            console.log(`Guardian ${guardian?.full_name} has no phone/WhatsApp number`);
           }
         }
+      } else {
+        console.log('No guardians found for this student');
       }
     }
 
@@ -162,9 +189,19 @@ ${noteData.follow_up_required ? '⚠️ تتطلب هذه الملاحظة مت�
 
   } catch (error) {
     console.error('Error processing student note notifications:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Request data received:', JSON.stringify({ noteId, tenantId, studentId, isPrivate }));
+    
     return new Response(JSON.stringify({ 
       error: 'Failed to process notifications',
-      details: error.message 
+      details: error.message,
+      debugInfo: {
+        noteId,
+        tenantId, 
+        studentId,
+        isPrivate,
+        errorType: error.constructor.name
+      }
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

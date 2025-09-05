@@ -216,10 +216,19 @@ export default function StudentNotes() {
         // Don't fail the whole operation if AI analysis fails
       }
 
-      // Send WhatsApp notifications immediately (optional)
+      // Send WhatsApp notifications immediately
       try {
         console.log('Triggering WhatsApp notifications...');
-        await supabase.functions.invoke('student-note-notifications', {
+        console.log('Notification payload:', {
+          noteId: newNote.id,
+          tenantId: tenant.id,
+          studentId: formData.student_id,
+          noteTitle: formData.title,
+          isPrivate: formData.is_private,
+          processImmediate: true
+        });
+        
+        const { data: notifResult, error: notifError } = await supabase.functions.invoke('student-note-notifications', {
           body: {
             noteId: newNote.id,
             tenantId: tenant.id,
@@ -229,10 +238,20 @@ export default function StudentNotes() {
             processImmediate: true
           }
         });
-        console.log('Notifications sent successfully');
+        
+        if (notifError) {
+          console.error('Notification function returned error:', notifError);
+        } else {
+          console.log('Notifications sent successfully:', notifResult);
+        }
       } catch (notifError) {
-        console.log('Failed to send notifications, but note was created:', notifError);
-        // Don't fail the whole operation if notifications fail
+        console.error('Failed to send notifications, but note was created:', notifError);
+        // Show warning toast about notification failure
+        toast({
+          title: "تنبيه",
+          description: "تم إنشاء الملاحظة لكن فشل إرسال الإشعارات لأولياء الأمور",
+          variant: "destructive"
+        });
       }
 
       toast({

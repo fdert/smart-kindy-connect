@@ -225,32 +225,39 @@ ${templateData.nurseryName || 'إدارة الحضانة'}`;
     console.log('N8N Webhook response:', JSON.stringify(result, null, 2));
 
     // Log outbound message in database
-    const { data: messageRecord, error: messageError } = await supabase
-      .from('wa_messages')
-      .insert({
-        tenant_id: tenantId,
-        direction: 'outbound',
-        from_number: 'system',
-        to_number: to,
-        message_text: messageText,
-        message_type: mediaUrl ? 'media' : 'text',
-        media_url: mediaUrl,
-        context_type: contextType || 'general',
-        context_id: contextId || crypto.randomUUID(), // Generate UUID if contextId is missing
-        student_id: studentId,
-        template_name: templateName,
-        message_id: result.messageId || result.id,
-        status: response.ok ? 'sent' : 'failed',
-        error_message: response.ok ? null : result.error || 'Unknown error',
-        webhook_data: result,
-        processed: true,
-        sent_at: new Date().toISOString()
-      })
-      .select('id')
-      .single();
+    try {
+      const { data: messageRecord, error: messageError } = await supabase
+        .from('wa_messages')
+        .insert({
+          tenant_id: tenantId,
+          direction: 'outbound',
+          from_number: 'system',
+          to_number: to,
+          message_text: messageText,
+          message_type: mediaUrl ? 'media' : 'text',
+          media_url: mediaUrl,
+          context_type: contextType || 'general',
+          context_id: contextId && contextId.length === 36 ? contextId : null, // Only insert valid UUIDs
+          student_id: studentId,
+          template_name: templateName,
+          message_id: result.messageId || result.id || crypto.randomUUID(),
+          status: response.ok ? 'sent' : 'failed',
+          error_message: response.ok ? null : result.error || 'Unknown error',
+          webhook_data: result,
+          processed: true,
+          sent_at: new Date().toISOString()
+        })
+        .select('id')
+        .single();
 
-    if (messageError) {
-      console.error('Error logging message:', messageError);
+      if (messageError) {
+        console.error('Error logging message:', messageError);
+      } else {
+        console.log('Message logged successfully with ID:', messageRecord?.id);
+      }
+    } catch (logError) {
+      console.error('Failed to log message in database:', logError);
+      // Continue processing even if logging fails
     }
 
     if (!response.ok) {
