@@ -43,6 +43,7 @@ export const useAuthRedirect = () => {
       console.log('User Role:', role);
       console.log('Current Path:', currentPath);
 
+      // تحديد المسار المناسب حسب نوع الحساب والدور
       switch (role) {
         case 'super_admin':
           // للحساب التجريبي لمدير النظام، توجه للوحة مدير النظام التجريبي
@@ -54,13 +55,28 @@ export const useAuthRedirect = () => {
           break;
         case 'admin':
         case 'owner':
-          targetPath = '/admin-dashboard';
+          // للحسابات التجريبية لمدير الروضة
+          if (user.email?.includes('demo.admin@') || user.email?.includes('admin.demo@')) {
+            targetPath = '/admin-dashboard';
+          } else {
+            targetPath = '/admin-dashboard';
+          }
           break;
         case 'teacher':
-          targetPath = '/teacher-dashboard';
+          // للحسابات التجريبية للمعلمة
+          if (user.email?.includes('demo.teacher@') || user.email?.includes('teacher.demo@')) {
+            targetPath = '/teacher-dashboard';
+          } else {
+            targetPath = '/teacher-dashboard';
+          }
           break;
         case 'guardian':
-          targetPath = '/guardian-dashboard';
+          // للحسابات التجريبية لولي الأمر
+          if (user.email?.includes('demo.guardian@') || user.email?.includes('guardian.demo@')) {
+            targetPath = '/guardian-dashboard';
+          } else {
+            targetPath = '/guardian-dashboard';
+          }
           break;
         default:
           targetPath = '/dashboard';
