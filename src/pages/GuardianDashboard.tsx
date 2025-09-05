@@ -280,13 +280,20 @@ const GuardianDashboard = () => {
           </div>
         )}
 
-        {/* الإحصائيات السريعة */}
+        {/* متابعة يومية شاملة */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <Heart className="h-6 w-6 text-pink-500" />
+            متابعة أطفالي اليومية
+          </h2>
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* عدد الأطفال */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all">
+          <Card className="bg-gradient-to-br from-pink-50 to-rose-50 border-l-4 border-l-pink-500 shadow-lg hover:shadow-xl transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">أطفالي</CardTitle>
-              <Baby className="h-4 w-4 text-pink-500" />
+              <CardTitle className="text-sm font-medium text-pink-700">أطفالي الأحباء</CardTitle>
+              <Baby className="h-5 w-5 text-pink-600" />
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -296,18 +303,21 @@ const GuardianDashboard = () => {
                 </div>
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats.totalChildren}</div>
-                  <p className="text-xs text-muted-foreground">طفل مسجل</p>
+                  <div className="text-3xl font-bold text-pink-600">{stats.totalChildren}</div>
+                  <p className="text-xs text-pink-700 flex items-center gap-1">
+                    <Heart className="h-3 w-3" />
+                    طفل عزيز ومتابع
+                  </p>
                 </>
               )}
             </CardContent>
           </Card>
 
-          {/* الحضور اليوم */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all">
+          {/* حضور اليوم */}
+          <Card className="bg-gradient-to-br from-emerald-50 to-green-50 border-l-4 border-l-emerald-500 shadow-lg hover:shadow-xl transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">حضور اليوم</CardTitle>
-              <Clock className="h-4 w-4 text-green-500" />
+              <CardTitle className="text-sm font-medium text-emerald-700">حضور اليوم</CardTitle>
+              <Clock className="h-5 w-5 text-emerald-600" />
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -317,18 +327,21 @@ const GuardianDashboard = () => {
                 </div>
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats.presentToday}</div>
-                  <p className="text-xs text-muted-foreground">من {stats.totalChildren} أطفال</p>
+                  <div className="text-3xl font-bold text-emerald-600">{stats.presentToday}</div>
+                  <p className="text-xs text-emerald-700 flex items-center gap-1">
+                    <UserCheck className="h-3 w-3" />
+                    من أصل {stats.totalChildren} طفل
+                  </p>
                 </>
               )}
             </CardContent>
           </Card>
 
-          {/* النجوم الأسبوعية */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all">
+          {/* النجوم والإنجازات */}
+          <Card className="bg-gradient-to-br from-amber-50 to-yellow-50 border-l-4 border-l-amber-500 shadow-lg hover:shadow-xl transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">نجوم هذا الأسبوع</CardTitle>
-              <Star className="h-4 w-4 text-yellow-500" />
+              <CardTitle className="text-sm font-medium text-amber-700">نجوم الأسبوع</CardTitle>
+              <Star className="h-5 w-5 text-amber-600" />
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -338,18 +351,21 @@ const GuardianDashboard = () => {
                 </div>
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats.weeklyRewards}</div>
-                  <p className="text-xs text-muted-foreground">نجمة حصل عليها أطفالي</p>
+                  <div className="text-3xl font-bold text-amber-600">{stats.weeklyRewards}</div>
+                  <p className="text-xs text-amber-700 flex items-center gap-1">
+                    <Award className="h-3 w-3" />
+                    نجمة تحفيزية رائعة
+                  </p>
                 </>
               )}
             </CardContent>
           </Card>
 
-          {/* الملاحظات الحديثة */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all">
+          {/* التقارير والملاحظات */}
+          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-l-4 border-l-blue-500 shadow-lg hover:shadow-xl transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">ملاحظات جديدة</CardTitle>
-              <NotebookPen className="h-4 w-4 text-blue-500" />
+              <CardTitle className="text-sm font-medium text-blue-700">تقارير جديدة</CardTitle>
+              <NotebookPen className="h-5 w-5 text-blue-600" />
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -359,8 +375,11 @@ const GuardianDashboard = () => {
                 </div>
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats.recentNotes}</div>
-                  <p className="text-xs text-muted-foreground">ملاحظة جديدة</p>
+                  <div className="text-3xl font-bold text-blue-600">{stats.recentNotes}</div>
+                  <p className="text-xs text-blue-700 flex items-center gap-1">
+                    <FileText className="h-3 w-3" />
+                    تقرير ومتابعة جديدة
+                  </p>
                 </>
               )}
             </CardContent>

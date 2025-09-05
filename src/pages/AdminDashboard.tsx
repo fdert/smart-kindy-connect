@@ -235,13 +235,20 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* الإحصائيات الرئيسية */}
+        {/* إحصائيات إدارية شاملة */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <Building className="h-6 w-6 text-emerald-500" />
+            نظرة عامة على الروضة
+          </h2>
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {/* إجمالي الطلاب */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all">
+          <Card className="bg-white/90 backdrop-blur-sm border-l-4 border-l-emerald-500 shadow-lg hover:shadow-xl transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">إجمالي الطلاب</CardTitle>
-              <Users className="h-4 w-4 text-blue-500" />
+              <CardTitle className="text-sm font-medium text-emerald-700">إجمالي الطلاب المسجلين</CardTitle>
+              <Users className="h-5 w-5 text-emerald-600" />
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -251,18 +258,21 @@ const AdminDashboard = () => {
                 </div>
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats.activeStudents}</div>
-                  <p className="text-xs text-muted-foreground">من أصل {stats.totalStudents} طالب</p>
+                  <div className="text-3xl font-bold text-emerald-600">{stats.activeStudents}</div>
+                  <p className="text-xs text-gray-600 flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    من أصل {stats.totalStudents} طالب مسجل
+                  </p>
                 </>
               )}
             </CardContent>
           </Card>
 
-          {/* المعلمين */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all">
+          {/* الكادر التعليمي */}
+          <Card className="bg-white/90 backdrop-blur-sm border-l-4 border-l-blue-500 shadow-lg hover:shadow-xl transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">المعلمين</CardTitle>
-              <School className="h-4 w-4 text-green-500" />
+              <CardTitle className="text-sm font-medium text-blue-700">الكادر التعليمي</CardTitle>
+              <School className="h-5 w-5 text-blue-600" />
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -272,18 +282,21 @@ const AdminDashboard = () => {
                 </div>
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats.totalTeachers}</div>
-                  <p className="text-xs text-muted-foreground">معلمين نشطين</p>
+                  <div className="text-3xl font-bold text-blue-600">{stats.totalTeachers}</div>
+                  <p className="text-xs text-gray-600 flex items-center gap-1">
+                    <Award className="h-3 w-3" />
+                    معلمة نشطة في النظام
+                  </p>
                 </>
               )}
             </CardContent>
           </Card>
 
-          {/* الفصول */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all">
+          {/* الفصول الدراسية */}
+          <Card className="bg-white/90 backdrop-blur-sm border-l-4 border-l-purple-500 shadow-lg hover:shadow-xl transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">الفصول</CardTitle>
-              <BookOpen className="h-4 w-4 text-purple-500" />
+              <CardTitle className="text-sm font-medium text-purple-700">الفصول الدراسية</CardTitle>
+              <BookOpen className="h-5 w-5 text-purple-600" />
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -293,18 +306,21 @@ const AdminDashboard = () => {
                 </div>
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats.totalClasses}</div>
-                  <p className="text-xs text-muted-foreground">فصول نشطة</p>
+                  <div className="text-3xl font-bold text-purple-600">{stats.totalClasses}</div>
+                  <p className="text-xs text-gray-600 flex items-center gap-1">
+                    <Building className="h-3 w-3" />
+                    فصل تعليمي مجهز
+                  </p>
                 </>
               )}
             </CardContent>
           </Card>
 
-          {/* الحضور اليوم */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all">
+          {/* حضور اليوم */}
+          <Card className="bg-white/90 backdrop-blur-sm border-l-4 border-l-green-500 shadow-lg hover:shadow-xl transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">حضور اليوم</CardTitle>
-              <Clock className="h-4 w-4 text-yellow-500" />
+              <CardTitle className="text-sm font-medium text-green-700">حضور اليوم</CardTitle>
+              <UserCheck className="h-5 w-5 text-green-600" />
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -314,20 +330,30 @@ const AdminDashboard = () => {
                 </div>
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats.todayAttendance}</div>
-                  <p className="text-xs text-muted-foreground">من {stats.activeStudents} طالب</p>
+                  <div className="text-3xl font-bold text-green-600">{stats.todayAttendance}</div>
+                  <p className="text-xs text-gray-600 flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    من أصل {stats.activeStudents} طالب
+                  </p>
                 </>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* الإحصائيات المالية */}
+        {/* الإحصائيات المالية والتشغيلية */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <DollarSign className="h-6 w-6 text-green-500" />
+            الأداء المالي والتشغيلي
+          </h2>
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all">
+          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-l-4 border-l-green-500 shadow-lg hover:shadow-xl transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">الإيرادات الشهرية</CardTitle>
-              <DollarSign className="h-4 w-4 text-emerald-500" />
+              <CardTitle className="text-sm font-medium text-green-700">الإيرادات الشهرية</CardTitle>
+              <DollarSign className="h-5 w-5 text-green-600" />
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -337,8 +363,11 @@ const AdminDashboard = () => {
                 </div>
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats.monthlyRevenue.toLocaleString()} ر.س</div>
-                  <p className="text-xs text-muted-foreground">رسوم مدفوعة</p>
+                  <div className="text-3xl font-bold text-green-600">{stats.monthlyRevenue.toLocaleString()}</div>
+                  <p className="text-xs text-green-700 flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    ريال سعودي مُحصل
+                  </p>
                 </>
               )}
             </CardContent>

@@ -26,7 +26,9 @@ import {
   UserCheck,
   School,
   MessageSquare,
-  Clipboard
+  Clipboard,
+  Building,
+  Heart
 } from 'lucide-react';
 
 const TeacherDashboard = () => {
@@ -223,12 +225,19 @@ const TeacherDashboard = () => {
           </div>
         </div>
 
-        {/* الإحصائيات السريعة */}
+        {/* لوحة المعلمة الأكاديمية */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <School className="h-6 w-6 text-blue-500" />
+            إدارة التعليم والأنشطة
+          </h2>
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all">
+          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-l-4 border-l-blue-500 shadow-lg hover:shadow-xl transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('teacher.my_classes')}</CardTitle>
-              <BookOpen className="h-4 w-4 text-blue-500" />
+              <CardTitle className="text-sm font-medium text-blue-700">فصولي الدراسية</CardTitle>
+              <BookOpen className="h-5 w-5 text-blue-600" />
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -238,17 +247,20 @@ const TeacherDashboard = () => {
                 </div>
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats.myClasses}</div>
-                  <p className="text-xs text-muted-foreground">{t('nav.classes')}</p>
+                  <div className="text-3xl font-bold text-blue-600">{stats.myClasses}</div>
+                  <p className="text-xs text-blue-700 flex items-center gap-1">
+                    <Building className="h-3 w-3" />
+                    فصل تحت إشرافي
+                  </p>
                 </>
               )}
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all">
+          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-l-4 border-l-green-500 shadow-lg hover:shadow-xl transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('nav.students')}</CardTitle>
-              <Users className="h-4 w-4 text-green-500" />
+              <CardTitle className="text-sm font-medium text-green-700">طلابي الأعزاء</CardTitle>
+              <Users className="h-5 w-5 text-green-600" />
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -258,17 +270,20 @@ const TeacherDashboard = () => {
                 </div>
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats.totalStudents}</div>
-                  <p className="text-xs text-muted-foreground">{t('nav.students')}</p>
+                  <div className="text-3xl font-bold text-green-600">{stats.totalStudents}</div>
+                  <p className="text-xs text-green-700 flex items-center gap-1">
+                    <Heart className="h-3 w-3" />
+                    طالب في فصولي
+                  </p>
                 </>
               )}
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all">
+          <Card className="bg-gradient-to-br from-amber-50 to-yellow-50 border-l-4 border-l-amber-500 shadow-lg hover:shadow-xl transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('teacher.today_attendance')}</CardTitle>
-              <Clock className="h-4 w-4 text-yellow-500" />
+              <CardTitle className="text-sm font-medium text-amber-700">حضور اليوم</CardTitle>
+              <Clock className="h-5 w-5 text-amber-600" />
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -278,17 +293,20 @@ const TeacherDashboard = () => {
                 </div>
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats.todayAttendance}</div>
-                  <p className="text-xs text-muted-foreground">{t('dashboard.total_students')}: {stats.totalAttendance}</p>
+                  <div className="text-3xl font-bold text-amber-600">{stats.todayAttendance}</div>
+                  <p className="text-xs text-amber-700 flex items-center gap-1">
+                    <UserCheck className="h-3 w-3" />
+                    من أصل {stats.totalAttendance} طالب
+                  </p>
                 </>
               )}
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all">
+          <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-l-4 border-l-purple-500 shadow-lg hover:shadow-xl transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('teacher.rewards_given')}</CardTitle>
-              <Star className="h-4 w-4 text-purple-500" />
+              <CardTitle className="text-sm font-medium text-purple-700">نجوم التحفيز</CardTitle>
+              <Star className="h-5 w-5 text-purple-600" />
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -298,8 +316,11 @@ const TeacherDashboard = () => {
                 </div>
               ) : (
                 <>
-                  <div className="text-2xl font-bold">{stats.weeklyRewards}</div>
-                  <p className="text-xs text-muted-foreground">{t('common.count')}</p>
+                  <div className="text-3xl font-bold text-purple-600">{stats.weeklyRewards}</div>
+                  <p className="text-xs text-purple-700 flex items-center gap-1">
+                    <Award className="h-3 w-3" />
+                    نجمة منحتها هذا الأسبوع
+                  </p>
                 </>
               )}
             </CardContent>
