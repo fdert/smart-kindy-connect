@@ -14,8 +14,10 @@ import Tour from "./pages/Tour";
 import StandaloneTour from "./pages/StandaloneTour";
 import Demo from "./pages/Demo";
 import Auth from "./pages/Auth";
-import TeacherDashboard from "./pages/TeacherDashboard";
 import Dashboard from "./pages/Dashboard";
+import TeacherDashboard from "./pages/TeacherDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import GuardianDashboard from "./pages/GuardianDashboard";
 import Students from "./pages/Students";
 import Teachers from "./pages/Teachers";
 import Attendance from "./pages/Attendance";
@@ -135,6 +137,8 @@ const AppRoutes = () => (
     {/* الصفحات المحمية */}
     <Route path="/super-admin" element={<ProtectedRoute><SuperAdmin /></ProtectedRoute>} />
     <Route path="/teacher-dashboard" element={<ProtectedRoute><TeacherDashboard /></ProtectedRoute>} />
+    <Route path="/admin-dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+    <Route path="/guardian-dashboard" element={<ProtectedRoute><GuardianDashboard /></ProtectedRoute>} />
     <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
     <Route path="/students" element={<ProtectedRoute><Students /></ProtectedRoute>} />
     <Route path="/teachers" element={<ProtectedRoute><Teachers /></ProtectedRoute>} />

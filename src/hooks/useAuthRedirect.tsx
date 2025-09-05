@@ -48,13 +48,14 @@ export const useAuthRedirect = () => {
           targetPath = '/super-admin';
           break;
         case 'admin':
-          targetPath = '/dashboard';
+        case 'owner':
+          targetPath = '/admin-dashboard';
           break;
         case 'teacher':
           targetPath = '/teacher-dashboard';
           break;
         case 'guardian':
-          targetPath = '/dashboard';
+          targetPath = '/guardian-dashboard';
           break;
         default:
           targetPath = '/dashboard';
