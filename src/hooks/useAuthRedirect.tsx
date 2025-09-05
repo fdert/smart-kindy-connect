@@ -57,25 +57,25 @@ export const useAuthRedirect = () => {
         case 'owner':
           // للحسابات التجريبية لمدير الروضة
           if (user.email?.includes('demo.admin@') || user.email?.includes('admin.demo@')) {
-            targetPath = '/admin-dashboard';
+            targetPath = '/dashboard'; // لوحة المدير التجريبية
           } else {
-            targetPath = '/admin-dashboard';
+            targetPath = '/dashboard'; // لوحة المدير العادية
           }
           break;
         case 'teacher':
           // للحسابات التجريبية للمعلمة
           if (user.email?.includes('demo.teacher@') || user.email?.includes('teacher.demo@')) {
-            targetPath = '/teacher-dashboard';
+            targetPath = '/dashboard'; // لوحة المعلمة التجريبية
           } else {
-            targetPath = '/teacher-dashboard';
+            targetPath = '/dashboard'; // لوحة المعلمة العادية
           }
           break;
         case 'guardian':
           // للحسابات التجريبية لولي الأمر
           if (user.email?.includes('demo.guardian@') || user.email?.includes('guardian.demo@')) {
-            targetPath = '/guardian-dashboard';
+            targetPath = '/dashboard'; // لوحة ولي الأمر التجريبية
           } else {
-            targetPath = '/guardian-dashboard';
+            targetPath = '/dashboard'; // لوحة ولي الأمر العادية
           }
           break;
         default:
