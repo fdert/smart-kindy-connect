@@ -45,7 +45,12 @@ export const useAuthRedirect = () => {
 
       switch (role) {
         case 'super_admin':
-          targetPath = '/super-admin';
+          // للحساب التجريبي لمدير النظام، توجه للوحة مدير النظام التجريبي
+          if (user.email === 'demo.system@smartkindy.com') {
+            targetPath = '/demo-system-admin';
+          } else {
+            targetPath = '/super-admin';
+          }
           break;
         case 'admin':
         case 'owner':

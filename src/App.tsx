@@ -18,6 +18,7 @@ import Dashboard from "./pages/Dashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import GuardianDashboard from "./pages/GuardianDashboard";
+import DemoSystemAdminDashboard from "./pages/DemoSystemAdminDashboard";
 import Students from "./pages/Students";
 import Teachers from "./pages/Teachers";
 import Attendance from "./pages/Attendance";
@@ -136,6 +137,7 @@ const AppRoutes = () => (
     
     {/* الصفحات المحمية */}
     <Route path="/super-admin" element={<ProtectedRoute><SuperAdmin /></ProtectedRoute>} />
+    <Route path="/demo-system-admin" element={<ProtectedRoute><DemoSystemAdminDashboard /></ProtectedRoute>} />
     <Route path="/teacher-dashboard" element={<ProtectedRoute><TeacherDashboard /></ProtectedRoute>} />
     <Route path="/admin-dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
     <Route path="/guardian-dashboard" element={<ProtectedRoute><GuardianDashboard /></ProtectedRoute>} />

@@ -327,179 +327,294 @@ const TeacherDashboard = () => {
           </Card>
         </div>
 
-        {/* {t('teacher.quick_actions')} */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* الطلاب */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={() => navigate('/students')}>
-            <CardHeader>
+        {/* أدوات المعلمة الشاملة */}
+        <div className="mb-6">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+            <Settings className="h-5 w-5 text-indigo-500" />
+            أدوات وإعدادات المعلمة
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+          {/* إدارة الطلاب */}
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-md hover:shadow-lg transition-all cursor-pointer group" onClick={() => navigate('/students')}>
+            <CardHeader className="pb-3">
               <div className="flex items-center space-x-reverse space-x-2">
-                <Users className="h-5 w-5 text-blue-500 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-lg">{t('nav.students')}</CardTitle>
+                <Users className="h-6 w-6 text-blue-600 group-hover:scale-110 transition-transform" />
+                <CardTitle className="text-base">إدارة الطلاب</CardTitle>
               </div>
-              <CardDescription>
-                {t('students.subtitle')}
+              <CardDescription className="text-xs">
+                عرض وإدارة بيانات الطلاب وملفاتهم الشخصية
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button className="w-full">
-                {t('common.view')}
-              </Button>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold text-blue-600 mb-1">{stats.totalStudents}</div>
+              <div className="text-xs text-blue-500">طالب نشط</div>
+            </CardContent>
+          </Card>
+
+          {/* إدارة الفصول */}
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-0 shadow-md hover:shadow-lg transition-all cursor-pointer group" onClick={() => navigate('/classes')}>
+            <CardHeader className="pb-3">
+              <div className="flex items-center space-x-reverse space-x-2">
+                <School className="h-6 w-6 text-green-600 group-hover:scale-110 transition-transform" />
+                <CardTitle className="text-base">إدارة الفصول</CardTitle>
+              </div>
+              <CardDescription className="text-xs">
+                إعداد وتنظيم الفصول الدراسية
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold text-green-600 mb-1">{stats.myClasses}</div>
+              <div className="text-xs text-green-500">فصل دراسي</div>
             </CardContent>
           </Card>
 
           {/* الحضور والغياب */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={() => navigate('/attendance')}>
-            <CardHeader>
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-0 shadow-md hover:shadow-lg transition-all cursor-pointer group" onClick={() => navigate('/attendance')}>
+            <CardHeader className="pb-3">
               <div className="flex items-center space-x-reverse space-x-2">
-                <UserCheck className="h-5 w-5 text-green-500 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-lg">{t('nav.attendance')}</CardTitle>
+                <UserCheck className="h-6 w-6 text-orange-600 group-hover:scale-110 transition-transform" />
+                <CardTitle className="text-base">الحضور والغياب</CardTitle>
               </div>
-              <CardDescription>
-                {t('teacher.mark_attendance')}
+              <CardDescription className="text-xs">
+                تسجيل وتتبع حضور الطلاب اليومي
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button className="w-full">
-                {t('common.view')}
-              </Button>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold text-orange-600 mb-1">{stats.todayAttendance}</div>
+              <div className="text-xs text-orange-500">حاضر اليوم</div>
             </CardContent>
           </Card>
 
-          {/* الواجبات */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={() => navigate('/assignments')}>
-            <CardHeader>
+          {/* إدارة الواجبات */}
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-0 shadow-md hover:shadow-lg transition-all cursor-pointer group" onClick={() => navigate('/assignments')}>
+            <CardHeader className="pb-3">
               <div className="flex items-center space-x-reverse space-x-2">
-                <FileText className="h-5 w-5 text-indigo-500 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-lg">{t('teacher.recent_assignments')}</CardTitle>
+                <FileText className="h-6 w-6 text-purple-600 group-hover:scale-110 transition-transform" />
+                <CardTitle className="text-base">إدارة الواجبات</CardTitle>
               </div>
-              <CardDescription>
-                {t('teacher.add_assignment')}
+              <CardDescription className="text-xs">
+                إنشاء وتقييم الواجبات والأنشطة
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm">{t('superadmin.pending')}:</span>
-                <span className="text-sm font-bold">{stats.pendingAssignments}</span>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold text-purple-600 mb-1">{stats.pendingAssignments}</div>
+              <div className="text-xs text-purple-500">واجب معلق</div>
+            </CardContent>
+          </Card>
+
+          {/* نظام المكافآت */}
+          <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-0 shadow-md hover:shadow-lg transition-all cursor-pointer group" onClick={() => navigate('/rewards')}>
+            <CardHeader className="pb-3">
+              <div className="flex items-center space-x-reverse space-x-2">
+                <Award className="h-6 w-6 text-yellow-600 group-hover:scale-110 transition-transform" />
+                <CardTitle className="text-base">نظام المكافآت</CardTitle>
               </div>
-              <Button className="w-full">
-                {t('common.view')}
-              </Button>
+              <CardDescription className="text-xs">
+                منح النجوم والجوائز للطلاب المميزين
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold text-yellow-600 mb-1">{stats.weeklyRewards}</div>
+              <div className="text-xs text-yellow-500">نجمة هذا الأسبوع</div>
             </CardContent>
           </Card>
 
           {/* ملاحظات الطلاب */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={() => navigate('/student-notes')}>
-            <CardHeader>
+          <Card className="bg-gradient-to-br from-pink-50 to-pink-100 border-0 shadow-md hover:shadow-lg transition-all cursor-pointer group" onClick={() => navigate('/student-notes')}>
+            <CardHeader className="pb-3">
               <div className="flex items-center space-x-reverse space-x-2">
-                <NotebookPen className="h-5 w-5 text-orange-500 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-lg">{t('teacher.student_notes')}</CardTitle>
+                <NotebookPen className="h-6 w-6 text-pink-600 group-hover:scale-110 transition-transform" />
+                <CardTitle className="text-base">ملاحظات الطلاب</CardTitle>
               </div>
-              <CardDescription>
-                {t('teacher.add_note')}
+              <CardDescription className="text-xs">
+                كتابة وإدارة الملاحظات السلوكية والأكاديمية
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button className="w-full">
-                {t('common.view')}
+            <CardContent className="pt-0">
+              <Button variant="secondary" size="sm" className="w-full">
+                إضافة ملاحظة جديدة
               </Button>
             </CardContent>
           </Card>
 
-          {/* نظام التحفيز */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={() => navigate('/rewards')}>
-            <CardHeader>
+          {/* الاستطلاعات والأذونات */}
+          <Card className="bg-gradient-to-br from-teal-50 to-teal-100 border-0 shadow-md hover:shadow-lg transition-all cursor-pointer group" onClick={() => navigate('/permissions')}>
+            <CardHeader className="pb-3">
               <div className="flex items-center space-x-reverse space-x-2">
-                <Award className="h-5 w-5 text-yellow-500 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-lg">{t('nav.rewards')}</CardTitle>
+                <CheckSquare className="h-6 w-6 text-teal-600 group-hover:scale-110 transition-transform" />
+                <CardTitle className="text-base">الأذونات</CardTitle>
               </div>
-              <CardDescription>
-                {t('teacher.give_reward')}
+              <CardDescription className="text-xs">
+                إنشاء وإدارة أذونات النشاطات
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button className="w-full">
-                {t('common.view')}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* الفصول */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={() => navigate('/classes')}>
-            <CardHeader>
-              <div className="flex items-center space-x-reverse space-x-2">
-                <School className="h-5 w-5 text-cyan-500 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-lg">{t('nav.classes')}</CardTitle>
-              </div>
-              <CardDescription>
-                {t('teacher.view_all_classes')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full">
-                {t('common.view')}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* الألبوم اليومي */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={() => navigate('/media')}>
-            <CardHeader>
-              <div className="flex items-center space-x-reverse space-x-2">
-                <Image className="h-5 w-5 text-pink-500 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-lg">{t('nav.media')}</CardTitle>
-              </div>
-              <CardDescription>
-                {t('common.view')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full">
-                {t('common.view')}
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* الأذونات */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={() => navigate('/permissions')}>
-            <CardHeader>
-              <div className="flex items-center space-x-reverse space-x-2">
-                <CheckSquare className="h-5 w-5 text-emerald-500 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-lg">{t('common.actions')}</CardTitle>
-              </div>
-              <CardDescription>
-                {t('common.view')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm">{t('superadmin.active')}:</span>
-                <span className="text-sm font-bold">{stats.activePermissions}</span>
-              </div>
-              <Button className="w-full">
-                {t('common.view')}
-              </Button>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold text-teal-600 mb-1">{stats.activePermissions}</div>
+              <div className="text-xs text-teal-500">إذن نشط</div>
             </CardContent>
           </Card>
 
           {/* الاستطلاعات */}
-          <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm hover:shadow-md transition-all cursor-pointer group" onClick={() => navigate('/surveys')}>
-            <CardHeader>
+          <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100 border-0 shadow-md hover:shadow-lg transition-all cursor-pointer group" onClick={() => navigate('/surveys')}>
+            <CardHeader className="pb-3">
               <div className="flex items-center space-x-reverse space-x-2">
-                <MessageSquare className="h-5 w-5 text-violet-500 group-hover:scale-110 transition-transform" />
-                <CardTitle className="text-lg">{t('common.view')}</CardTitle>
+                <MessageSquare className="h-6 w-6 text-indigo-600 group-hover:scale-110 transition-transform" />
+                <CardTitle className="text-base">الاستطلاعات</CardTitle>
               </div>
-              <CardDescription>
-                {t('common.view')}
+              <CardDescription className="text-xs">
+                إجراء استطلاعات آراء أولياء الأمور
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm">{t('superadmin.active')}:</span>
-                <span className="text-sm font-bold">{stats.activeSurveys}</span>
+            <CardContent className="pt-0">
+              <div className="text-2xl font-bold text-indigo-600 mb-1">{stats.activeSurveys}</div>
+              <div className="text-xs text-indigo-500">استطلاع نشط</div>
+            </CardContent>
+          </Card>
+
+          {/* الألبوم اليومي */}
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-0 shadow-md hover:shadow-lg transition-all cursor-pointer group" onClick={() => navigate('/media')}>
+            <CardHeader className="pb-3">
+              <div className="flex items-center space-x-reverse space-x-2">
+                <Image className="h-6 w-6 text-emerald-600 group-hover:scale-110 transition-transform" />
+                <CardTitle className="text-base">الألبوم اليومي</CardTitle>
               </div>
-              <Button className="w-full">
-                {t('common.view')}
+              <CardDescription className="text-xs">
+                رفع ومشاركة صور الأنشطة اليومية
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <Button variant="secondary" size="sm" className="w-full">
+                رفع صور جديدة
               </Button>
+            </CardContent>
+          </Card>
+
+          {/* التقارير */}
+          <Card className="bg-gradient-to-br from-cyan-50 to-cyan-100 border-0 shadow-md hover:shadow-lg transition-all cursor-pointer group" onClick={() => navigate('/reports')}>
+            <CardHeader className="pb-3">
+              <div className="flex items-center space-x-reverse space-x-2">
+                <Clipboard className="h-6 w-6 text-cyan-600 group-hover:scale-110 transition-transform" />
+                <CardTitle className="text-base">التقارير</CardTitle>
+              </div>
+              <CardDescription className="text-xs">
+                إنشاء تقارير شاملة عن أداء الطلاب
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <Button variant="secondary" size="sm" className="w-full">
+                إنشاء تقرير جديد
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* إعدادات المعلمة */}
+          <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-0 shadow-md hover:shadow-lg transition-all cursor-pointer group" onClick={() => navigate('/settings')}>
+            <CardHeader className="pb-3">
+              <div className="flex items-center space-x-reverse space-x-2">
+                <Settings className="h-6 w-6 text-slate-600 group-hover:scale-110 transition-transform" />
+                <CardTitle className="text-base">إعدادات المعلمة</CardTitle>
+              </div>
+              <CardDescription className="text-xs">
+                تخصيص الإعدادات والتفضيلات الشخصية
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <Button variant="outline" size="sm" className="w-full">
+                الإعدادات
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* إحصائيات وأدوات سريعة */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* إحصائيات سريعة */}
+          <Card className="bg-white border-0 shadow-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-blue-500" />
+                إحصائيات هذا الأسبوع
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <UserCheck className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">متوسط الحضور</span>
+                  </div>
+                  <span className="text-sm font-bold">85%</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-purple-500" />
+                    <span className="text-sm">الواجبات المنجزة</span>
+                  </div>
+                  <span className="text-sm font-bold">12/15</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-yellow-500" />
+                    <span className="text-sm">النجوم الممنوحة</span>
+                  </div>
+                  <span className="text-sm font-bold">{stats.weeklyRewards}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <NotebookPen className="h-4 w-4 text-orange-500" />
+                    <span className="text-sm">الملاحظات المضافة</span>
+                  </div>
+                  <span className="text-sm font-bold">8</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* أدوات سريعة */}
+          <Card className="bg-white border-0 shadow-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-green-500" />
+                إجراءات سريعة
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start gap-2"
+                  onClick={() => navigate('/attendance')}
+                >
+                  <UserCheck className="h-4 w-4" />
+                  تسجيل حضور سريع
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start gap-2"
+                  onClick={() => navigate('/rewards')}
+                >
+                  <Award className="h-4 w-4" />
+                  منح نجمة تحفيزية
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start gap-2"
+                  onClick={() => navigate('/student-notes')}
+                >
+                  <NotebookPen className="h-4 w-4" />
+                  إضافة ملاحظة طالب
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start gap-2"
+                  onClick={() => navigate('/assignments')}
+                >
+                  <FileText className="h-4 w-4" />
+                  إنشاء واجب جديد
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
