@@ -47,19 +47,19 @@ const Index = () => {
               <h1 className="text-xl font-bold text-gray-900">SmartKindy</h1>
             </Link>
             <div className="flex items-center space-x-reverse space-x-4">
+              <Link to="/demo">
+                <Button variant="ghost" size="sm" className="text-sm">
+                  🎯 جربه الآن
+                </Button>
+              </Link>
               <Link to="/register">
                 <Button variant="secondary" size="sm">
                   تسجيل حضانة
                 </Button>
               </Link>
               <Link to="/auth">
-                <Button variant="outline" size="sm">
-                  تسجيل الدخول
-                </Button>
-              </Link>
-              <Link to="/auth">
                 <Button size="sm">
-                  ابدأ الآن
+                  تسجيل دخول
                 </Button>
               </Link>
             </div>
@@ -90,21 +90,21 @@ const Index = () => {
             نظام شامل لإدارة الحضانات مع تكامل واتساب وتتبع الحضور ونظام التحفيز
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth">
+            <Link to="/demo">
               <Button size="lg" className="text-lg px-8 py-3">
-                ابدأ رحلتك الآن
+                🎯 جرب النظام الآن مجاناً
+                <ArrowLeft className="mr-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link to="/auth">
+              <Button variant="outline" size="lg" className="text-lg px-8 py-3">
+                تسجيل الدخول
                 <ArrowLeft className="mr-2 h-5 w-5" />
               </Button>
             </Link>
             <Link to="/tour">
-              <Button variant="outline" size="lg" className="text-lg px-8 py-3">
-                جولة تعريفية
-              </Button>
-            </Link>
-            <Link to="/demo">
               <Button variant="secondary" size="lg" className="text-lg px-8 py-3">
-                تجربة النظام
-                <Users className="mr-2 h-5 w-5" />
+                جولة تعريفية
               </Button>
             </Link>
           </div>
