@@ -118,23 +118,33 @@ serve(async (req) => {
       
       // Create fallback templates for common cases
       if (templateName === 'permission_request' && templateData) {
-        messageText = `🔔 طلب إذن جديد
+        messageText = `🔔 *طلب إذن جديد*
 
-عزيز/ة ${templateData.guardianName || 'ولي الأمر'}
+السلام عليكم ${templateData.guardianName || 'ولي الأمر المحترم'} ✨
 
-يطلب منكم الموافقة على: ${templateData.permissionTitle || 'الإذن'}
+📋 *موضوع الإذن:*
+${templateData.permissionTitle || 'الإذن'}
 
-التفاصيل: ${templateData.permissionDescription || 'لا توجد تفاصيل'}
+📝 *التفاصيل:*
+${templateData.permissionDescription || 'لا توجد تفاصيل'}
 
-للطالب/ة: ${templateData.studentName || 'الطالب'}
+👤 *للطالب/ة:*
+${templateData.studentName || 'الطالب'}
 
-ينتهي الطلب في: ${templateData.expiresAt || 'غير محدد'}
+⏰ *ينتهي الطلب في:*
+${templateData.expiresAt || 'غير محدد'}
 
-🔗 للرد على الطلب انقر الرابط:
+━━━━━━━━━━━━━━━━━━━━
+
+🔗 *للرد على الطلب انقر الرابط:*
 ${templateData.permissionLink || `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/permission/${contextId}`}
 
-مع تحيات
-${templateData.nurseryName || 'الحضانة'}`;
+🙏 نقدر تعاونكم معنا
+
+━━━━━━━━━━━━━━━━━━━━
+
+مع أطيب التحيات 💝
+*${templateData.nurseryName || 'الحضانة'}*`;
       } else if (templateName === 'survey_notification' && templateData) {
         // Build the survey link with the correct production domain
         let surveyLink = templateData.surveyLink;
