@@ -662,6 +662,19 @@ const StandaloneTeacherGuide = () => {
           {/* Individual Section Tabs */}
           {guideData.map((section) => (
             <TabsContent key={section.id} value={section.id} className="space-y-6">
+              {/* Back to Home Button */}
+              <div className="flex justify-start">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setActiveTab('overview')}
+                  className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  العودة إلى الصفحة الرئيسية
+                </Button>
+              </div>
+
               {/* Section Header */}
               <Card className="bg-gradient-to-r from-white to-gray-50 border-l-4 border-l-blue-500">
                 <CardHeader>
@@ -690,6 +703,15 @@ const StandaloneTeacherGuide = () => {
                       ) : (
                         <Volume2 className="h-4 w-4" />
                       )}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setActiveTab('overview')}
+                      className="flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                    >
+                      <Home className="h-4 w-4" />
+                      الرئيسية
                     </Button>
                   </div>
                 </CardHeader>
