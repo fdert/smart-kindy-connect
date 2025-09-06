@@ -86,6 +86,29 @@ const StandaloneTeacherGuide = () => {
     isLoading: false,
     error: null
   });
+  const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
+
+  // Auto-play audio when tab changes
+  useEffect(() => {
+    if (autoPlayEnabled && activeTab !== 'overview') {
+      const currentSection = guideData.find(section => section.id === activeTab);
+      if (currentSection?.audioText) {
+        // Add a small delay to allow the UI to render first
+        setTimeout(() => {
+          playTextToSpeech(currentSection.audioText || currentSection.description);
+        }, 500);
+      }
+    }
+  }, [activeTab, autoPlayEnabled]);
+
+  // Auto-play welcome message on page load
+  useEffect(() => {
+    if (autoPlayEnabled) {
+      setTimeout(() => {
+        playTextToSpeech('مرحباً بك في دليل المعلم التفاعلي الشامل لنظام SmartKindy. هذا الدليل سيساعدك في إتقان جميع أدوات النظام بطريقة تفاعلية وممتعة مع شرح صوتي مفصل لكل قسم.');
+      }, 1000);
+    }
+  }, []);
 
   const guideData: GuideSection[] = [
     {
@@ -431,6 +454,24 @@ const StandaloneTeacherGuide = () => {
                 <Home className="h-4 w-4" />
                 الصفحة الرئيسية
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setAutoPlayEnabled(!autoPlayEnabled)}
+                className={`flex items-center gap-2 ${autoPlayEnabled ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}
+              >
+                {autoPlayEnabled ? (
+                  <>
+                    <Volume2 className="h-4 w-4" />
+                    الصوت التلقائي: مفعل
+                  </>
+                ) : (
+                  <>
+                    <VolumeX className="h-4 w-4" />
+                    الصوت التلقائي: معطل
+                  </>
+                )}
+              </Button>
               {currentSection && (
                 <Button
                   variant={audioState.isPlaying ? "destructive" : "default"}
@@ -508,6 +549,35 @@ const StandaloneTeacherGuide = () => {
                     <Image className="h-5 w-5 text-green-300" />
                     <span>صور حقيقية من النظام</span>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Auto-play Status Card */}
+            <Card className="bg-gradient-to-r from-green-100 to-blue-100 border-green-200">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-full ${autoPlayEnabled ? 'bg-green-500' : 'bg-red-500'} text-white`}>
+                    {autoPlayEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">
+                      {autoPlayEnabled ? '🔊 الشرح الصوتي التلقائي مفعل' : '🔇 الشرح الصوتي التلقائي معطل'}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {autoPlayEnabled 
+                        ? 'سيتم تشغيل الشرح الصوتي تلقائياً عند دخول كل قسم'
+                        : 'يمكنك تفعيل الصوت التلقائي من الأزرار أعلاه'
+                      }
+                    </p>
+                  </div>
+                  <Button
+                    variant={autoPlayEnabled ? "destructive" : "default"}
+                    size="sm"
+                    onClick={() => setAutoPlayEnabled(!autoPlayEnabled)}
+                  >
+                    {autoPlayEnabled ? 'إيقاف' : 'تفعيل'}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
