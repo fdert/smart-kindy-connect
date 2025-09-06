@@ -83,81 +83,40 @@ Deno.serve(async (req) => {
       
       console.log('Sending notifications for permission:', permissionId);
 
-      // Get permission details
+      // Get permission details with pending responses
       const { data: permission, error: permissionError } = await supabase
         .from('permissions')
-        .select('*')
+        .select(`
+          *,
+          permission_responses!inner (
+            id,
+            guardian_id,
+            student_id,
+            response,
+            guardians (
+              full_name,
+              whatsapp_number
+            ),
+            students (
+              full_name,
+              student_id
+            )
+          )
+        `)
         .eq('id', permissionId)
         .eq('tenant_id', userData.tenant_id)
-        .maybeSingle();
+        .eq('permission_responses.response', 'pending')
+        .single();
 
       if (permissionError) {
         throw permissionError;
       }
 
-      if (!permission) {
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: 'الإذن المطلوب غير موجود أو تم حذفه'
-          }),
-          { 
-            status: 404,
-            headers: { 
-              ...corsHeaders, 
-              'Content-Type': 'application/json' 
-            } 
-          }
-        );
-      }
-
-      // Get pending responses separately
-      const { data: pendingResponses, error: responsesError } = await supabase
-        .from('permission_responses')
-        .select(`
-          id,
-          guardian_id,
-          student_id,
-          response,
-          guardians (
-            full_name,
-            whatsapp_number
-          ),
-          students (
-            full_name,
-            student_id
-          )
-        `)
-        .eq('permission_id', permissionId)
-        .eq('tenant_id', userData.tenant_id)
-        .eq('response', 'pending');
-
-      if (responsesError) {
-        console.error('Error fetching pending responses:', responsesError);
-        throw responsesError;
-      }
-
-      // Check if there are any pending responses
-      if (!pendingResponses || pendingResponses.length === 0) {
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            message: 'لا توجد استجابات معلقة لهذا الإذن',
-            notificationsSent: 0 
-          }),
-          { 
-            headers: { 
-              ...corsHeaders, 
-              'Content-Type': 'application/json' 
-            } 
-          }
-        );
-      }
-
       // Send WhatsApp notifications for pending responses
       let notificationsSent = 0;
+      const responses = permission.permission_responses || [];
       
-      for (const response of pendingResponses) {
+      for (const response of responses) {
         if (response.guardians?.whatsapp_number && response.response === 'pending') {
           try {
             // Generate OTP token for response
@@ -174,7 +133,7 @@ Deno.serve(async (req) => {
               .eq('id', response.id);
 
             // Send WhatsApp notification
-            const permissionLink = `https://ytjodudlnfamvnescumu.supabase.co/permission/${permissionId}`;
+            const permissionLink = `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/permission/${permissionId}`;
             console.log(`Sending reminder WhatsApp with permission link: ${permissionLink}`);
             
             const { data: whatsappResult, error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
@@ -268,13 +227,9 @@ Deno.serve(async (req) => {
         .eq('permission_id', permissionId)
         .eq('otp_token', otpToken)
         .gt('otp_expires_at', new Date().toISOString())
-        .maybeSingle();
+        .single();
 
-      if (responseError) {
-        throw new Error(`Database error: ${responseError.message}`);
-      }
-
-      if (!permissionResponse) {
+      if (responseError || !permissionResponse) {
         throw new Error('Invalid or expired OTP token');
       }
 
@@ -399,7 +354,7 @@ Deno.serve(async (req) => {
                   .eq('student_id', link.student_id);
 
                 // Send WhatsApp notification
-                const permissionLink = `https://ytjodudlnfamvnescumu.supabase.co/permission/${permission.id}`;
+                const permissionLink = `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/permission/${permission.id}`;
                 console.log(`Sending new permission WhatsApp with permission link: ${permissionLink}`);
                 
                 const { data: whatsappResult, error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
@@ -478,19 +433,9 @@ async function handlePublicResponse(requestData: PublicResponseRequest, supabase
       .select('*')
       .eq('id', permissionId)
       .eq('is_active', true)
-      .maybeSingle();
+      .single();
 
-    if (permissionError) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Database error while checking permission'
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    if (!permission) {
+    if (permissionError || !permission) {
       return new Response(JSON.stringify({
         success: false,
         error: 'Permission not found or no longer active'

@@ -80,26 +80,10 @@ Deno.serve(async (req) => {
         .select('*')
         .eq('id', surveyId)
         .eq('tenant_id', userData.tenant_id)
-        .maybeSingle();
+        .single();
 
       if (surveyError) {
         throw surveyError;
-      }
-
-      if (!survey) {
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: 'الاستطلاع المطلوب غير موجود أو تم حذفه'
-          }),
-          { 
-            status: 404,
-            headers: { 
-              ...corsHeaders, 
-              'Content-Type': 'application/json' 
-            } 
-          }
-        );
       }
 
       // Get target audience contacts based on survey settings
@@ -149,7 +133,7 @@ Deno.serve(async (req) => {
           }
           
           // Generate the correct survey link with the live domain
-          const surveyLink = `https://ytjodudlnfamvnescumu.supabase.co/survey/${survey.id}`;
+          const surveyLink = `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/survey/${survey.id}`;
           
           console.log(`Manual notification - surveyId: ${survey.id}, surveyLink: ${surveyLink}`);
           
@@ -208,26 +192,10 @@ Deno.serve(async (req) => {
         `)
         .eq('id', surveyId)
         .eq('tenant_id', userData.tenant_id)
-        .maybeSingle();
+        .single();
 
       if (surveyError) {
         throw surveyError;
-      }
-
-      if (!survey) {
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: 'الاستطلاع المطلوب غير موجود أو تم حذفه'
-          }),
-          { 
-            status: 404,
-            headers: { 
-              ...corsHeaders, 
-              'Content-Type': 'application/json' 
-            } 
-          }
-        );
       }
 
       // Get responses for each question
@@ -396,7 +364,7 @@ Deno.serve(async (req) => {
           for (const contact of contacts) {
             try {
               // Generate the correct survey link with the live domain
-              const surveyLink = `https://ytjodudlnfamvnescumu.supabase.co/survey/${survey.id}`;
+              const surveyLink = `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/survey/${survey.id}`;
               
               console.log(`Auto-notification - surveyId: ${survey.id}, surveyLink: ${surveyLink}`);
               
@@ -482,13 +450,9 @@ async function handlePublicResponse(supabase: any, requestBody: any) {
       .from('surveys')
       .select('id, tenant_id, is_active, expires_at')
       .eq('id', surveyId)
-      .maybeSingle();
+      .single();
 
-    if (surveyError) {
-      throw new Error(`Database error: ${surveyError.message}`);
-    }
-
-    if (!survey) {
+    if (surveyError || !survey) {
       throw new Error('Survey not found');
     }
 
