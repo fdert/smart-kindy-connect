@@ -65,16 +65,22 @@ Deno.serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    // Get user's tenant
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('tenant_id, tenants(*)')
-      .eq('id', user.id)
-      .single();
+      // Get user's tenant
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('tenant_id, tenants(*)')
+        .eq('id', user.id)
+        .maybeSingle();
 
-    if (userError || !userData?.tenant_id) {
-      throw new Error('User has no associated tenant');
-    }
+      if (userError) {
+        console.error('Error fetching user data:', userError);
+        throw new Error('Failed to fetch user data');
+      }
+
+      if (!userData?.tenant_id) {
+        console.error('User has no tenant_id:', user.id);
+        throw new Error('User has no associated tenant');
+      }
 
     // Handle different actions based on request body
     if (body.action === 'notify' && body.permissionId) {

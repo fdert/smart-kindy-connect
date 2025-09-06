@@ -61,11 +61,17 @@ Deno.serve(async (req) => {
         .from('users')
         .select('tenant_id, tenants(*)')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
-    if (userError || !userData?.tenant_id) {
-      throw new Error('User has no associated tenant');
-    }
+      if (userError) {
+        console.error('Error fetching user data:', userError);
+        throw new Error('Failed to fetch user data');
+      }
+
+      if (!userData?.tenant_id) {
+        console.error('User has no tenant_id:', user.id);
+        throw new Error('User has no associated tenant');
+      }
 
     // Handle different actions based on request body
     if (requestBody.action === 'notify' && requestBody.surveyId) {
