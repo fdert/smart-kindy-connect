@@ -80,10 +80,26 @@ Deno.serve(async (req) => {
         .select('*')
         .eq('id', surveyId)
         .eq('tenant_id', userData.tenant_id)
-        .single();
+        .maybeSingle();
 
       if (surveyError) {
         throw surveyError;
+      }
+
+      if (!survey) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'الاستطلاع المطلوب غير موجود أو تم حذفه'
+          }),
+          { 
+            status: 404,
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json' 
+            } 
+          }
+        );
       }
 
       // Get target audience contacts based on survey settings
@@ -192,10 +208,26 @@ Deno.serve(async (req) => {
         `)
         .eq('id', surveyId)
         .eq('tenant_id', userData.tenant_id)
-        .single();
+        .maybeSingle();
 
       if (surveyError) {
         throw surveyError;
+      }
+
+      if (!survey) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'الاستطلاع المطلوب غير موجود أو تم حذفه'
+          }),
+          { 
+            status: 404,
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json' 
+            } 
+          }
+        );
       }
 
       // Get responses for each question
@@ -450,9 +482,13 @@ async function handlePublicResponse(supabase: any, requestBody: any) {
       .from('surveys')
       .select('id, tenant_id, is_active, expires_at')
       .eq('id', surveyId)
-      .single();
+      .maybeSingle();
 
-    if (surveyError || !survey) {
+    if (surveyError) {
+      throw new Error(`Database error: ${surveyError.message}`);
+    }
+
+    if (!survey) {
       throw new Error('Survey not found');
     }
 

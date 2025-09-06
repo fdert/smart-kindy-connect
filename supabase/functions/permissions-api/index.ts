@@ -89,10 +89,26 @@ Deno.serve(async (req) => {
         .select('*')
         .eq('id', permissionId)
         .eq('tenant_id', userData.tenant_id)
-        .single();
+        .maybeSingle();
 
       if (permissionError) {
         throw permissionError;
+      }
+
+      if (!permission) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'الإذن المطلوب غير موجود أو تم حذفه'
+          }),
+          { 
+            status: 404,
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json' 
+            } 
+          }
+        );
       }
 
       // Get pending responses separately
@@ -252,9 +268,13 @@ Deno.serve(async (req) => {
         .eq('permission_id', permissionId)
         .eq('otp_token', otpToken)
         .gt('otp_expires_at', new Date().toISOString())
-        .single();
+        .maybeSingle();
 
-      if (responseError || !permissionResponse) {
+      if (responseError) {
+        throw new Error(`Database error: ${responseError.message}`);
+      }
+
+      if (!permissionResponse) {
         throw new Error('Invalid or expired OTP token');
       }
 
@@ -458,9 +478,19 @@ async function handlePublicResponse(requestData: PublicResponseRequest, supabase
       .select('*')
       .eq('id', permissionId)
       .eq('is_active', true)
-      .single();
+      .maybeSingle();
 
-    if (permissionError || !permission) {
+    if (permissionError) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Database error while checking permission'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (!permission) {
       return new Response(JSON.stringify({
         success: false,
         error: 'Permission not found or no longer active'
