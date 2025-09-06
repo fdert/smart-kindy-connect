@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import DemoAccountsManager from '@/components/DemoAccountsManager';
 import TenantWhatsAppManager from '@/components/TenantWhatsAppManager';
+import MarketingMessagesManager from '@/components/MarketingMessagesManager';
 import { 
   Building, 
   Users, 
@@ -364,10 +365,11 @@ const SuperAdmin = () => {
 
         {/* التبويبات */}
         <Tabs defaultValue="tenants" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="tenants">{t('superadmin.tenants_management')}</TabsTrigger>
             <TabsTrigger value="subscriptions">{t('superadmin.subscriptions_management')}</TabsTrigger>
             <TabsTrigger value="payments">{t('superadmin.payments_reports')}</TabsTrigger>
+            <TabsTrigger value="marketing">الرسائل التسويقية</TabsTrigger>
             <TabsTrigger value="settings">{t('superadmin.system_settings')}</TabsTrigger>
           </TabsList>
 
@@ -628,6 +630,11 @@ const SuperAdmin = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* تبويب الرسائل التسويقية */}
+          <TabsContent value="marketing">
+            <MarketingMessagesManager />
           </TabsContent>
 
           {/* تبويب الإعدادات */}

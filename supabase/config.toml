@@ -41,3 +41,6 @@ verify_jwt = true
 
 [functions.fix-whatsapp-templates]
 verify_jwt = false
+
+[functions.send-marketing-messages]
+verify_jwt = true
