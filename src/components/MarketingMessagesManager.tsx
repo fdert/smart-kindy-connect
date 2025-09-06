@@ -57,7 +57,9 @@ const MarketingMessagesManager = () => {
     message_content: '',
     phone_numbers: [] as string[],
     webhook_url: '',
-    webhook_secret: ''
+    webhook_secret: '',
+    message_delay_seconds: 10,
+    use_random_delay: false
   });
 
   const [phoneInput, setPhoneInput] = useState('');
@@ -194,6 +196,8 @@ const MarketingMessagesManager = () => {
           total_recipients: newCampaign.phone_numbers.length,
           webhook_url: newCampaign.webhook_url,
           webhook_secret: newCampaign.webhook_secret,
+          message_delay_seconds: newCampaign.message_delay_seconds,
+          use_random_delay: newCampaign.use_random_delay,
           status: 'draft'
         })
         .select()
@@ -211,7 +215,9 @@ const MarketingMessagesManager = () => {
         message_content: '',
         phone_numbers: [],
         webhook_url: '',
-        webhook_secret: ''
+        webhook_secret: '',
+        message_delay_seconds: 10,
+        use_random_delay: false
       });
       setShowCreateForm(false);
       fetchCampaigns();
@@ -450,6 +456,48 @@ const MarketingMessagesManager = () => {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* إعدادات التوقيت */}
+            <div className="space-y-4">
+              <Label>إعدادات الإرسال</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="message-delay">الفترة الزمنية بين كل رسالة (بالثواني)</Label>
+                  <Input
+                    id="message-delay"
+                    type="number"
+                    min="1"
+                    max="60"
+                    value={newCampaign.message_delay_seconds}
+                    onChange={(e) => setNewCampaign(prev => ({ ...prev, message_delay_seconds: parseInt(e.target.value) || 10 }))}
+                    placeholder="10"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    الحد الأدنى: ثانية واحدة، الحد الأقصى: 60 ثانية
+                  </p>
+                </div>
+                <div className="flex items-center space-x-reverse space-x-2 pt-6">
+                  <input
+                    type="checkbox"
+                    id="random-delay"
+                    checked={newCampaign.use_random_delay}
+                    onChange={(e) => setNewCampaign(prev => ({ ...prev, use_random_delay: e.target.checked }))}
+                    className="h-4 w-4"
+                  />
+                  <Label htmlFor="random-delay" className="text-sm">
+                    استخدام توقيت عشوائي (±3 ثواني)
+                  </Label>
+                </div>
+              </div>
+              <div className="text-sm bg-muted p-3 rounded-lg">
+                <Clock className="h-4 w-4 inline ml-2" />
+                <strong>ملاحظة:</strong> الفترة الزمنية بين الرسائل تساعد في تجنب حظر الحساب من قبل واتساب. 
+                {newCampaign.use_random_delay 
+                  ? ` سيتم الإرسال كل ${newCampaign.message_delay_seconds - 3} إلى ${newCampaign.message_delay_seconds + 3} ثانية.`
+                  : ` سيتم الإرسال كل ${newCampaign.message_delay_seconds} ثانية.`
+                }
+              </div>
             </div>
 
             {/* إعدادات الويب هوك */}

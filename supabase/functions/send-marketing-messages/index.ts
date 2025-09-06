@@ -92,7 +92,13 @@ Deno.serve(async (req) => {
       console.error('Error creating message logs:', logError);
     }
 
-    // Send messages sequentially to avoid overwhelming the webhook
+    // Calculate delay settings
+    const baseDelay = campaign.message_delay_seconds || 10;
+    const useRandomDelay = campaign.use_random_delay || false;
+    
+    console.log(`Using delay settings: base=${baseDelay}s, random=${useRandomDelay}`);
+
+    // Send messages sequentially with configurable delay
     for (const phone of phoneNumbers) {
       try {
         const webhookUrl = campaign.webhook_url || 'https://hook.eu2.make.com/default-webhook-url';
@@ -145,8 +151,22 @@ Deno.serve(async (req) => {
             .eq('recipient_phone', phone);
         }
 
-        // Add small delay between messages to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Calculate delay based on settings
+        let delayMs;
+        if (useRandomDelay) {
+          // Random delay: base ± 3 seconds
+          const minDelay = Math.max(1, baseDelay - 3);
+          const maxDelay = baseDelay + 3;
+          const randomDelay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+          delayMs = randomDelay * 1000;
+          console.log(`Using random delay: ${randomDelay}s`);
+        } else {
+          delayMs = baseDelay * 1000;
+          console.log(`Using fixed delay: ${baseDelay}s`);
+        }
+
+        // Add delay between messages
+        await new Promise(resolve => setTimeout(resolve, delayMs));
 
       } catch (error: any) {
         failedCount++;

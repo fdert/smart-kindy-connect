@@ -1067,6 +1067,7 @@ export type Database = {
           failed_count: number
           id: string
           message_content: string
+          message_delay_seconds: number | null
           phone_numbers: Json
           scheduled_at: string | null
           sent_count: number
@@ -1074,6 +1075,7 @@ export type Database = {
           status: string
           total_recipients: number
           updated_at: string
+          use_random_delay: boolean | null
           webhook_secret: string | null
           webhook_url: string | null
         }
@@ -1085,6 +1087,7 @@ export type Database = {
           failed_count?: number
           id?: string
           message_content: string
+          message_delay_seconds?: number | null
           phone_numbers?: Json
           scheduled_at?: string | null
           sent_count?: number
@@ -1092,6 +1095,7 @@ export type Database = {
           status?: string
           total_recipients?: number
           updated_at?: string
+          use_random_delay?: boolean | null
           webhook_secret?: string | null
           webhook_url?: string | null
         }
@@ -1103,6 +1107,7 @@ export type Database = {
           failed_count?: number
           id?: string
           message_content?: string
+          message_delay_seconds?: number | null
           phone_numbers?: Json
           scheduled_at?: string | null
           sent_count?: number
@@ -1110,6 +1115,7 @@ export type Database = {
           status?: string
           total_recipients?: number
           updated_at?: string
+          use_random_delay?: boolean | null
           webhook_secret?: string | null
           webhook_url?: string | null
         }
@@ -1152,6 +1158,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      marketing_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          setting_key: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
       }
       media: {
         Row: {
