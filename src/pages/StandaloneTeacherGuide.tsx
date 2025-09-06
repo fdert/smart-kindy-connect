@@ -448,15 +448,6 @@ const StandaloneTeacherGuide = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.open('/', '_blank')}
-                className="flex items-center gap-2"
-              >
-                <Home className="h-4 w-4" />
-                الصفحة الرئيسية
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
                 onClick={() => setAutoPlayEnabled(!autoPlayEnabled)}
                 className={`flex items-center gap-2 ${autoPlayEnabled ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}
               >
@@ -497,26 +488,43 @@ const StandaloneTeacherGuide = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          {/* Navigation Tabs */}
-          <div className="bg-white rounded-lg shadow-sm p-2 overflow-x-auto">
-            <TabsList className="grid w-full grid-cols-4 lg:grid-cols-11 gap-1 min-w-max">
-              <TabsTrigger value="overview" className="text-xs whitespace-nowrap">
-                نظرة عامة
-              </TabsTrigger>
+          {/* Section Navigation Buttons */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">اختر القسم الذي تريد تعلمه:</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <Button
+                variant={activeTab === 'overview' ? "default" : "outline"}
+                size="lg"
+                onClick={() => setActiveTab('overview')}
+                className={`flex flex-col items-center gap-2 h-auto py-4 px-6 ${
+                  activeTab === 'overview' 
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white' 
+                    : 'hover:bg-gray-50'
+                }`}
+              >
+                <Home className="h-8 w-8" />
+                <span className="text-sm font-medium">نظرة عامة</span>
+              </Button>
+              
               {guideData.map((section) => {
                 const Icon = section.icon;
+                const isActive = activeTab === section.id;
+                const gradientClass = isActive ? `bg-gradient-to-r ${section.color.replace('bg-', 'from-')}-400 to-${section.color.replace('bg-', '')}-600 text-white` : 'hover:bg-gray-50';
+                
                 return (
-                  <TabsTrigger 
-                    key={section.id} 
-                    value={section.id}
-                    className="flex flex-col items-center gap-1 text-xs p-2 whitespace-nowrap"
+                  <Button
+                    key={section.id}
+                    variant={isActive ? "default" : "outline"}
+                    size="lg"
+                    onClick={() => setActiveTab(section.id)}
+                    className={`flex flex-col items-center gap-2 h-auto py-4 px-6 ${gradientClass} transition-all duration-200`}
                   >
-                    <Icon className="h-4 w-4" />
-                    <span className="hidden sm:block">{section.title}</span>
-                  </TabsTrigger>
+                    <Icon className="h-8 w-8" />
+                    <span className="text-sm font-medium text-center leading-tight">{section.title}</span>
+                  </Button>
                 );
               })}
-            </TabsList>
+            </div>
           </div>
 
           {/* Overview Tab */}
