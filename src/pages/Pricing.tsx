@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Check, 
   X, 
@@ -21,105 +22,65 @@ import {
 
 const smartKindyLogo = "/lovable-uploads/46a447fc-00fa-49c5-b6ae-3f7b46fc4691.png";
 
+interface Plan {
+  id: string;
+  name: string;
+  name_ar: string;
+  description: string | null;
+  description_ar: string | null;
+  price_monthly: number;
+  price_quarterly: number | null;
+  price_yearly: number | null;
+  max_students: number | null;
+  max_teachers: number | null;
+  max_classes: number | null;
+  storage_gb: number;
+  has_whatsapp: boolean;
+  has_analytics: boolean;
+  has_reports: boolean;
+  features: any;
+  is_active: boolean;
+  is_popular: boolean;
+  sort_order: number;
+  currency: string;
+}
+
 const Pricing = () => {
   const [isYearly, setIsYearly] = useState(false);
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const plans = [
-    {
-      id: 'starter',
-      name: 'المبتدئ',
-      nameEn: 'Starter',
-      description: 'مثالي للحضانات الصغيرة',
-      priceMonthly: 199,
-      priceYearly: 1990,
-      maxStudents: 50,
-      maxTeachers: 3,
-      maxClasses: 3,
-      storageGB: 5,
-      features: [
-        'إدارة الطلاب والفصول',
-        'تسجيل الحضور الأساسي',
-        'نظام التحفيز البسيط',
-        'ألبوم الصور',
-        'تقارير أساسية',
-        'دعم فني عبر البريد'
-      ],
-      notIncluded: [
-        'تكامل واتساب',
-        'التقارير المتقدمة',
-        'نسخ احتياطية متعددة',
-        'دعم فني أولوي'
-      ],
-      isPopular: false,
-      color: 'blue'
-    },
-    {
-      id: 'professional',
-      name: 'المحترف',
-      nameEn: 'Professional',
-      description: 'الأكثر طلباً للحضانات المتوسطة',
-      priceMonthly: 399,
-      priceYearly: 3990,
-      maxStudents: 150,
-      maxTeachers: 10,
-      maxClasses: 10,
-      storageGB: 20,
-      features: [
-        'جميع ميزات الخطة المبتدئة',
-        'تكامل واتساب الكامل',
-        'التقارير المتقدمة',
-        'لوحة تحكم تحليلية',
-        'نسخ احتياطية يومية',
-        'دعم فني أولوي',
-        'تخصيص الشعار',
-        'إدارة متعددة المستخدمين'
-      ],
-      notIncluded: [
-        'API مخصص',
-        'تدريب شخصي',
-        'مدير حساب مخصص'
-      ],
-      isPopular: true,
-      color: 'primary'
-    },
-    {
-      id: 'enterprise',
-      name: 'المؤسسي',
-      nameEn: 'Enterprise',
-      description: 'للحضانات الكبيرة والمجموعات',
-      priceMonthly: 799,
-      priceYearly: 7990,
-      maxStudents: 500,
-      maxTeachers: 50,
-      maxClasses: 50,
-      storageGB: 100,
-      features: [
-        'جميع ميزات الخطة المحترفة',
-        'API مخصص',
-        'تكامل مع أنظمة أخرى',
-        'تدريب شخصي للفريق',
-        'مدير حساب مخصص',
-        'دعم فني 24/7',
-        'تخصيص كامل للنظام',
-        'تقارير مخصصة',
-        'أمان متقدم',
-        'SLA مضمون'
-      ],
-      notIncluded: [],
-      isPopular: false,
-      color: 'purple'
+  useEffect(() => {
+    loadPlans();
+  }, []);
+
+  const loadPlans = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+
+      if (error) throw error;
+      setPlans(data || []);
+    } catch (error) {
+      console.error('Error loading plans:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const getPrice = (plan: typeof plans[0]) => {
-    const price = isYearly ? plan.priceYearly : plan.priceMonthly;
+  const getPrice = (plan: Plan) => {
+    const price = isYearly ? (plan.price_yearly || plan.price_monthly * 10) : plan.price_monthly;
     const period = isYearly ? 'سنوياً' : 'شهرياً';
-    const discount = isYearly ? Math.round(((plan.priceMonthly * 12 - plan.priceYearly) / (plan.priceMonthly * 12)) * 100) : 0;
+    const yearlyPrice = plan.price_yearly || plan.price_monthly * 10;
+    const discount = isYearly ? Math.round(((plan.price_monthly * 12 - yearlyPrice) / (plan.price_monthly * 12)) * 100) : 0;
     
     return { price, period, discount };
   };
 
-  const getColorClasses = (color: string, isPopular: boolean) => {
+  const getColorClasses = (isPopular: boolean, index: number) => {
     if (isPopular) {
       return {
         card: 'border-2 border-primary bg-gradient-to-br from-primary/5 to-purple-500/10',
@@ -128,21 +89,37 @@ const Pricing = () => {
       };
     }
     
-    const colorMap = {
-      blue: {
+    const colors = [
+      {
         card: 'border border-blue-200 bg-white/80',
         button: 'bg-blue-600 hover:bg-blue-700',
         badge: 'bg-blue-500 text-white'
       },
-      purple: {
+      {
         card: 'border border-purple-200 bg-white/80',
         button: 'bg-purple-600 hover:bg-purple-700',
         badge: 'bg-purple-500 text-white'
+      },
+      {
+        card: 'border border-green-200 bg-white/80',
+        button: 'bg-green-600 hover:bg-green-700',
+        badge: 'bg-green-500 text-white'
       }
-    };
+    ];
     
-    return colorMap[color as keyof typeof colorMap] || colorMap.blue;
+    return colors[index % colors.length];
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">جاري تحميل الخطط...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
@@ -203,13 +180,31 @@ const Pricing = () => {
 
         {/* بطاقات الخطط */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-          {plans.map((plan) => {
+          {plans.map((plan, index) => {
             const { price, period, discount } = getPrice(plan);
-            const colorClasses = getColorClasses(plan.color, plan.isPopular);
+            const colorClasses = getColorClasses(plan.is_popular, index);
+
+            // إنشاء قائمة الميزات المتضمنة
+            const includedFeatures = [
+              `حتى ${plan.max_students || 'غير محدود'} طالب`,
+              `حتى ${plan.max_teachers || 'غير محدود'} معلم`,
+              `حتى ${plan.max_classes || 'غير محدود'} فصل`,
+              `${plan.storage_gb} جيجابايت تخزين`,
+              ...(plan.has_whatsapp ? ['تكامل واتساب'] : []),
+              ...(plan.has_analytics ? ['التحليلات المتقدمة'] : []),
+              ...(plan.has_reports ? ['التقارير المتقدمة'] : []),
+              ...(Array.isArray(plan.features) ? plan.features : [])
+            ];
+
+            // إنشاء قائمة الميزات غير المتضمنة
+            const notIncludedFeatures = [];
+            if (!plan.has_whatsapp) notIncludedFeatures.push('تكامل واتساب');
+            if (!plan.has_analytics) notIncludedFeatures.push('التحليلات المتقدمة');
+            if (!plan.has_reports) notIncludedFeatures.push('التقارير المتقدمة');
 
             return (
               <Card key={plan.id} className={`${colorClasses.card} backdrop-blur-sm relative`}>
-                {plan.isPopular && (
+                {plan.is_popular && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                     <Badge className={colorClasses.badge}>
                       <Star className="h-3 w-3 ml-1" />
@@ -219,8 +214,8 @@ const Pricing = () => {
                 )}
                 
                 <CardHeader className="pb-4">
-                  <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
-                  <CardDescription className="text-lg">{plan.description}</CardDescription>
+                  <CardTitle className="text-2xl font-bold">{plan.name_ar}</CardTitle>
+                  <CardDescription className="text-lg">{plan.description_ar || plan.description}</CardDescription>
                   
                   <div className="pt-4">
                     <div className="flex items-baseline justify-center">
@@ -235,32 +230,12 @@ const Pricing = () => {
                 </CardHeader>
 
                 <CardContent className="space-y-6">
-                  {/* المواصفات الرئيسية */}
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">عدد الطلاب</span>
-                      <span className="font-semibold">حتى {plan.maxStudents}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">عدد المعلمين</span>
-                      <span className="font-semibold">حتى {plan.maxTeachers}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">عدد الفصول</span>
-                      <span className="font-semibold">حتى {plan.maxClasses}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">مساحة التخزين</span>
-                      <span className="font-semibold">{plan.storageGB} جيجابايت</span>
-                    </div>
-                  </div>
-
                   {/* الميزات المتضمنة */}
                   <div>
                     <h4 className="font-semibold mb-3">الميزات المتضمنة:</h4>
                     <ul className="space-y-2">
-                      {plan.features.map((feature, index) => (
-                        <li key={index} className="flex items-start space-x-reverse space-x-2">
+                      {includedFeatures.map((feature, featureIndex) => (
+                        <li key={featureIndex} className="flex items-start space-x-reverse space-x-2">
                           <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
                           <span className="text-sm text-gray-700">{feature}</span>
                         </li>
@@ -269,12 +244,12 @@ const Pricing = () => {
                   </div>
 
                   {/* الميزات غير المتضمنة */}
-                  {plan.notIncluded.length > 0 && (
+                  {notIncludedFeatures.length > 0 && (
                     <div>
                       <h4 className="font-semibold mb-3 text-gray-600">غير متضمن:</h4>
                       <ul className="space-y-2">
-                        {plan.notIncluded.map((feature, index) => (
-                          <li key={index} className="flex items-start space-x-reverse space-x-2">
+                        {notIncludedFeatures.map((feature, featureIndex) => (
+                          <li key={featureIndex} className="flex items-start space-x-reverse space-x-2">
                             <X className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
                             <span className="text-sm text-gray-500">{feature}</span>
                           </li>
@@ -285,7 +260,7 @@ const Pricing = () => {
 
                   <Link to="/register" className="w-full block">
                     <Button className={`w-full ${colorClasses.button} text-white`}>
-                      ابدأ مع {plan.name}
+                      ابدأ مع {plan.name_ar}
                       <ArrowLeft className="mr-2 h-4 w-4" />
                     </Button>
                   </Link>

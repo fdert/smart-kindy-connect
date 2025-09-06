@@ -1,7 +1,9 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
+import { supabase } from '@/integrations/supabase/client';
 import Testimonials from "@/components/Testimonials";
 import { 
   Heart, 
@@ -23,7 +25,54 @@ import {
 
 const smartKindyLogo = "/lovable-uploads/46a447fc-00fa-49c5-b6ae-3f7b46fc4691.png";
 
+interface Plan {
+  id: string;
+  name: string;
+  name_ar: string;
+  description: string | null;
+  description_ar: string | null;
+  price_monthly: number;
+  price_quarterly: number | null;
+  price_yearly: number | null;
+  max_students: number | null;
+  max_teachers: number | null;
+  max_classes: number | null;
+  storage_gb: number;
+  has_whatsapp: boolean;
+  has_analytics: boolean;
+  has_reports: boolean;
+  features: any;
+  is_active: boolean;
+  is_popular: boolean;
+  sort_order: number;
+  currency: string;
+}
+
 const Index = () => {
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadPlans();
+  }, []);
+
+  const loadPlans = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .limit(3);
+
+      if (error) throw error;
+      setPlans(data || []);
+    } catch (error) {
+      console.error('Error loading plans:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
       {/* الخلفية الزخرفية */}
@@ -282,115 +331,74 @@ const Index = () => {
           <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
             ابدأ مجاناً وارق لاحقاً حسب احتياجاتك
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm text-center">
-              <CardHeader>
-                <CardTitle className="text-2xl">المبتدئ</CardTitle>
-                <div className="mt-4">
-                  <span className="text-4xl font-bold">199</span>
-                  <span className="text-gray-600 mr-2">ر.س/شهرياً</span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 mb-6">
-                  <li className="flex items-center justify-center space-x-reverse space-x-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">حتى 50 طالب</span>
-                  </li>
-                  <li className="flex items-center justify-center space-x-reverse space-x-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">3 معلمين</span>
-                  </li>
-                  <li className="flex items-center justify-center space-x-reverse space-x-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">ميزات أساسية</span>
-                  </li>
-                </ul>
-                <Link to="/pricing">
-                  <Button variant="outline" className="w-full">
-                    اعرف المزيد
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+          
+          {loading ? (
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">جاري تحميل الخطط...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {plans.map((plan, index) => {
+                const getCardClasses = (isPopular: boolean) => {
+                  if (isPopular) {
+                    return "bg-gradient-to-br from-primary/5 to-purple-500/10 border-2 border-primary shadow-lg text-center relative";
+                  }
+                  return "bg-white/80 backdrop-blur-sm border-0 shadow-sm text-center";
+                };
 
-            <Card className="bg-gradient-to-br from-primary/5 to-purple-500/10 border-2 border-primary shadow-lg text-center relative">
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-primary text-white">
-                  <Star className="h-3 w-3 ml-1" />
-                  الأكثر شيوعاً
-                </Badge>
-              </div>
-              <CardHeader>
-                <CardTitle className="text-2xl">المحترف</CardTitle>
-                <div className="mt-4">
-                  <span className="text-4xl font-bold">399</span>
-                  <span className="text-gray-600 mr-2">ر.س/شهرياً</span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 mb-6">
-                  <li className="flex items-center justify-center space-x-reverse space-x-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">حتى 150 طالب</span>
-                  </li>
-                  <li className="flex items-center justify-center space-x-reverse space-x-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">تكامل واتساب</span>
-                  </li>
-                  <li className="flex items-center justify-center space-x-reverse space-x-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">تقارير متقدمة</span>
-                  </li>
-                </ul>
-                <Link to="/pricing">
-                  <Button className="w-full">
-                    ابدأ الآن
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-sm text-center">
-              <CardHeader>
-                <CardTitle className="text-2xl">المؤسسي</CardTitle>
-                <div className="mt-4">
-                  <span className="text-4xl font-bold">799</span>
-                  <span className="text-gray-600 mr-2">ر.س/شهرياً</span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 mb-6">
-                  <li className="flex items-center justify-center space-x-reverse space-x-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">حتى 500 طالب</span>
-                  </li>
-                  <li className="flex items-center justify-center space-x-reverse space-x-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">مدير حساب مخصص</span>
-                  </li>
-                  <li className="flex items-center justify-center space-x-reverse space-x-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="text-sm">تخصيص كامل</span>
-                  </li>
-                </ul>
-                <Link to="/pricing">
-                  <Button variant="outline" className="w-full">
-                    تواصل معنا
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
-          <div className="text-center mt-8">
-            <Link to="/pricing">
-              <Button variant="outline" size="lg">
-                مقارنة جميع الخطط
-                <ArrowLeft className="mr-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
+                return (
+                  <Card key={plan.id} className={getCardClasses(plan.is_popular)}>
+                    {plan.is_popular && (
+                      <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                        <Badge className="bg-primary text-white">
+                          <Star className="h-3 w-3 ml-1" />
+                          الأكثر شيوعاً
+                        </Badge>
+                      </div>
+                    )}
+                    <CardHeader>
+                      <CardTitle className="text-2xl">{plan.name_ar}</CardTitle>
+                      <div className="mt-4">
+                        <span className="text-4xl font-bold">{plan.price_monthly}</span>
+                        <span className="text-gray-600 mr-2">ر.س/شهرياً</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-2 mb-6">
+                        <li className="flex items-center justify-center space-x-reverse space-x-2">
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <span className="text-sm">حتى {plan.max_students || 'غير محدود'} طالب</span>
+                        </li>
+                        <li className="flex items-center justify-center space-x-reverse space-x-2">
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <span className="text-sm">حتى {plan.max_teachers || 'غير محدود'} معلم</span>
+                        </li>
+                        {plan.has_whatsapp && (
+                          <li className="flex items-center justify-center space-x-reverse space-x-2">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            <span className="text-sm">تكامل واتساب</span>
+                          </li>
+                        )}
+                        {plan.has_reports && (
+                          <li className="flex items-center justify-center space-x-reverse space-x-2">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            <span className="text-sm">تقارير متقدمة</span>
+                          </li>
+                        )}
+                      </ul>
+                      <Link to="/pricing">
+                        <Button className={plan.is_popular ? "w-full" : "w-full"} variant={plan.is_popular ? "default" : "outline"}>
+                          {plan.is_popular ? "ابدأ الآن" : "اعرف المزيد"}
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                 );
+               })}
+             </div>
+           )}
+         </div>
 
         {/* دعوة للعمل */}
         <div className="text-center bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10 rounded-2xl p-12">
