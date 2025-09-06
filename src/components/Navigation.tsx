@@ -90,6 +90,7 @@ const Navigation = () => {
 
   const teacherNavigation = [
     { name: t('nav.dashboard'), href: '/teacher-dashboard', icon: Settings },
+    { name: 'دليل المعلم', href: '/teacher-guide', icon: BookOpen },
     { name: t('nav.classes'), href: '/classes', icon: BookOpen },
     { name: t('nav.attendance'), href: '/attendance', icon: Calendar },
     { name: t('teacher.recent_assignments'), href: '/assignments', icon: PenTool },

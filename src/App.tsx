@@ -41,6 +41,7 @@ import Surveys from "./pages/Surveys";
 import VirtualClasses from "./pages/VirtualClasses";
 import PlansManagement from "./pages/PlansManagement";
 import CMSManagement from "./pages/CMSManagement";
+import TeacherGuide from "./pages/TeacherGuide";
 import SharedRewardCard from "./pages/SharedRewardCard";
 import PublicSurvey from "./pages/PublicSurvey";
 import PublicPermission from "./pages/PublicPermission";
@@ -162,6 +163,7 @@ const AppRoutes = () => (
     <Route path="/virtual-classes" element={<ProtectedRoute><VirtualClasses /></ProtectedRoute>} />
     <Route path="/plans-management" element={<ProtectedRoute><PlansManagement /></ProtectedRoute>} />
     <Route path="/cms-management" element={<ProtectedRoute><CMSManagement /></ProtectedRoute>} />
+    <Route path="/teacher-guide" element={<ProtectedRoute><TeacherGuide /></ProtectedRoute>} />
     
     {/* صفحة 404 */}
     <Route path="*" element={<PublicPageRoute><NotFound /></PublicPageRoute>} />

@@ -207,6 +207,14 @@ const TeacherDashboard = () => {
           
           <div className="flex items-center gap-3">
             <Button 
+              variant="default" 
+              onClick={() => navigate('/teacher-guide')}
+              className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+            >
+              <BookOpen className="h-4 w-4" />
+              دليل المعلم التفاعلي
+            </Button>
+            <Button 
               variant="outline" 
               onClick={() => navigate('/settings')}
               className="flex items-center gap-2"
