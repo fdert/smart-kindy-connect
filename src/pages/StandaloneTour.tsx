@@ -706,7 +706,7 @@ const StandaloneTour = () => {
                 <Phone className="h-6 w-6 text-white" />
               </div>
               <div>
-                <div className="font-bold text-blue-600 text-xl" dir="ltr">+966 53 598 3261</div>
+                <div className="font-bold text-blue-600 text-xl" dir="ltr">+966 54 189 5145</div>
                 <div className="text-sm text-blue-500">📞 اتصال مباشر</div>
               </div>
             </div>
