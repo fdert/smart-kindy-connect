@@ -145,10 +145,25 @@ Deno.serve(async (req) => {
 
       // Check if there are any pending responses
       if (!pendingResponses || pendingResponses.length === 0) {
+        // Check if there are any responses at all
+        const { data: allResponses } = await supabase
+          .from('permission_responses')
+          .select('response')
+          .eq('permission_id', permissionId)
+          .eq('tenant_id', userData.tenant_id);
+
+        let message;
+        if (allResponses && allResponses.length > 0) {
+          const respondedCount = allResponses.filter(r => r.response !== 'pending').length;
+          message = `تم الرد على جميع الإشعارات (${respondedCount} استجابة). لا توجد استجابات معلقة.`;
+        } else {
+          message = 'لم يتم إنشاء استجابات لهذا الإذن. تأكد من وجود أولياء أمور مع أرقام واتس آب.';
+        }
+
         return new Response(
           JSON.stringify({ 
             success: false, 
-            message: 'لا توجد استجابات معلقة لهذا الإذن',
+            message: message,
             notificationsSent: 0 
           }),
           { 
@@ -386,6 +401,7 @@ Deno.serve(async (req) => {
           // Automatically send WhatsApp notifications after creating permission
           try {
             console.log('Sending automatic notifications for new permission:', permission.id);
+            let autoNotificationsSent = 0;
             
             for (const link of guardianLinks) {
               if (link.guardians?.whatsapp_number) {
@@ -432,9 +448,12 @@ Deno.serve(async (req) => {
                   console.error('WhatsApp auto-notification error:', whatsappError);
                 } else {
                   console.log('WhatsApp auto-notification sent successfully to:', link.guardians.whatsapp_number);
+                  autoNotificationsSent++;
                 }
               }
             }
+            
+            console.log(`Sent ${autoNotificationsSent} automatic notifications for new permission`);
           } catch (autoNotifyError) {
             console.error('Error sending automatic notifications:', autoNotifyError);
             // Don't throw here, as permission was created successfully
