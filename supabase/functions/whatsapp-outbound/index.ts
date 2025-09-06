@@ -118,7 +118,7 @@ serve(async (req) => {
       
       // Create fallback templates for common cases
       if (templateName === 'permission_request' && templateData) {
-        const permissionUrl = templateData.permissionLink || `https://ytjodudlnfamvnescumu.supabase.co/permission/${contextId}`;
+        const permissionUrl = templateData.permissionLink || `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/permission/${contextId}`;
         
         messageText = `🔔 *طلب إذن جديد*
 
@@ -139,11 +139,10 @@ ${permissionUrl}
 شكراً لتعاونكم
 ${templateData.nurseryName || 'الحضانة'}`;
       } else if (templateName === 'survey_notification' && templateData) {
-        // Build the survey link with the correct production domain
         let surveyLink = templateData.surveyLink;
         if (!surveyLink && contextId) {
           // Use the correct production domain
-          surveyLink = `https://ytjodudlnfamvnescumu.supabase.co/survey/${contextId}`;
+          surveyLink = `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/survey/${contextId}`;
         }
         
         console.log(`Survey notification - contextId: ${contextId}, surveyLink: ${surveyLink}`);

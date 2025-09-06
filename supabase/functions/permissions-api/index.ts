@@ -195,7 +195,7 @@ Deno.serve(async (req) => {
               .eq('id', response.id);
 
             // Send WhatsApp notification
-            const permissionLink = `https://ytjodudlnfamvnescumu.supabase.co/permission/${permissionId}`;
+            const permissionLink = `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/permission/${permissionId}`;
             console.log(`Sending reminder WhatsApp with permission link: ${permissionLink}`);
             
             const { data: whatsappResult, error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
@@ -421,7 +421,7 @@ Deno.serve(async (req) => {
                   .eq('student_id', link.student_id);
 
                 // Send WhatsApp notification
-                const permissionLink = `https://ytjodudlnfamvnescumu.supabase.co/permission/${permission.id}`;
+                const permissionLink = `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/permission/${permission.id}`;
                 console.log(`Sending new permission WhatsApp with permission link: ${permissionLink}`);
                 
                 const { data: whatsappResult, error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
