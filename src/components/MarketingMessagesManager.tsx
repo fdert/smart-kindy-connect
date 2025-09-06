@@ -21,9 +21,12 @@ import {
   Copy,
   Trash2,
   Play,
-  Eye
+  Eye,
+  Edit,
+  BarChart3
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import MarketingCampaignReport from './MarketingCampaignReport';
 
 interface Campaign {
   id: string;
@@ -64,6 +67,8 @@ const MarketingMessagesManager = () => {
 
   const [phoneInput, setPhoneInput] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
+  const [showReport, setShowReport] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCampaigns();
@@ -210,16 +215,7 @@ const MarketingMessagesManager = () => {
         description: "تم إنشاء الحملة التسويقية بنجاح",
       });
 
-      setNewCampaign({
-        campaign_name: '',
-        message_content: '',
-        phone_numbers: [],
-        webhook_url: '',
-        webhook_secret: '',
-        message_delay_seconds: 10,
-        use_random_delay: false
-      });
-      setShowCreateForm(false);
+      resetForm();
       fetchCampaigns();
 
     } catch (error: any) {
@@ -229,6 +225,78 @@ const MarketingMessagesManager = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const updateCampaign = async () => {
+    if (!editingCampaign || !newCampaign.campaign_name || !newCampaign.message_content) {
+      toast({
+        title: "خطأ",
+        description: "يرجى ملء جميع الحقول المطلوبة",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('marketing_campaigns')
+        .update({
+          campaign_name: newCampaign.campaign_name,
+          message_content: newCampaign.message_content,
+          phone_numbers: newCampaign.phone_numbers,
+          total_recipients: newCampaign.phone_numbers.length,
+          webhook_url: newCampaign.webhook_url,
+          webhook_secret: newCampaign.webhook_secret,
+          message_delay_seconds: newCampaign.message_delay_seconds,
+          use_random_delay: newCampaign.use_random_delay
+        })
+        .eq('id', editingCampaign.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "تم التحديث بنجاح",
+        description: "تم تحديث الحملة التسويقية بنجاح",
+      });
+
+      resetForm();
+      fetchCampaigns();
+
+    } catch (error: any) {
+      toast({
+        title: "خطأ",
+        description: "فشل في تحديث الحملة: " + error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const resetForm = () => {
+    setNewCampaign({
+      campaign_name: '',
+      message_content: '',
+      phone_numbers: [],
+      webhook_url: '',
+      webhook_secret: '',
+      message_delay_seconds: 10,
+      use_random_delay: false
+    });
+    setShowCreateForm(false);
+    setEditingCampaign(null);
+  };
+
+  const editCampaign = (campaign: Campaign) => {
+    setEditingCampaign(campaign);
+    setNewCampaign({
+      campaign_name: campaign.campaign_name,
+      message_content: campaign.message_content,
+      phone_numbers: Array.isArray(campaign.phone_numbers) ? campaign.phone_numbers : [],
+      webhook_url: campaign.webhook_url || '',
+      webhook_secret: campaign.webhook_secret || '',
+      message_delay_seconds: 10,
+      use_random_delay: false
+    });
+    setShowCreateForm(true);
   };
 
   const sendCampaign = async (campaignId: string) => {
@@ -351,9 +419,11 @@ const MarketingMessagesManager = () => {
       {showCreateForm && (
         <Card>
           <CardHeader>
-            <CardTitle>إنشاء حملة تسويقية جديدة</CardTitle>
+            <CardTitle>
+              {editingCampaign ? 'تعديل الحملة التسويقية' : 'إنشاء حملة تسويقية جديدة'}
+            </CardTitle>
             <CardDescription>
-              قم بإنشاء حملة واتساب تسويقية واستيراد أرقام الهواتف
+              {editingCampaign ? 'قم بتعديل بيانات الحملة التسويقية' : 'قم بإنشاء حملة واتساب تسويقية واستيراد أرقام الهواتف'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -628,6 +698,14 @@ const MarketingMessagesManager = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* مودال التقرير */}
+      {showReport && (
+        <MarketingCampaignReport 
+          campaignId={showReport} 
+          onClose={() => setShowReport(null)} 
+        />
+      )}
     </div>
   );
 };
