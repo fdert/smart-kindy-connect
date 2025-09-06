@@ -107,6 +107,11 @@ const Index = () => {
                 جولة تعريفية
               </Button>
             </Link>
+            <Link to="/standalone-teacher-guide">
+              <Button variant="secondary" size="lg" className="text-lg px-8 py-3 bg-green-500 hover:bg-green-600 text-white">
+                📚 دليل المعلم التفاعلي
+              </Button>
+            </Link>
           </div>
         </div>
 

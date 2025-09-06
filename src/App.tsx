@@ -42,6 +42,7 @@ import VirtualClasses from "./pages/VirtualClasses";
 import PlansManagement from "./pages/PlansManagement";
 import CMSManagement from "./pages/CMSManagement";
 import TeacherGuide from "./pages/TeacherGuide";
+import StandaloneTeacherGuide from "./pages/StandaloneTeacherGuide";
 import SharedRewardCard from "./pages/SharedRewardCard";
 import PublicSurvey from "./pages/PublicSurvey";
 import PublicPermission from "./pages/PublicPermission";
@@ -119,6 +120,7 @@ const AppRoutes = () => (
     <Route path="/tour" element={<PublicPageRoute><Tour /></PublicPageRoute>} />
     <Route path="/visitor-analytics" element={<ProtectedRoute><VisitorAnalytics /></ProtectedRoute>} />
     <Route path="/standalone-tour" element={<PublicPageRoute><StandaloneTour /></PublicPageRoute>} />
+    <Route path="/standalone-teacher-guide" element={<PublicPageRoute><StandaloneTeacherGuide /></PublicPageRoute>} />
     <Route path="/demo" element={<PublicPageRoute><Demo /></PublicPageRoute>} />
     <Route path="/register" element={<PublicPageRoute><TenantRegistration /></PublicPageRoute>} />
     <Route path="/pricing" element={<PublicPageRoute><Pricing /></PublicPageRoute>} />
