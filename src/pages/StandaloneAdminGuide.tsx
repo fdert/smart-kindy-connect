@@ -109,9 +109,21 @@ const StandaloneAdminGuide = () => {
   // Auto-play welcome message on page load
   useEffect(() => {
     if (autoPlayEnabled) {
-      setTimeout(() => {
-        playTextToSpeech('مرحباً بك في دليل مدير الروضة التفاعلي الشامل لنظام SmartKindy. هذا الدليل سيساعدك في إتقان جميع أدوات إدارة الروضة بطريقة تفاعلية وممتعة مع شرح صوتي مفصل لكل قسم. ستتعلم كيفية إدارة المعلمين والطلاب والفصول والتقارير المالية وجميع جوانب العملية التعليمية والإدارية.');
-      }, 1000);
+      // Wait for voices to load
+      const loadVoices = () => {
+        if (window.speechSynthesis.getVoices().length > 0) {
+          setTimeout(() => {
+            playTextToSpeech('مرحباً بك في دليل مدير الروضة التفاعلي الشامل لنظام SmartKindy. هذا الدليل سيساعدك في إتقان جميع أدوات إدارة الروضة بطريقة تفاعلية وممتعة مع شرح صوتي مفصل لكل قسم. ستتعلم كيفية إدارة المعلمين والطلاب والفصول والتقارير المالية وجميع جوانب العملية التعليمية والإدارية.');
+          }, 1000);
+        } else {
+          setTimeout(loadVoices, 100);
+        }
+      };
+      
+      if (window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+        loadVoices();
+      }
     }
   }, []);
 
@@ -441,41 +453,43 @@ const StandaloneAdminGuide = () => {
         audioState.currentAudio.currentTime = 0;
       }
 
-      const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/9BWtsMINqrJLrRacOk9x', {
-        method: 'POST',
-        headers: {
-          'Accept': 'audio/mpeg',
-          'Content-Type': 'application/json',
-          'xi-api-key': 'sk_5c2c7b4f7e8d4a0b8f3e6d1a9c2e4f7b8a1d3c5e7f9b2a4c6e8d1a3b5c7e9f1b3'
-        },
-        body: JSON.stringify({
-          text: text,
-          model_id: 'eleven_multilingual_v2',
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.5
-          }
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('فشل في تحويل النص إلى صوت');
+      // Check if Web Speech API is supported
+      if (!('speechSynthesis' in window)) {
+        throw new Error('متصفحك لا يدعم تحويل النص إلى صوت');
       }
 
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
       
-      audio.onplay = () => {
+      // Find Arabic voice or use default
+      const voices = window.speechSynthesis.getVoices();
+      const arabicVoice = voices.find(voice => 
+        voice.lang.includes('ar') || 
+        voice.lang.includes('Arabic') ||
+        voice.name.includes('Arabic')
+      );
+      
+      if (arabicVoice) {
+        utterance.voice = arabicVoice;
+      }
+      
+      utterance.lang = 'ar-SA';
+      utterance.rate = 0.9;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+
+      utterance.onstart = () => {
         setAudioState(prev => ({ ...prev, isPlaying: true, isLoading: false }));
       };
-      
-      audio.onended = () => {
+
+      utterance.onend = () => {
         setAudioState(prev => ({ ...prev, isPlaying: false, currentAudio: null }));
-        URL.revokeObjectURL(audioUrl);
       };
-      
-      audio.onerror = () => {
+
+      utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event.error);
         setAudioState(prev => ({ 
           ...prev, 
           isPlaying: false, 
@@ -483,11 +497,12 @@ const StandaloneAdminGuide = () => {
           error: 'خطأ في تشغيل الصوت',
           currentAudio: null 
         }));
-        URL.revokeObjectURL(audioUrl);
       };
 
-      setAudioState(prev => ({ ...prev, currentAudio: audio }));
-      await audio.play();
+      // Store reference for stopping
+      setAudioState(prev => ({ ...prev, currentAudio: utterance as any }));
+      
+      window.speechSynthesis.speak(utterance);
       
     } catch (error) {
       console.error('Text-to-speech error:', error);
@@ -503,8 +518,13 @@ const StandaloneAdminGuide = () => {
 
   const stopAudio = () => {
     if (audioState.currentAudio) {
-      audioState.currentAudio.pause();
-      audioState.currentAudio.currentTime = 0;
+      if (audioState.currentAudio instanceof HTMLAudioElement) {
+        audioState.currentAudio.pause();
+        audioState.currentAudio.currentTime = 0;
+      } else {
+        // For speech synthesis
+        window.speechSynthesis.cancel();
+      }
       setAudioState(prev => ({ ...prev, isPlaying: false, currentAudio: null }));
     }
   };
