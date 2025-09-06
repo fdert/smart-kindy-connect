@@ -110,8 +110,8 @@ serve(async (req) => {
 
     console.log('Token generated successfully');
 
-    // إنشاء رابط التقرير باستخدام SITE_URL
-    const baseUrl = Deno.env.get('SITE_URL') || req.headers.get('origin') || 'https://smart-kindy-connect.lovable.app';
+    // إنشاء رابط التقرير باستخدام الدومين الصحيح
+    const baseUrl = Deno.env.get('SITE_URL') || 'https://ytjodudlnfamvnescumu.supabase.co';
     const reportUrl = `${baseUrl}/${reportType}/${studentId}?token=${tokenHash}&guardian=${guardianAccess}`;
 
     return new Response(

@@ -33,6 +33,7 @@ export const useSecureReportUrl = () => {
         throw new Error(data.error || 'فشل في إنشاء رابط آمن');
       }
 
+      const baseUrl = 'https://ytjodudlnfamvnescumu.supabase.co';
       return data.data.reportUrl;
 
     } catch (err: any) {
