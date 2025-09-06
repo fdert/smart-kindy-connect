@@ -531,7 +531,7 @@ const StandaloneTour = () => {
 
           <Button
             onClick={currentStep === steps.length - 1 ? () => {
-              const phoneNumber = '966535983261';
+              const phoneNumber = '966541895145';
               const message = 'مرحباً، أريد معرفة المزيد عن نظام SmartKindy لإدارة الحضانات';
               
               // محاولة فتح الواتساب بطرق متعددة
@@ -629,7 +629,7 @@ const StandaloneTour = () => {
                 size="lg"
                 className="bg-white text-purple-600 hover:bg-yellow-100 px-12 py-6 text-2xl rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-110 font-bold border-4 border-white/30"
                 onClick={() => {
-                  const phoneNumber = '966535983261';
+                  const phoneNumber = '966541895145';
                   const message = 'مرحباً، أود بدء التجربة المجانية لنظام SmartKindy لإدارة الحضانات';
                   
                   const tryOpenWhatsApp = () => {
@@ -658,7 +658,7 @@ const StandaloneTour = () => {
                 variant="outline"
                 className="border-4 border-white text-white hover:bg-white hover:text-purple-600 px-12 py-6 text-2xl rounded-3xl transition-all duration-500 hover:scale-110 font-bold backdrop-blur-sm"
                 onClick={() => {
-                  const phoneNumber = '966535983261';
+                  const phoneNumber = '966541895145';
                   const message = 'مرحباً، أريد معرفة المزيد عن نظام SmartKindy لإدارة الحضانات';
                   
                   const tryOpenWhatsApp = () => {
