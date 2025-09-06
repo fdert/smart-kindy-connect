@@ -83,40 +83,65 @@ Deno.serve(async (req) => {
       
       console.log('Sending notifications for permission:', permissionId);
 
-      // Get permission details with pending responses
+      // Get permission details
       const { data: permission, error: permissionError } = await supabase
         .from('permissions')
-        .select(`
-          *,
-          permission_responses!inner (
-            id,
-            guardian_id,
-            student_id,
-            response,
-            guardians (
-              full_name,
-              whatsapp_number
-            ),
-            students (
-              full_name,
-              student_id
-            )
-          )
-        `)
+        .select('*')
         .eq('id', permissionId)
         .eq('tenant_id', userData.tenant_id)
-        .eq('permission_responses.response', 'pending')
         .single();
 
       if (permissionError) {
         throw permissionError;
       }
 
+      // Get pending responses separately
+      const { data: pendingResponses, error: responsesError } = await supabase
+        .from('permission_responses')
+        .select(`
+          id,
+          guardian_id,
+          student_id,
+          response,
+          guardians (
+            full_name,
+            whatsapp_number
+          ),
+          students (
+            full_name,
+            student_id
+          )
+        `)
+        .eq('permission_id', permissionId)
+        .eq('tenant_id', userData.tenant_id)
+        .eq('response', 'pending');
+
+      if (responsesError) {
+        console.error('Error fetching pending responses:', responsesError);
+        throw responsesError;
+      }
+
+      // Check if there are any pending responses
+      if (!pendingResponses || pendingResponses.length === 0) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            message: 'لا توجد استجابات معلقة لهذا الإذن',
+            notificationsSent: 0 
+          }),
+          { 
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json' 
+            } 
+          }
+        );
+      }
+
       // Send WhatsApp notifications for pending responses
       let notificationsSent = 0;
-      const responses = permission.permission_responses || [];
       
-      for (const response of responses) {
+      for (const response of pendingResponses) {
         if (response.guardians?.whatsapp_number && response.response === 'pending') {
           try {
             // Generate OTP token for response
@@ -133,7 +158,7 @@ Deno.serve(async (req) => {
               .eq('id', response.id);
 
             // Send WhatsApp notification
-            const permissionLink = `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/permission/${permissionId}`;
+            const permissionLink = `https://ytjodudlnfamvnescumu.supabase.co/permission/${permissionId}`;
             console.log(`Sending reminder WhatsApp with permission link: ${permissionLink}`);
             
             const { data: whatsappResult, error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {
@@ -354,7 +379,7 @@ Deno.serve(async (req) => {
                   .eq('student_id', link.student_id);
 
                 // Send WhatsApp notification
-                const permissionLink = `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/permission/${permission.id}`;
+                const permissionLink = `https://ytjodudlnfamvnescumu.supabase.co/permission/${permission.id}`;
                 console.log(`Sending new permission WhatsApp with permission link: ${permissionLink}`);
                 
                 const { data: whatsappResult, error: whatsappError } = await supabase.functions.invoke('whatsapp-outbound', {

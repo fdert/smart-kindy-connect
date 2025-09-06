@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
           }
           
           // Generate the correct survey link with the live domain
-          const surveyLink = `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/survey/${survey.id}`;
+          const surveyLink = `https://ytjodudlnfamvnescumu.supabase.co/survey/${survey.id}`;
           
           console.log(`Manual notification - surveyId: ${survey.id}, surveyLink: ${surveyLink}`);
           
@@ -364,7 +364,7 @@ Deno.serve(async (req) => {
           for (const contact of contacts) {
             try {
               // Generate the correct survey link with the live domain
-              const surveyLink = `https://5f232500-a2a2-44ad-9709-756a29678377.sandbox.lovable.dev/survey/${survey.id}`;
+              const surveyLink = `https://ytjodudlnfamvnescumu.supabase.co/survey/${survey.id}`;
               
               console.log(`Auto-notification - surveyId: ${survey.id}, surveyLink: ${surveyLink}`);
               
