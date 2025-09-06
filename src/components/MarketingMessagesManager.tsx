@@ -667,30 +667,52 @@ const MarketingMessagesManager = () => {
                     <TableCell>
                       {new Date(campaign.created_at).toLocaleDateString('ar-SA')}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-reverse space-x-2">
-                        {campaign.status === 'draft' && (
-                          <Button
-                            size="sm"
-                            onClick={() => sendCampaign(campaign.id)}
-                            disabled={sending === campaign.id}
-                          >
-                            {sending === campaign.id ? (
-                              <Clock className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Send className="h-4 w-4" />
-                            )}
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => deleteCampaign(campaign.id, campaign.campaign_name)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                     <TableCell>
+                       <div className="flex justify-end space-x-reverse space-x-2">
+                         {campaign.status === 'draft' && (
+                           <>
+                             <Button
+                               size="sm"
+                               variant="outline"
+                               onClick={() => editCampaign(campaign)}
+                             >
+                               <Edit className="h-4 w-4" />
+                               تعديل
+                             </Button>
+                             <Button
+                               size="sm"
+                               onClick={() => sendCampaign(campaign.id)}
+                               disabled={sending === campaign.id}
+                             >
+                               {sending === campaign.id ? (
+                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                               ) : (
+                                 <Play className="h-4 w-4" />
+                               )}
+                               {sending === campaign.id ? 'جاري الإرسال...' : 'إرسال'}
+                             </Button>
+                           </>
+                         )}
+                         
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           onClick={() => setShowReport(campaign.id)}
+                         >
+                           <BarChart3 className="h-4 w-4" />
+                           التقرير
+                         </Button>
+                         
+                         <Button
+                           size="sm"
+                           variant="destructive"
+                           onClick={() => deleteCampaign(campaign.id, campaign.campaign_name)}
+                         >
+                           <Trash2 className="h-4 w-4" />
+                           حذف
+                         </Button>
+                       </div>
+                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
