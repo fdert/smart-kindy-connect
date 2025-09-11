@@ -110,8 +110,9 @@ const MarketingMessagesManager = () => {
         // استخراج أرقام الهواتف من العمود الأول
         const phoneNumbers: string[] = [];
         jsonData.forEach((row: any) => {
-          if (row[0] && typeof row[0] === 'string') {
-            const phone = row[0].toString().trim();
+          const cell = row[0];
+          if (cell !== undefined && cell !== null && cell !== '') {
+            const phone = String(cell).trim();
             if (phone && phone.length > 8) {
               phoneNumbers.push(formatPhoneNumber(phone));
             }
@@ -293,8 +294,8 @@ const MarketingMessagesManager = () => {
       phone_numbers: Array.isArray(campaign.phone_numbers) ? campaign.phone_numbers : [],
       webhook_url: campaign.webhook_url || '',
       webhook_secret: campaign.webhook_secret || '',
-      message_delay_seconds: 10,
-      use_random_delay: false
+      message_delay_seconds: (campaign as any).message_delay_seconds ?? 10,
+      use_random_delay: (campaign as any).use_random_delay ?? false
     });
     setShowCreateForm(true);
   };
@@ -601,11 +602,11 @@ const MarketingMessagesManager = () => {
 
             {/* أزرار الإجراءات */}
             <div className="flex space-x-reverse space-x-4">
-              <Button onClick={createCampaign}>
+              <Button onClick={editingCampaign ? updateCampaign : createCampaign}>
                 <MessageCircle className="h-4 w-4 ml-2" />
-                إنشاء الحملة
+                {editingCampaign ? 'تحديث الحملة' : 'إنشاء الحملة'}
               </Button>
-              <Button variant="outline" onClick={() => setShowCreateForm(false)}>
+              <Button variant="outline" onClick={resetForm}>
                 إلغاء
               </Button>
             </div>
@@ -669,31 +670,35 @@ const MarketingMessagesManager = () => {
                     </TableCell>
                      <TableCell>
                        <div className="flex justify-end space-x-reverse space-x-2">
-                         {campaign.status === 'draft' && (
-                           <>
-                             <Button
-                               size="sm"
-                               variant="outline"
-                               onClick={() => editCampaign(campaign)}
-                             >
-                               <Edit className="h-4 w-4" />
-                               تعديل
-                             </Button>
-                             <Button
-                               size="sm"
-                               onClick={() => sendCampaign(campaign.id)}
-                               disabled={sending === campaign.id}
-                             >
-                               {sending === campaign.id ? (
-                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                               ) : (
-                                 <Play className="h-4 w-4" />
-                               )}
-                               {sending === campaign.id ? 'جاري الإرسال...' : 'إرسال'}
-                             </Button>
-                           </>
+                         {/* زر التعديل متاح لكل الحالات ماعدا أثناء الإرسال */}
+                         {campaign.status !== 'sending' && (
+                           <Button
+                             size="sm"
+                             variant="outline"
+                             onClick={() => editCampaign(campaign)}
+                           >
+                             <Edit className="h-4 w-4" />
+                             تعديل
+                           </Button>
                          )}
-                         
+
+                         {/* زر الإرسال يظهر فقط للمسودات */}
+                         {campaign.status === 'draft' && (
+                           <Button
+                             size="sm"
+                             onClick={() => sendCampaign(campaign.id)}
+                             disabled={sending === campaign.id || campaign.total_recipients === 0}
+                           >
+                             {sending === campaign.id ? (
+                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                             ) : (
+                               <Play className="h-4 w-4" />
+                             )}
+                             {sending === campaign.id ? 'جاري الإرسال...' : 'إرسال'}
+                           </Button>
+                         )}
+
+                         {/* زر التقرير دائمًا */}
                          <Button
                            size="sm"
                            variant="outline"
@@ -702,7 +707,8 @@ const MarketingMessagesManager = () => {
                            <BarChart3 className="h-4 w-4" />
                            التقرير
                          </Button>
-                         
+
+                         {/* زر الحذف */}
                          <Button
                            size="sm"
                            variant="destructive"
