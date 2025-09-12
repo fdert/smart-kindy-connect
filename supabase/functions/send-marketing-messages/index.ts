@@ -9,6 +9,42 @@ interface SendMarketingRequest {
   campaignId: string;
 }
 
+const MAX_MESSAGE_CHARS = 600;
+
+// Split long messages into safe chunks (tries to split on word boundaries)
+function splitMessage(content: string, limit: number = MAX_MESSAGE_CHARS): string[] {
+  if (!content) return [''];
+  const chunks: string[] = [];
+  let remaining = content.trim();
+  while (remaining.length > limit) {
+    let cut = remaining.lastIndexOf(' ', limit);
+    if (cut === -1 || cut < limit * 0.6) cut = limit; // fallback if no space nearby
+    chunks.push(remaining.slice(0, cut));
+    remaining = remaining.slice(cut).trimStart();
+  }
+  if (remaining.length) chunks.push(remaining);
+  return chunks;
+}
+
+// Basic E.164 phone normalization focused on KSA numbers, but keeps existing E.164
+function normalizePhone(phone: string): string {
+  if (!phone) return '';
+  let p = phone.replace(/\s|-/g, '');
+  if (p.startsWith('00')) p = '+' + p.slice(2);
+  if (p.startsWith('+')) return p;
+  // KSA-specific normalizations
+  if (p.startsWith('05')) return '+966' + p.slice(1);
+  if (p.startsWith('5') && p.length === 9) return '+966' + p;
+  if (p.startsWith('966')) return '+' + p;
+  // Fallback: prefix with + if looks like international
+  if (/^\d{8,15}$/.test(p)) return '+' + p;
+  return p;
+}
+
+function isValidE164(phone: string): boolean {
+  return /^\+[1-9]\d{7,14}$/.test(phone);
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -73,9 +109,12 @@ Deno.serve(async (req) => {
         .eq('id', campaignId);
     }
 
-    const phoneNumbers = Array.isArray(campaign.phone_numbers) ? campaign.phone_numbers : [];
+    const rawPhoneNumbers = Array.isArray(campaign.phone_numbers) ? campaign.phone_numbers : [];
+    const normalizedPhones = Array.from(new Set(
+      rawPhoneNumbers.map(normalizePhone).filter(isValidE164)
+    ));
 
-    console.log(`Starting to send ${phoneNumbers.length} messages`);
+    console.log(`Starting to send ${normalizedPhones.length} messages`);
 
     // Ensure message logs exist (create only if none)
     const { count: existingLogsCount, error: logsCountError } = await supabase
@@ -86,7 +125,7 @@ Deno.serve(async (req) => {
       console.error('Error checking existing logs:', logsCountError);
     }
     if (!existingLogsCount || existingLogsCount === 0) {
-      const messageLogs = phoneNumbers.map(phone => ({
+      const messageLogs = normalizedPhones.map(phone => ({
         campaign_id: campaignId,
         recipient_phone: phone,
         status: 'pending'
@@ -131,42 +170,71 @@ Deno.serve(async (req) => {
         const webhookUrl = campaign.webhook_url || 'https://hook.eu2.make.com/default-webhook-url';
 
         for (const phone of phonesToSend) {
+          const normalized = normalizePhone(phone);
+          if (!isValidE164(normalized)) {
+            await supabase
+              .from('marketing_message_logs')
+              .update({ status: 'failed', error_message: 'Invalid recipient phone format' })
+              .eq('campaign_id', campaignId)
+              .eq('recipient_phone', phone);
+            console.warn(`Invalid phone skipped: ${phone}`);
+            continue;
+          }
+
           try {
-            const payload = {
-              to: phone,
-              message: campaign.message_content,
-              campaign_id: campaignId,
-              campaign_name: campaign.campaign_name,
-              timestamp: new Date().toISOString(),
-              webhook_secret: campaign.webhook_secret
-            };
+            const parts = splitMessage(campaign.message_content || '');
+            let allOk = true;
+            let lastErrText = '';
 
-            console.log(`Sending message to ${phone}`);
+            for (let i = 0; i < parts.length; i++) {
+              const payload = {
+                to: normalized,
+                message: parts[i],
+                campaign_id: campaignId,
+                campaign_name: campaign.campaign_name,
+                timestamp: new Date().toISOString(),
+                webhook_secret: campaign.webhook_secret,
+                message_part: i + 1,
+                message_total: parts.length
+              };
 
-            const response = await fetch(webhookUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
+              console.log(`Sending message${parts.length > 1 ? ` part ${i + 1}/${parts.length}` : ''} to ${normalized}`);
 
-            if (response.ok) {
+              const response = await fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+
+              if (!response.ok) {
+                lastErrText = await response.text();
+                console.error(`Failed to send${parts.length > 1 ? ` part ${i + 1}` : ''} to ${normalized}:`, lastErrText);
+                allOk = false;
+                break;
+              }
+
+              // tiny gap between parts to avoid provider throttling
+              if (parts.length > 1) {
+                await new Promise(res => setTimeout(res, 150));
+              }
+            }
+
+            if (allOk) {
               await supabase
                 .from('marketing_message_logs')
                 .update({ status: 'sent', sent_at: new Date().toISOString() })
                 .eq('campaign_id', campaignId)
                 .eq('recipient_phone', phone);
-              console.log(`Message sent successfully to ${phone}`);
+              console.log(`Message sent successfully to ${normalized}${parts.length > 1 ? ` in ${parts.length} parts` : ''}`);
             } else {
-              const errorText = await response.text();
-              console.error(`Failed to send message to ${phone}:`, errorText);
               await supabase
                 .from('marketing_message_logs')
-                .update({ status: 'failed', error_message: errorText || 'Webhook request failed' })
+                .update({ status: 'failed', error_message: lastErrText || 'Webhook request failed' })
                 .eq('campaign_id', campaignId)
                 .eq('recipient_phone', phone);
             }
           } catch (error: any) {
-            console.error(`Error sending message to ${phone}:`, error.message);
+            console.error(`Error sending message to ${normalized}:`, error.message);
             await supabase
               .from('marketing_message_logs')
               .update({ status: 'failed', error_message: error.message || 'Network error' })
@@ -174,7 +242,7 @@ Deno.serve(async (req) => {
               .eq('recipient_phone', phone);
           }
 
-          // Delay per configured settings
+          // Delay per configured settings (between recipients)
           let delayMs;
           if (useRandomDelay) {
             const minDelay = Math.max(1, baseDelay - 3);
@@ -248,7 +316,7 @@ Deno.serve(async (req) => {
       status: 'sending',
       sentCount: 0,
       failedCount: 0,
-      totalRecipients: phoneNumbers.length
+      totalRecipients: (typeof normalizedPhones !== 'undefined' ? normalizedPhones.length : 0)
     }), {
       status: 202,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
