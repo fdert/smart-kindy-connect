@@ -9,7 +9,7 @@ interface SendMarketingRequest {
   campaignId: string;
 }
 
-const MAX_MESSAGE_CHARS = 600;
+const MAX_MESSAGE_CHARS = 1500;
 
 // Split long messages into safe chunks (tries to split on word boundaries)
 function splitMessage(content: string, limit: number = MAX_MESSAGE_CHARS): string[] {
