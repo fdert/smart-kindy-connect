@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/hooks/useLanguage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { CreateSuperAdmin } from '@/components/CreateSuperAdmin';
 import PasswordResetForm from '@/components/PasswordResetForm';
 import { supabase } from '@/integrations/supabase/client';
+import { LanguageSwitcher } from '@/components/ui/language-switcher';
 
 const smartKindyLogo = "/lovable-uploads/46a447fc-00fa-49c5-b6ae-3f7b46fc4691.png";
 
@@ -24,56 +26,65 @@ const Auth = () => {
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t, language } = useLanguage();
 
   // الحسابات التجريبية
   const demoAccounts = [
     {
       role: 'super_admin',
-      title: 'مدير عام النظام',
+      title: language === 'ar' ? 'مدير عام النظام' : 'System Super Admin',
       email: 'superadmin@smartkindy.com',
       password: 'demo123456',
-      description: 'إدارة شاملة لجميع الحضانات والاشتراكات',
+      description: language === 'ar' ? 'إدارة شاملة لجميع الحضانات والاشتراكات' : 'Comprehensive management of all nurseries and subscriptions',
       icon: Settings,
       color: 'bg-purple-500',
-      features: ['إدارة جميع الحضانات', 'إدارة الاشتراكات والفواتير', 'إحصائيات شاملة', 'إدارة المستخدمين']
+      features: language === 'ar' 
+        ? ['إدارة جميع الحضانات', 'إدارة الاشتراكات والفواتير', 'إحصائيات شاملة', 'إدارة المستخدمين']
+        : ['Manage all nurseries', 'Manage subscriptions & billing', 'Comprehensive statistics', 'User management']
     },
     {
       role: 'owner',
-      title: 'مدير الروضة',
+      title: language === 'ar' ? 'مدير الروضة' : 'Nursery Manager',
       email: 'owner@smartkindy.com',
       password: 'demo123456',
-      description: 'إدارة كاملة للروضة والطلاب والمعلمين',
+      description: language === 'ar' ? 'إدارة كاملة للروضة والطلاب والمعلمين' : 'Complete management of nursery, students and teachers',
       icon: UserCheck,
       color: 'bg-blue-500',
-      features: ['إدارة الطلاب والفصول', 'إدارة المعلمين', 'تقارير مفصلة', 'إعدادات الروضة']
+      features: language === 'ar' 
+        ? ['إدارة الطلاب والفصول', 'إدارة المعلمين', 'تقارير مفصلة', 'إعدادات الروضة']
+        : ['Manage students & classes', 'Teacher management', 'Detailed reports', 'Nursery settings']
     },
     {
       role: 'teacher',
-      title: 'المعلمة',
+      title: language === 'ar' ? 'المعلمة' : 'Teacher',
       email: 'teacher@smartkindy.com',
       password: 'demo123456',
-      description: 'متابعة الطلاب وتسجيل الحضور والأنشطة',
+      description: language === 'ar' ? 'متابعة الطلاب وتسجيل الحضور والأنشطة' : 'Student monitoring, attendance tracking and activities',
       icon: BookOpen,
       color: 'bg-green-500',
-      features: ['تسجيل الحضور', 'منح المكافآت', 'رفع صور الأنشطة', 'متابعة الطلاب']
+      features: language === 'ar' 
+        ? ['تسجيل الحضور', 'منح المكافآت', 'رفع صور الأنشطة', 'متابعة الطلاب']
+        : ['Record attendance', 'Award rewards', 'Upload activity photos', 'Monitor students']
     },
     {
       role: 'guardian',
-      title: 'ولي الأمر',
+      title: language === 'ar' ? 'ولي الأمر' : 'Guardian/Parent',
       email: 'parent@smartkindy.com',
       password: 'demo123456',
-      description: 'متابعة طفلك وتلقي التحديثات والصور',
+      description: language === 'ar' ? 'متابعة طفلك وتلقي التحديثات والصور' : 'Monitor your child and receive updates and photos',
       icon: Heart,
       color: 'bg-pink-500',
-      features: ['متابعة حضور الطفل', 'تلقي إشعارات واتساب', 'مشاهدة صور الأنشطة', 'تتبع المكافآت']
+      features: language === 'ar' 
+        ? ['متابعة حضور الطفل', 'تلقي إشعارات واتساب', 'مشاهدة صور الأنشطة', 'تتبع المكافآت']
+        : ['Track child attendance', 'Receive WhatsApp notifications', 'View activity photos', 'Track rewards']
     }
   ];
 
   const copyToClipboard = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
     toast({
-      title: "تم النسخ",
-      description: `تم نسخ ${type} بنجاح`,
+      title: t('auth.copy_success'),
+      description: t('auth.copy_success_desc').replace('{type}', type),
       duration: 2000,
     });
   };
@@ -86,8 +97,8 @@ const Auth = () => {
       navigate('/dashboard');
     } else {
       toast({
-        title: "خطأ في تسجيل الدخول",
-        description: "تأكد من صحة البيانات أو تواصل مع الدعم الفني",
+        title: t('auth.login_error_title'),
+        description: t('auth.login_error_desc'),
         variant: "destructive",
       });
     }
@@ -179,32 +190,35 @@ const Auth = () => {
       <div className="w-full max-w-md relative z-10">
         {/* شعار/عنوان المنصة */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-6">
+          <div className="flex items-center justify-center gap-4 mb-6">
             <div className="relative">
               <img 
                 src={smartKindyLogo} 
-                alt="SmartKindy - منصة إدارة رياض الأطفال الذكية" 
+                alt={t('auth.platform_name')} 
                 className="h-20 w-20 object-contain drop-shadow-lg"
               />
               <div className="absolute -inset-2 bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-full blur-lg animate-pulse-soft"></div>
             </div>
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher />
+            </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">SmartKindy</h1>
-          <p className="text-gray-600 font-medium">منصة إدارة رياض الأطفال الذكية</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('auth.platform_name')}</h1>
+          <p className="text-gray-600 font-medium">{t('auth.platform_description')}</p>
         </div>
 
         <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-gray-900">مرحباً بك</CardTitle>
-            <CardDescription>سجل دخولك أو أنشئ حساباً جديداً أو جرب النظام</CardDescription>
+            <CardTitle className="text-2xl font-bold text-gray-900">{t('auth.welcome')}</CardTitle>
+            <CardDescription>{t('auth.description')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-4 mb-6">
-                <TabsTrigger value="signin">تسجيل الدخول</TabsTrigger>
-                <TabsTrigger value="signup">حساب جديد</TabsTrigger>
-                <TabsTrigger value="password">كلمة المرور</TabsTrigger>
-                <TabsTrigger value="admin">إنشاء مدير</TabsTrigger>
+                <TabsTrigger value="signin">{t('auth.signin')}</TabsTrigger>
+                <TabsTrigger value="signup">{t('auth.signup')}</TabsTrigger>
+                <TabsTrigger value="password">{t('auth.password_reset')}</TabsTrigger>
+                <TabsTrigger value="admin">{t('auth.admin_create')}</TabsTrigger>
               </TabsList>
 
 
@@ -212,44 +226,44 @@ const Auth = () => {
               <TabsContent value="signin">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div>
-                    <Label htmlFor="email">البريد الإلكتروني</Label>
+                    <Label htmlFor="email">{t('auth.email')}</Label>
                     <Input
                       id="email"
                       type="email"
                       value={signInForm.email}
                       onChange={(e) => setSignInForm(prev => ({ ...prev, email: e.target.value }))}
-                      placeholder="أدخل بريدك الإلكتروني"
+                      placeholder={t('auth.email_placeholder')}
                       required
                       className="text-right"
                       dir="ltr"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="password">كلمة المرور</Label>
+                    <Label htmlFor="password">{t('auth.password')}</Label>
                     <Input
                       id="password"
                       type="password"
                       value={signInForm.password}
                       onChange={(e) => setSignInForm(prev => ({ ...prev, password: e.target.value }))}
-                      placeholder="أدخل كلمة المرور"
+                      placeholder={t('auth.password_placeholder')}
                       required
                     />
                   </div>
                   
                   {/* رسالة توضيحية للمعلمين */}
                   <div className="bg-blue-50 p-3 rounded-lg text-sm text-blue-800">
-                    <p className="font-medium mb-1">📝 للمعلمات:</p>
-                    <p>إذا لم تتلقي بيانات الدخول، أدخلي بريدك الإلكتروني وكلمة المرور المؤقتة <strong>TK94303549</strong> وسيتم إرسال بيانات دخول جديدة عبر الواتساب.</p>
+                    <p className="font-medium mb-1">📝 {t('auth.teacher_note')}</p>
+                    <p>{t('auth.teacher_instruction')}</p>
                   </div>
                   
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? (
                       <>
                         <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                        جاري تسجيل الدخول...
+                        {t('auth.signing_in')}
                       </>
                     ) : (
-                      'تسجيل الدخول'
+                      t('auth.signin')
                     )}
                   </Button>
                 </form>
@@ -259,54 +273,54 @@ const Auth = () => {
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div>
-                    <Label htmlFor="fullName">الاسم الكامل</Label>
+                    <Label htmlFor="fullName">{t('auth.full_name')}</Label>
                     <Input
                       id="fullName"
                       type="text"
                       value={signUpForm.fullName}
                       onChange={(e) => setSignUpForm(prev => ({ ...prev, fullName: e.target.value }))}
-                      placeholder="أدخل اسمك الكامل"
+                      placeholder={t('auth.full_name_placeholder')}
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="signupEmail">البريد الإلكتروني</Label>
+                    <Label htmlFor="signupEmail">{t('auth.email')}</Label>
                     <Input
                       id="signupEmail"
                       type="email"
                       value={signUpForm.email}
                       onChange={(e) => setSignUpForm(prev => ({ ...prev, email: e.target.value }))}
-                      placeholder="أدخل بريدك الإلكتروني"
+                      placeholder={t('auth.email_placeholder')}
                       required
                       className="text-right"
                       dir="ltr"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="signupPassword">كلمة المرور</Label>
+                    <Label htmlFor="signupPassword">{t('auth.password')}</Label>
                     <Input
                       id="signupPassword"
                       type="password"
                       value={signUpForm.password}
                       onChange={(e) => setSignUpForm(prev => ({ ...prev, password: e.target.value }))}
-                      placeholder="أدخل كلمة المرور"
+                      placeholder={t('auth.password_placeholder')}
                       required
                       minLength={6}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="confirmPassword">تأكيد كلمة المرور</Label>
+                    <Label htmlFor="confirmPassword">{t('auth.confirm_password')}</Label>
                     <Input
                       id="confirmPassword"
                       type="password"
                       value={signUpForm.confirmPassword}
                       onChange={(e) => setSignUpForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                      placeholder="أعد إدخال كلمة المرور"
+                      placeholder={t('auth.confirm_password_placeholder')}
                       required
                       minLength={6}
                     />
                     {signUpForm.password && signUpForm.confirmPassword && signUpForm.password !== signUpForm.confirmPassword && (
-                      <p className="text-sm text-red-500 mt-1">كلمات المرور غير متطابقة</p>
+                      <p className="text-sm text-red-500 mt-1">{t('auth.passwords_dont_match')}</p>
                     )}
                   </div>
                   <Button 
@@ -317,10 +331,10 @@ const Auth = () => {
                     {loading ? (
                       <>
                         <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                        جاري إنشاء الحساب...
+                        {t('auth.creating_account')}
                       </>
                     ) : (
-                      'إنشاء حساب جديد'
+                      t('auth.create_new_account')
                     )}
                   </Button>
                 </form>
@@ -330,18 +344,18 @@ const Auth = () => {
               <TabsContent value="password">
                 <div className="space-y-4 text-center">
                   <p className="text-sm text-gray-600">
-                    لتغيير كلمة المرور، يرجى تسجيل الدخول أولاً
+                    {t('auth.change_password_instruction')}
                   </p>
                   <Button
                     variant="outline"
                     onClick={() => {
                       toast({
-                        title: "تغيير كلمة المرور",
-                        description: "يرجى تسجيل الدخول أولاً لتتمكن من تغيير كلمة المرور",
+                        title: t('auth.change_password_toast_title'),
+                        description: t('auth.change_password_toast_desc'),
                       });
                     }}
                   >
-                    تسجيل الدخول لتغيير كلمة المرور
+                    {t('auth.login_to_change_password')}
                   </Button>
                 </div>
               </TabsContent>
@@ -360,15 +374,15 @@ const Auth = () => {
         <div className="mt-8 grid grid-cols-3 gap-4 text-center">
           <div className="bg-white/60 backdrop-blur-sm rounded-lg p-3">
             <Users className="h-6 w-6 text-blue-500 mx-auto mb-2" />
-            <p className="text-xs text-gray-600">إدارة الطلاب</p>
+            <p className="text-xs text-gray-600">{t('auth.students_management')}</p>
           </div>
           <div className="bg-white/60 backdrop-blur-sm rounded-lg p-3">
             <Star className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
-            <p className="text-xs text-gray-600">نظام التحفيز</p>
+            <p className="text-xs text-gray-600">{t('auth.reward_system')}</p>
           </div>
           <div className="bg-white/60 backdrop-blur-sm rounded-lg p-3">
             <Heart className="h-6 w-6 text-pink-500 mx-auto mb-2" />
-            <p className="text-xs text-gray-600">تواصل الأولياء</p>
+            <p className="text-xs text-gray-600">{t('auth.parent_communication')}</p>
           </div>
         </div>
       </div>
